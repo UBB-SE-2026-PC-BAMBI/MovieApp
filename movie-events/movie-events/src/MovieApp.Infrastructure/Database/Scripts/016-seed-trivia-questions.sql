@@ -1,0 +1,2 @@
+-- Mock seed moved to ../MockData/003-seed-base-trivia-questions.sql.
+-- Scripts/ contains schema/bootstrap only.

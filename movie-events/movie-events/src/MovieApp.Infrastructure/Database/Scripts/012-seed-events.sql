@@ -1,0 +1,2 @@
+-- Mock seed moved to ../MockData/002-seed-base-events.sql.
+-- Scripts/ contains schema/bootstrap only.

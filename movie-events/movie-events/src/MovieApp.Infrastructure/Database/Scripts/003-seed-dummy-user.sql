@@ -1,0 +1,2 @@
+-- Mock seed moved to ../MockData/001-seed-dummy-user.sql.
+-- Scripts/ contains schema/bootstrap only.

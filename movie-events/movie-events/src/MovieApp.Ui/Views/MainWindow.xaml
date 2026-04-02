@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="MovieApp.Ui.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d">
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border
+            Margin="16,16,16,0"
+            Style="{StaticResource SurfaceCardStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="2">
+                    <TextBlock
+                        Style="{ThemeResource TitleTextBlockStyle}"
+                        Text="{x:Bind ViewModel.AppTitle, Mode=OneWay}" />
+                    <TextBlock
+                        Style="{StaticResource SectionCaptionTextStyle}"
+                        Text="{x:Bind ViewModel.UserLabel, Mode=OneWay}" />
+                </StackPanel>
+
+                <Border
+                    Grid.Column="1"
+                    MinWidth="40"
+                    MinHeight="40"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Padding="12,8"
+                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                    CornerRadius="20">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{x:Bind ViewModel.UserBadgeText, Mode=OneWay}" />
+                </Border>
+            </Grid>
+        </Border>
+
+        <controls:InfoBar
+            x:Name="PriceAlertInfoBar"
+            Grid.Row="1"
+            Margin="16,12,16,0"
+            IsOpen="False"
+            Severity="Success"
+            Title="Price Drop Alert!"
+            IsClosable="True" />
+
+        <controls:NavigationView
+            x:Name="AppNavigationView"
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False"
+            IsPaneToggleButtonVisible="False"
+            SelectionChanged="AppNavigationView_SelectionChanged">
+            <controls:NavigationView.MenuItems>
+                <controls:NavigationViewItem
+                    Content="Home"
+                    Icon="Home"
+                    Tag="Home" />
+                <controls:NavigationViewItem
+                    Content="Favorites"
+                    Icon="Favorite"
+                    Tag="Favorites" />
+                <controls:NavigationViewItem
+                    Content="My Events"
+                    Icon="Calendar"
+                    Tag="MyEvents" />
+                <controls:NavigationViewItem
+                    Content="Slots"
+                    Icon="Shop"
+                    Tag="SlotMachine" />
+                <controls:NavigationViewItem
+                    Content="Trivia Wheel"
+                    Icon="Help"
+                    Tag="TriviaWheel" />
+                <controls:NavigationViewItem
+                    Content="Marathons"
+                    Icon="Play"
+                    Tag="Marathons" />
+            </controls:NavigationView.MenuItems>
+            <controls:NavigationView.FooterMenuItems>
+                <controls:NavigationViewItem
+                    Content="Notifications"
+                    Tag="Notifications" />
+                <controls:NavigationViewItem
+                    Content="Rewards"
+                    Tag="Rewards" />
+                <controls:NavigationViewItem
+                    Content="Referral"
+                    Tag="ReferralArea" />
+            </controls:NavigationView.FooterMenuItems>
+            <Frame x:Name="ContentFrame" />
+        </controls:NavigationView>
+    </Grid>
+</Window>

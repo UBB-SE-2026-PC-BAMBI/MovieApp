@@ -1,0 +1,172 @@
+<Page
+    x:Class="MovieApp.Ui.Views.RewardsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="20">
+        <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.8*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <controls:TabView x:Name="RewardsTabView" SelectionChanged="RewardsTabView_SelectionChanged">
+                <controls:TabViewItem Header="Checkout">
+                    <StackPanel Padding="0,16,0,0">
+                        <ListView Height="420" />
+                    </StackPanel>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Referral">
+                    <StackPanel Padding="16" Spacing="12">
+                        <TextBlock Text="Free Passes" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Available from referral rewards" Style="{StaticResource SectionCaptionTextStyle}" />
+                        <Border Padding="16" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <FontIcon Glyph="&#xE8D1;" FontSize="28" Foreground="{ThemeResource SystemAccentColor}" />
+                                <TextBlock
+                                    Text="{x:Bind RewardBalance, Mode=OneTime}"
+                                    FontSize="32"
+                                    FontWeight="Bold"
+                                    VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </controls:TabViewItem>
+
+                <controls:TabViewItem Header="Trivia">
+                    <StackPanel Padding="16" Spacing="16">
+
+                        <TextBlock
+                            Text="Trivia Wheel Reward"
+                            Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                        <TextBlock
+                            Text="Earn a free movie ticket by answering all 20 trivia questions correctly."
+                            Style="{StaticResource SectionCaptionTextStyle}"
+                            TextWrapping="WrapWholeWords" />
+
+                        <!--  No reward state  -->
+                        <Border
+                            x:Name="NoRewardBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Visible"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Text="🎯 No reward available yet"
+                                    FontWeight="SemiBold" />
+                                <TextBlock
+                                    Text="Spin the trivia wheel and answer all 20 questions correctly to earn a free ticket."
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                        <!--  Reward available state  -->
+                        <Border
+                            x:Name="RewardAvailableBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="12">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <FontIcon
+                                        Glyph="&#xE8D1;"
+                                        FontSize="28"
+                                        Foreground="{ThemeResource SystemAccentColor}" />
+                                    <StackPanel Spacing="2">
+                                        <TextBlock
+                                            Text="🎉 Free Movie Ticket"
+                                            FontWeight="Bold"
+                                            FontSize="16" />
+                                        <TextBlock
+                                            Text="Applicable to any movie event"
+                                            Style="{StaticResource SectionCaptionTextStyle}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <TextBlock
+                                    x:Name="RewardEarnedDateText"
+                                    Style="{StaticResource SectionCaptionTextStyle}" />
+
+                                <Button
+                                    x:Name="TriviaRedeemButton"
+                                    Content="Redeem at checkout"
+                                    Click="TriviaRedeemButton_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!--  Already redeemed state  -->
+                        <Border
+                            x:Name="RedeemedBanner"
+                            Padding="16"
+                            CornerRadius="8"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                            <StackPanel Spacing="4">
+                                <TextBlock
+                                    Text="✅ Reward already redeemed"
+                                    FontWeight="SemiBold" />
+                                <TextBlock
+                                    Text="You have already used your free ticket reward. Earn another by scoring 20/20 again!"
+                                    Style="{StaticResource SectionCaptionTextStyle}"
+                                    TextWrapping="WrapWholeWords" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </controls:TabViewItem>
+                <controls:TabViewItem x:Name="SlotsTab" Header="Slots">
+                    <StackPanel Padding="16" Spacing="12">
+                        <TextBlock Text="Slot Machine Discounts" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="Earned from jackpot wins" Style="{StaticResource SectionCaptionTextStyle}" />
+                        <ListView x:Name="SlotsListView" Height="340" SelectionChanged="SlotsListView_SelectionChanged">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="6" Padding="12,8" Margin="0,2"
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                        <Grid ColumnSpacing="12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Spacing="2">
+                                                <TextBlock FontWeight="Bold" Text="{Binding MovieTitle}" />
+                                                <TextBlock FontSize="12" Opacity="0.7" Text="🎰 Jackpot Discount" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" CornerRadius="4" Padding="8,4"
+                                                    VerticalAlignment="Center"
+                                                    Background="{Binding StatusBrush}">
+                                                <TextBlock Text="{Binding StatusLabel}" FontWeight="SemiBold" />
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </controls:TabViewItem>
+            </controls:TabView>
+
+            <Border
+                Grid.Column="1"
+                Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Reward Details" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <TextBox x:Name="DetailTypeBox" Header="Type" IsReadOnly="True" />
+                    <TextBox x:Name="DetailScopeBox" Header="Movie" IsReadOnly="True" />
+                    <TextBox x:Name="DetailDiscountBox" Header="Discount" IsReadOnly="True" />
+                    <TextBox x:Name="DetailStatusBox" Header="Status" IsReadOnly="True" />
+                    <Button x:Name="RedeemButton" Content="Mark redeemed" Click="RedeemButton_Click" IsEnabled="False" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Page>

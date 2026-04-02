@@ -1,0 +1,21 @@
+using MovieApp.Core.Models;
+
+namespace MovieApp.Core.Repositories;
+
+public interface IEventRepository
+{
+    Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default);
+
+    Task<IEnumerable<Event>> GetAllByTypeAsync(string eventType, CancellationToken cancellationToken = default);
+
+    Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default);
+
+    Task<int> AddAsync(Event @event, CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default);
+
+    Task<bool> UpdateEnrollmentAsync(int eventId, int newCount, CancellationToken cancellationToken = default);
+
+    Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default);
+}

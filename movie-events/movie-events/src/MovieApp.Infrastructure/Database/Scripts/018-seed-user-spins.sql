@@ -1,0 +1,2 @@
+-- Mock seed moved to ../MockData/005-seed-base-user-spins.sql.
+-- Scripts/ contains schema/bootstrap only.

@@ -1,0 +1,2 @@
+-- Mock seed moved to ../MockData/004-seed-base-movies-and-cast.sql.
+-- Scripts/ contains schema/bootstrap only.

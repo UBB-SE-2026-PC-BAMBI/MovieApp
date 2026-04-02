@@ -1,0 +1,82 @@
+<Page
+    x:Class="MovieApp.Ui.Views.ReferralAreaPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:MovieApp.Core.Models"
+    mc:Ignorable="d">
+
+    <ScrollViewer Padding="24">
+        <StackPanel MaxWidth="600" Spacing="20">
+
+            <!-- Ambassador Code Card -->
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="8">
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="Your Ambassador Code" />
+                    <TextBlock
+                        Style="{StaticResource SectionCaptionTextStyle}"
+                        Text="Share this code with friends so they can use it when enrolling for events." />
+                    <Border
+                        Padding="12,10"
+                        CornerRadius="6"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                        <TextBlock
+                            FontSize="18"
+                            FontWeight="SemiBold"
+                            FontFamily="Consolas"
+                            IsTextSelectionEnabled="True"
+                            Text="{x:Bind ReferralCode, Mode=OneWay}" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- History Card -->
+            <Border Style="{StaticResource SurfaceCardStyle}">
+                <StackPanel Spacing="12">
+                    <TextBlock
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="Referral History" />
+                    <TextBlock
+                        Style="{StaticResource SectionCaptionTextStyle}"
+                        Text="People who used your code when enrolling for events." />
+
+                    <!-- Empty state -->
+                    <TextBlock
+                        x:Name="EmptyHistoryText"
+                        Style="{StaticResource SectionCaptionTextStyle}"
+                        Text="No referrals yet. Share your code to get started!"
+                        Visibility="{x:Bind IsHistoryEmpty, Mode=OneWay}" />
+
+                    <ListView
+                        ItemsSource="{x:Bind ReferralHistory, Mode=OneWay}"
+                        SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:ReferralHistoryItem">
+                                <Grid Padding="0,8" ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{x:Bind FriendName}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{x:Bind EventTitle}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                    </StackPanel>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Text="{x:Bind FormattedDate}"
+                                        Style="{StaticResource CaptionTextBlockStyle}"
+                                        Foreground="Gray" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</Page>
