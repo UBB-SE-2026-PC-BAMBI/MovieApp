@@ -6,6 +6,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="StatusPendingBrush" Color="#1A808080" />
+        <SolidColorBrush x:Key="StatusEndedBrush" Color="#22949494" />
+        <SolidColorBrush x:Key="StatusSoldOutBrush" Color="#33D13438" />
+        <SolidColorBrush x:Key="StatusAvailableBrush" Color="#3316A34A" />
+    </UserControl.Resources>
+
     <Border
         Width="284"
         Padding="0"
@@ -70,12 +77,15 @@
                                 BorderBrush="#FFD4A017"
                                 BorderThickness="1"
                                 CornerRadius="6"
-                                Visibility="{x:Bind DiscountBadgeVisibility, Mode=OneTime}">
-                                <TextBlock
-                                    FontSize="12"
-                                    FontWeight="SemiBold"
-                                    Foreground="#FFD4A017"
-                                    Text="{x:Bind DiscountBadgeText, Mode=OneTime}" />
+                                Visibility="{x:Bind DiscountBadgeVisibility, Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <FontIcon Glyph="&#xE7FC;" FontSize="12" Foreground="#FFD4A017" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        FontWeight="SemiBold"
+                                        Foreground="#FFD4A017"
+                                        Text="{x:Bind DiscountBadgeText, Mode=OneWay}" />
+                                </StackPanel>
                             </Border>
                         </StackPanel>
 
@@ -159,7 +169,7 @@
                             Text="Price" />
                         <TextBlock
                             FontWeight="SemiBold"
-                            Text="{x:Bind PriceText, Mode=OneTime}" />
+                            Text="{x:Bind PriceText, Mode=OneWay}" />
                     </StackPanel>
 
                     <StackPanel

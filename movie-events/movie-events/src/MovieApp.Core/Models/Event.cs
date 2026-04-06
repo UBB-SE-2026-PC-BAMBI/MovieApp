@@ -29,4 +29,8 @@ public sealed class Event
     public int AvailableSpots => MaxCapacity - CurrentEnrollment;
 
     public bool IsAvailable => AvailableSpots > 0 && EventDateTime > DateTime.Now;
+
+    public int DiscountPercentage { get; set; }
+
+    public bool IsJoined { get; set; }
 }
