@@ -5,6 +5,9 @@ using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 using MovieApp.Infrastructure;
 using MovieApp.Ui.ViewModels;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MovieApp.Ui.Views;
 
@@ -18,21 +21,39 @@ public sealed partial class MarathonsPage : Page
 
     public MarathonsPage()
     {
-        var connectionString = App.Configuration?["Database:ConnectionString"]
-            ?? throw new InvalidOperationException("Missing connection string.");
+        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
 
         var db = new DatabaseOptions { ConnectionString = connectionString };
         var marathonRepo = new SqlMarathonRepository(db);
-        var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService!);
+
+        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
+        var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService);
 
         ViewModel = new MarathonPageViewModel(marathonService, marathonRepo);
         InitializeComponent();
 
         Loaded += async (_, _) =>
         {
-            _currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
+            App.EnsureServicesValid();
+
+            if (App.Services.CurrentUserService?.CurrentUser == null)
+            {
+                throw new InvalidOperationException("User session is invalid or has expired.");
+            }
+
+            _currentUserId = App.Services.CurrentUserService.CurrentUser.Id;
             await ViewModel.LoadAsync(_currentUserId);
         };
+    }
+
+    private string GetRequiredConfiguration(string key)
+    {
+        var value = App.Configuration?[key];
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException($"Missing or invalid required configuration for key: '{key}'.");
+        }
+        return value;
     }
 
     private async void MarathonCard_Tapped(object sender, TappedRoutedEventArgs e)
@@ -55,7 +76,7 @@ public sealed partial class MarathonsPage : Page
         JoinPromptText.Visibility = ViewModel.ShowJoinButton
             ? Visibility.Visible : Visibility.Collapsed;
 
-        
+
         if (ViewModel.IsJoined)
             ShowMovieList();
         else if (!ViewModel.IsLocked)
@@ -151,10 +172,12 @@ public sealed partial class MarathonsPage : Page
 
     private async Task LogPassedMovieAsync(int marathonId, int movieId, int correctCount)
     {
-        var connectionString = App.Configuration?["Database:ConnectionString"]!;
+        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
         var db = new DatabaseOptions { ConnectionString = connectionString };
         var repo = new SqlMarathonRepository(db);
-        var service = new MarathonService(repo, App.Services.CurrentUserService!);
+
+        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
+        var service = new MarathonService(repo, App.Services.CurrentUserService);
 
         await service.LogMovieAsync(marathonId, movieId, correctCount);
         await ViewModel.RefreshAfterMovieLoggedAsync();
