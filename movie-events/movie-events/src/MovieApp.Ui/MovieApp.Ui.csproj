@@ -14,7 +14,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug'">
 		<CodeAnalysisRuleSet>SE.ruleset</CodeAnalysisRuleSet>
 	</PropertyGroup>
 	
