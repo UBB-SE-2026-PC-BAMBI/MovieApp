@@ -5,7 +5,7 @@ using MovieApp.Core.Repositories;
 namespace MovieApp.Infrastructure;
 
 /// <summary>
-/// SQL Server-backed repository for user slot-machine state. Uses the existing
+/// sqlStringCommand Server-backed repository for user slot-machine state. Uses the existing
 /// dbo.UserSpins table and maps to <see cref="UserSpinData"/>.
 /// </summary>
 public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRepository
@@ -21,68 +21,68 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
 
     public async Task<UserSpinData?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        const string sql = "SELECT UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday FROM dbo.UserSpins WHERE UserId = @userId";
+        const string sqlStringCommand = "SELECT UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday FROM dbo.UserSpins WHERE UserId = @userId";
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", userId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", userId);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        if (!await sqlDataReader.ReadAsync(cancellationToken))
             return null;
 
         return new UserSpinData
         {
-            UserId = reader.GetInt32(0),
-            DailySpinsRemaining = reader.GetInt32(1),
-            BonusSpins = reader.GetInt32(2),
-            LastSlotSpinReset = reader.IsDBNull(3) ? default : reader.GetDateTime(3),
-            LastTriviaSpinReset = reader.IsDBNull(4) ? default : reader.GetDateTime(4),
-            LoginStreak = reader.GetInt32(5),
-            LastLoginDate = reader.IsDBNull(6) ? default : reader.GetDateTime(6),
-            EventSpinRewardsToday = reader.GetInt32(7)
+            UserId                = sqlDataReader.GetInt32(0),
+            DailySpinsRemaining   = sqlDataReader.GetInt32(1),
+            BonusSpins            = sqlDataReader.GetInt32(2),
+            LastSlotSpinReset     = sqlDataReader.IsDBNull(3) ? default : sqlDataReader.GetDateTime(3),
+            LastTriviaSpinReset   = sqlDataReader.IsDBNull(4) ? default : sqlDataReader.GetDateTime(4),
+            LoginStreak           = sqlDataReader.GetInt32(5),
+            LastLoginDate         = sqlDataReader.IsDBNull(6) ? default : sqlDataReader.GetDateTime(6),
+            EventSpinRewardsToday = sqlDataReader.GetInt32(7)
         };
     }
 
     public async Task CreateAsync(UserSpinData state, CancellationToken cancellationToken = default)
     {
-        const string sql = "INSERT INTO dbo.UserSpins (UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday) VALUES (@userId, @dailySpins, @bonusSpins, @lastSlotReset, @lastTriviaReset, @loginStreak, @lastLoginDate, @eventRewards)";
+        const string sqlStringCommand = "INSERT INTO dbo.UserSpins (UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday) VALUES (@userId, @dailySpins, @bonusSpins, @lastSlotReset, @lastTriviaReset, @loginStreak, @lastLoginDate, @eventRewards)";
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", state.UserId);
-        command.Parameters.AddWithValue("@dailySpins", state.DailySpinsRemaining);
-        command.Parameters.AddWithValue("@bonusSpins", state.BonusSpins);
-        command.Parameters.AddWithValue("@lastSlotReset", state.LastSlotSpinReset == default ? DBNull.Value : (object)state.LastSlotSpinReset);
-        command.Parameters.AddWithValue("@lastTriviaReset", state.LastTriviaSpinReset == default ? DBNull.Value : (object)state.LastTriviaSpinReset);
-        command.Parameters.AddWithValue("@loginStreak", state.LoginStreak);
-        command.Parameters.AddWithValue("@lastLoginDate", state.LastLoginDate == default ? DBNull.Value : (object)state.LastLoginDate);
-        command.Parameters.AddWithValue("@eventRewards", state.EventSpinRewardsToday);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", state.UserId);
+        sqlCommand.Parameters.AddWithValue("@dailySpins", state.DailySpinsRemaining);
+        sqlCommand.Parameters.AddWithValue("@bonusSpins", state.BonusSpins);
+        sqlCommand.Parameters.AddWithValue("@lastSlotReset", state.LastSlotSpinReset == default ? DBNull.Value : (object)state.LastSlotSpinReset);
+        sqlCommand.Parameters.AddWithValue("@lastTriviaReset", state.LastTriviaSpinReset == default ? DBNull.Value : (object)state.LastTriviaSpinReset);
+        sqlCommand.Parameters.AddWithValue("@loginStreak", state.LoginStreak);
+        sqlCommand.Parameters.AddWithValue("@lastLoginDate", state.LastLoginDate == default ? DBNull.Value : (object)state.LastLoginDate);
+        sqlCommand.Parameters.AddWithValue("@eventRewards", state.EventSpinRewardsToday);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task UpdateAsync(UserSpinData state, CancellationToken cancellationToken = default)
     {
-        const string sql = "UPDATE dbo.UserSpins SET DailySpinsRemaining = @dailySpins, BonusSpins = @bonusSpins, LastSlotSpinReset = @lastSlotReset, LastTriviaSpinReset = @lastTriviaReset, LoginStreak = @loginStreak, LastLoginDate = @lastLoginDate, EventSpinRewardsToday = @eventRewards WHERE UserId = @userId";
+        const string sqlStringCommand = "UPDATE dbo.UserSpins SET DailySpinsRemaining = @dailySpins, BonusSpins = @bonusSpins, LastSlotSpinReset = @lastSlotReset, LastTriviaSpinReset = @lastTriviaReset, LoginStreak = @loginStreak, LastLoginDate = @lastLoginDate, EventSpinRewardsToday = @eventRewards WHERE UserId = @userId";
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@dailySpins", state.DailySpinsRemaining);
-        command.Parameters.AddWithValue("@bonusSpins", state.BonusSpins);
-        command.Parameters.AddWithValue("@lastSlotReset", state.LastSlotSpinReset == default ? DBNull.Value : (object)state.LastSlotSpinReset);
-        command.Parameters.AddWithValue("@lastTriviaReset", state.LastTriviaSpinReset == default ? DBNull.Value : (object)state.LastTriviaSpinReset);
-        command.Parameters.AddWithValue("@loginStreak", state.LoginStreak);
-        command.Parameters.AddWithValue("@lastLoginDate", state.LastLoginDate == default ? DBNull.Value : (object)state.LastLoginDate);
-        command.Parameters.AddWithValue("@eventRewards", state.EventSpinRewardsToday);
-        command.Parameters.AddWithValue("@userId", state.UserId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@dailySpins", state.DailySpinsRemaining);
+        sqlCommand.Parameters.AddWithValue("@bonusSpins", state.BonusSpins);
+        sqlCommand.Parameters.AddWithValue("@lastSlotReset", state.LastSlotSpinReset == default ? DBNull.Value : (object)state.LastSlotSpinReset);
+        sqlCommand.Parameters.AddWithValue("@lastTriviaReset", state.LastTriviaSpinReset == default ? DBNull.Value : (object)state.LastTriviaSpinReset);
+        sqlCommand.Parameters.AddWithValue("@loginStreak", state.LoginStreak);
+        sqlCommand.Parameters.AddWithValue("@lastLoginDate", state.LastLoginDate == default ? DBNull.Value : (object)state.LastLoginDate);
+        sqlCommand.Parameters.AddWithValue("@eventRewards", state.EventSpinRewardsToday);
+        sqlCommand.Parameters.AddWithValue("@userId", state.UserId);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 }
