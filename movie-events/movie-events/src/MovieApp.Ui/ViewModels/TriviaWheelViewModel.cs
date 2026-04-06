@@ -27,6 +27,9 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     private bool _isTriviaAvailable = true;
     private string _availabilityMessage = string.Empty;
 
+    private const int QUESTION_PER_SESSION = 20;
+    private const string ERROR_MESSAGE = "Trivia unavailable: no trivia data in the database.";
+
     public TriviaWheelViewModel(
         ITriviaRepository triviaRepository,
         ITriviaRewardRepository triviaRewardRepository,
@@ -138,9 +141,9 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     }
 
     public bool IsHintAvailable => !HintUsed;
-    public bool HasEarnedReward => Score == 20;
-    public double ProgressValue => CurrentQuestionIndex / 20.0 * 100;
-    public string ProgressText => $"{CurrentQuestionIndex}/20";
+    public bool HasEarnedReward => Score == QUESTION_PER_SESSION;
+    public double ProgressValue => CurrentQuestionIndex / QUESTION_PER_SESSION * 100;
+    public string ProgressText => $"{CurrentQuestionIndex}/{QUESTION_PER_SESSION}";
 
     public bool IsTriviaAvailable
     {
@@ -176,8 +179,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
     public string EmptyStateMessage => NoQuestionsAvailable
         ? "No trivia questions are available for this category yet."
         : "Spin the wheel to begin!";
-
-    // ── Spin eligibility ─────────────────────────────────────────────────────
 
     public async Task InitializeAsync()
     {
@@ -233,13 +234,11 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         CanSpin = false;
     }
 
-    // ── Questions ────────────────────────────────────────────────────────────
-
     public async Task LoadQuestionsAsync(string category)
     {
         SelectedCategory = category;
 
-        var all = await _triviaRepository.GetByCategoryAsync(category);
+        IEnumerable<TriviaQuestion> all = await _triviaRepository.GetByCategoryAsync(category);
 
         _questions = all
             .OrderBy(_ => Guid.NewGuid())
@@ -253,7 +252,7 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         NoQuestionsAvailable = false;
         CurrentQuestion = null;
 
-        if (_questions.Count < 20)
+        if (_questions.Count < QUESTION_PER_SESSION)
         {
             IsPlaying = false;
             NoQuestionsAvailable = true;
@@ -305,8 +304,6 @@ public sealed class TriviaWheelViewModel : ViewModelBase
             .ToList();
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
-
     private static bool HasSpunToday(DateTime lastSpin)
     {
         if (lastSpin == default) return false;
@@ -315,9 +312,9 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
     private async Task RefreshTriviaAvailabilityAsync()
     {
-        foreach (var category in Categories)
+        foreach (string category in Categories)
         {
-            var questions = await _triviaRepository.GetByCategoryAsync(category);
+            IEnumerable<TriviaQuestion> questions = await _triviaRepository.GetByCategoryAsync(category);
             if (questions.Any())
             {
                 IsTriviaAvailable = true;
@@ -327,13 +324,13 @@ public sealed class TriviaWheelViewModel : ViewModelBase
         }
 
         IsTriviaAvailable = false;
-        AvailabilityMessage = "Trivia unavailable: no trivia data in the database.";
+        AvailabilityMessage = ERROR_MESSAGE;
         CanSpin = false;
     }
 
     private async Task GrantRewardAsync()
     {
-        var reward = new TriviaReward
+        TriviaReward reward = new TriviaReward
         {
             Id = 0,
             UserId = _currentUserId,

@@ -1,13 +1,26 @@
-using MovieApp.Core.Models;
+// <copyright file="EventListTransformer.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Core.EventLists;
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using MovieApp.Core.Models;
+
+/// <summary>
+/// Provides transformation logic for event lists including filtering, searching, and sorting.
+/// </summary>
 public static class EventListTransformer
 {
     /// <summary>
     /// Applies the full event-list pipeline in a stable order:
     /// filters first, then search, then sorting.
     /// </summary>
+    /// <param name="events">The source collection of events.</param>
+    /// <param name="state">The state containing filter, search, and sort criteria.</param>
+    /// <returns>A transformed and materialized list of events.</returns>
     public static IReadOnlyList<Event> Apply(IEnumerable<Event> events, EventListState state)
     {
         ArgumentNullException.ThrowIfNull(events);
@@ -20,6 +33,12 @@ public static class EventListTransformer
         return sortedEvents.ToList();
     }
 
+    /// <summary>
+    /// Filters the event collection based on the provided criteria.
+    /// </summary>
+    /// <param name="events">The source events.</param>
+    /// <param name="filters">The filter criteria to apply.</param>
+    /// <returns>A filtered sequence of events.</returns>
     public static IEnumerable<Event> ApplyFilters(IEnumerable<Event> events, EventFilterState filters)
     {
         ArgumentNullException.ThrowIfNull(events);
@@ -50,6 +69,9 @@ public static class EventListTransformer
     /// Searches across the user-visible text fields for an event,
     /// including its title, description, location, and event type.
     /// </summary>
+    /// <param name="events">The source events.</param>
+    /// <param name="searchText">The text to search for.</param>
+    /// <returns>A sequence of events matching the search text.</returns>
     /// <remarks>
     /// This method is intentionally screen-agnostic. It filters only the sequence
     /// supplied by the caller, so different event-list screens can reuse the same
@@ -73,6 +95,12 @@ public static class EventListTransformer
             || e.EventType.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>
+    /// Sorts the event collection based on the specified option.
+    /// </summary>
+    /// <param name="events">The source events.</param>
+    /// <param name="sortOption">The sorting strategy to apply.</param>
+    /// <returns>An ordered sequence of events.</returns>
     public static IOrderedEnumerable<Event> ApplySorting(IEnumerable<Event> events, EventSortOption sortOption)
     {
         ArgumentNullException.ThrowIfNull(events);
