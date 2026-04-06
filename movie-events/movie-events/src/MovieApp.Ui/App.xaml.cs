@@ -32,8 +32,8 @@ public partial class App : Application
     public static IUserMovieDiscountRepository? UserMovieDiscountRepository { get; private set; }
     public static IScreeningRepository? ScreeningRepository { get; private set; }
     public static IUserEventAttendanceRepository? UserEventAttendanceRepository { get; private set; }
-    public static SlotMachineService? SlotMachineService { get; private set; }
-    public static SlotMachineResultService? SlotMachineResultService { get; private set; }
+    public static ISlotMachineService? SlotMachineService { get; private set; }
+    public static ISlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
     public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
     public static IEventUserStateService? EventUserStateService { get; private set; }
@@ -87,13 +87,13 @@ public partial class App : Application
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
 
-            SlotMachineService slotMachineService = new SlotMachineService(
-                slotMachineStateRepository,
-                movieRepository,
-                eventRepository,
-                userMovieDiscountRepository);
+            ISlotMachineService slotMachineService = new SlotMachineService(
+                                                            slotMachineStateRepository,
+                                                            movieRepository,
+                                                            eventRepository,
+                                                            userMovieDiscountRepository);
 
-            SlotMachineResultService slotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
+            ISlotMachineResultService slotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
             ReelAnimationService reelAnimationService = new ReelAnimationService();
             SlotMachineAnimationService slotMachineAnimationService = new SlotMachineAnimationService();
 

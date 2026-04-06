@@ -4,7 +4,7 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Core.Services;
 
-public sealed class SlotMachineService
+public sealed class SlotMachineService : ISlotMachineService
 {
     private readonly IUserSlotMachineStateRepository _stateRepository;
     private readonly IMovieRepository _movieRepository;

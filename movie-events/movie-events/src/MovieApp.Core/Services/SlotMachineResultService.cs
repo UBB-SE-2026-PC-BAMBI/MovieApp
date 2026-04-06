@@ -8,7 +8,7 @@ namespace MovieApp.Core.Services;
 /// Service responsible for assembling the final results for the UI, including highlighting
 /// jackpot events and calculating discounts.
 /// </summary>
-public sealed class SlotMachineResultService
+public sealed class SlotMachineResultService : ISlotMachineResultService
 {
     private readonly IUserMovieDiscountRepository _discountRepository;
     private const int JACKPOT_DISCOUNT_PERCENTAGE = 70;
