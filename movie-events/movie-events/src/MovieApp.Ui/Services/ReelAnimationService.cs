@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using MovieApp.Core.Models.Movie;
 
 namespace MovieApp.Ui.Services;
@@ -8,8 +10,8 @@ namespace MovieApp.Ui.Services;
 /// </summary>
 public sealed class ReelAnimationService
 {
-    private const int AnimationDurationMs = 2000;
-    private const int ReelStopDelayMs = 200;
+    private const int ANIMATION_DURATION_MS = 2000;
+    private const int REEL_STOP_DELAY_MS = 200;
 
     public event EventHandler<ReelAnimationCompletedEventArgs>? AnimationCompleted;
 
@@ -31,9 +33,9 @@ public sealed class ReelAnimationService
         try
         {
             // Start animations for all reels simultaneously
-            var animationGenreTask = AnimateReelAsync(genreSequence.Cast<object>().ToList(), 0, cancellationToken);
-            var animationActorTask = AnimateReelAsync(actorSequence.Cast<object>().ToList(), ReelStopDelayMs, cancellationToken);
-            var animationDirectorTask = AnimateReelAsync(directorSequence.Cast<object>().ToList(), ReelStopDelayMs * 2, cancellationToken);
+            Task animationGenreTask = AnimateReelAsync(genreSequence.Cast<object>().ToList(), 0, cancellationToken);
+            Task animationActorTask = AnimateReelAsync(actorSequence.Cast<object>().ToList(), REEL_STOP_DELAY_MS, cancellationToken);
+            Task animationDirectorTask = AnimateReelAsync(directorSequence.Cast<object>().ToList(), REEL_STOP_DELAY_MS * 2, cancellationToken);
 
             await Task.WhenAll(animationGenreTask, animationActorTask, animationDirectorTask);
 
@@ -63,12 +65,12 @@ public sealed class ReelAnimationService
         // Initial delay before this reel starts
         await Task.Delay(delayMs, cancellationToken);
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        while (stopwatch.ElapsedMilliseconds < AnimationDurationMs && !cancellationToken.IsCancellationRequested)
+        while (stopwatch.ElapsedMilliseconds < ANIMATION_DURATION_MS && !cancellationToken.IsCancellationRequested)
         {
             // Cycle through reel values
-            var index = (int)((stopwatch.ElapsedMilliseconds / 50) % values.Count);
+            int index = (int)((stopwatch.ElapsedMilliseconds / 50) % values.Count);
             // Here you would update the UI binding with values[index]
             // This would be connected to the ViewModel that updates display
 
