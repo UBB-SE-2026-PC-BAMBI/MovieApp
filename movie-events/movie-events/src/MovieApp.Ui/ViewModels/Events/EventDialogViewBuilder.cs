@@ -80,6 +80,23 @@ public static class EventDialogViewBuilder
         Button willAttendButton = new Button { Content = "Will attend", Tag = "Joined!" };
         Button buyTicketButton = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
 
+        layout.Loaded += async (object sender, RoutedEventArgs e) =>
+        {
+            if (App.EventUserStateService is not null)
+            {
+                bool isAlreadyJoined = await App.EventUserStateService.IsEventJoinedByUserAsync(model.Event.Id);
+
+                if (isAlreadyJoined)
+                {
+                    willAttendButton.IsEnabled = false;
+                    willAttendButton.Content = "Joined!";
+
+                    buyTicketButton.IsEnabled = false;
+                    buyTicketButton.Content = "Ticket purchased!";
+                }
+            }
+        };
+
         willAttendButton.Click += async (object sender, RoutedEventArgs e) => await HandleJoinClick(willAttendButton, model.Event.Id);
         buyTicketButton.Click += async (object sender, RoutedEventArgs e) => await HandleJoinClick(buyTicketButton, model.Event.Id);
 
@@ -133,7 +150,17 @@ public static class EventDialogViewBuilder
         {
             string tag = button.Tag?.ToString() ?? string.Empty;
             JoinEventResult result = await App.EventJoinService.JoinEventAsync(eventId, tag);
+
             button.Content = result.Message;
+
+            if (result.Success)
+            {
+                button.IsEnabled = false;
+            }
+            else
+            {
+                button.IsEnabled = true;
+            }
         }
     }
 }
