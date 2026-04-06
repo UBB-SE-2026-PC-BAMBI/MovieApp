@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models.Movie;
@@ -13,18 +17,22 @@ public sealed class SqlMovieRepository : IMovieRepository
 {
     private readonly string _connectionString;
 
-
     /// <summary>
-    /// Initialises a new instance of <see cref="SqlMovieRepository"/>.
+    /// Initialises a new instance of the <see cref="SqlMovieRepository"/> class.
     /// </summary>
     /// <param name="databaseOptions">Database connection options.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the databaseOptions parameter is null.</exception>
     public SqlMovieRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
         _connectionString = databaseOptions.ConnectionString;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves all genres from the database, ordered alphabetically by name.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Genre"/> objects.</returns>
     public async Task<IReadOnlyList<Genre>> GetGenresAsync(CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = "SELECT Id, Name FROM dbo.Genres ORDER BY Name";
@@ -41,7 +49,7 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             genres.Add(new Genre
             {
-                Id   = sqlDataReader.GetInt32(0),
+                Id = sqlDataReader.GetInt32(0),
                 Name = sqlDataReader.GetString(1)
             });
         }
@@ -49,7 +57,11 @@ public sealed class SqlMovieRepository : IMovieRepository
         return genres;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves all actors from the database, ordered alphabetically by name.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Actor"/> objects.</returns>
     public async Task<IReadOnlyList<Actor>> GetActorsAsync(CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = "SELECT Id, Name FROM dbo.Actors ORDER BY Name";
@@ -66,7 +78,7 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             actors.Add(new Actor
             {
-                Id   = sqlDataReader.GetInt32(0),
+                Id = sqlDataReader.GetInt32(0),
                 Name = sqlDataReader.GetString(1)
             });
         }
@@ -74,7 +86,11 @@ public sealed class SqlMovieRepository : IMovieRepository
         return actors;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves all directors from the database, ordered alphabetically by name.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Director"/> objects.</returns>
     public async Task<IReadOnlyList<Director>> GetDirectorsAsync(CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = "SELECT Id, Name FROM dbo.Directors ORDER BY Name";
@@ -91,7 +107,7 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             directors.Add(new Director
             {
-                Id   = sqlDataReader.GetInt32(0),
+                Id = sqlDataReader.GetInt32(0),
                 Name = sqlDataReader.GetString(1)
             });
         }
@@ -99,7 +115,14 @@ public sealed class SqlMovieRepository : IMovieRepository
         return directors;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously finds distinct movies that contain the specified genre AND actor AND director.
+    /// </summary>
+    /// <param name="genreId">The required genre ID.</param>
+    /// <param name="actorId">The required actor ID.</param>
+    /// <param name="directorId">The required director ID.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Movie"/> objects matching all criteria.</returns>
     public async Task<IReadOnlyList<Movie>> FindMoviesByCriteriaAsync(int genreId, int actorId, int directorId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -129,21 +152,28 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             movies.Add(new Movie
             {
-                Id              = sqlDataReader.GetInt32(0),
-                Title           = sqlDataReader.GetString(1),
-                Description     = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
-                ReleaseYear     = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
+                Id = sqlDataReader.GetInt32(0),
+                Title = sqlDataReader.GetString(1),
+                Description = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
+                ReleaseYear = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
-                Genres          = [],
-                Actors          = [],
-                Directors       = []
+                Genres = [],
+                Actors = [],
+                Directors = []
             });
         }
 
         return movies;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously finds distinct movies that match the specified genre OR actor OR director.
+    /// </summary>
+    /// <param name="genreId">The target genre ID.</param>
+    /// <param name="actorId">The target actor ID.</param>
+    /// <param name="directorId">The target director ID.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Movie"/> objects matching any of the given criteria.</returns>
     public async Task<IReadOnlyList<Movie>> FindMoviesByAnyCriteriaAsync(int genreId, int actorId, int directorId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -173,21 +203,26 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             movies.Add(new Movie
             {
-                Id              = sqlDataReader.GetInt32(0),
-                Title           = sqlDataReader.GetString(1),
-                Description     = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
-                ReleaseYear     = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
+                Id = sqlDataReader.GetInt32(0),
+                Title = sqlDataReader.GetString(1),
+                Description = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
+                ReleaseYear = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
-                Genres          = [],
-                Actors          = [],
-                Directors       = []
+                Genres = [],
+                Actors = [],
+                Directors = []
             });
         }
 
         return movies;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves the IDs of all upcoming events that include a screening for the specified movie.
+    /// </summary>
+    /// <param name="movieId">The ID of the movie being screened.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of event IDs for future screenings.</returns>
     public async Task<IReadOnlyList<int>> FindScreeningEventIdsForMovieAsync(int movieId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -215,7 +250,12 @@ public sealed class SqlMovieRepository : IMovieRepository
         return eventIds;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves all valid combinations of Genre, Actor, and Director 
+    /// for movies that currently have future screenings scheduled.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="ReelCombination"/> objects.</returns>
     public async Task<IReadOnlyList<ReelCombination>> GetValidReelCombinationsAsync(CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -246,8 +286,8 @@ public sealed class SqlMovieRepository : IMovieRepository
         {
             combinations.Add(new ReelCombination
             {
-                Genre    = new Genre { Id = sqlDataReader.GetInt32(0), Name = sqlDataReader.GetString(1) },
-                Actor    = new Actor { Id = sqlDataReader.GetInt32(2), Name = sqlDataReader.GetString(3) },
+                Genre = new Genre { Id = sqlDataReader.GetInt32(0), Name = sqlDataReader.GetString(1) },
+                Actor = new Actor { Id = sqlDataReader.GetInt32(2), Name = sqlDataReader.GetString(3) },
                 Director = new Director { Id = sqlDataReader.GetInt32(4), Name = sqlDataReader.GetString(5) }
             });
         }
