@@ -26,9 +26,9 @@ public static class EventListTransformer
         ArgumentNullException.ThrowIfNull(events);
         ArgumentNullException.ThrowIfNull(state);
 
-        var filteredEvents = ApplyFilters(events, state.ActiveFilters);
-        var searchedEvents = ApplySearch(filteredEvents, state.SearchText);
-        var sortedEvents = ApplySorting(searchedEvents, state.SelectedSortOption);
+        IEnumerable<Event> filteredEvents = ApplyFilters(events, state.ActiveFilters);
+        IEnumerable<Event> searchedEvents = ApplySearch(filteredEvents, state.SearchText);
+        IOrderedEnumerable<Event> sortedEvents = ApplySorting(searchedEvents, state.SelectedSortOption);
 
         return sortedEvents.ToList();
     }
@@ -50,19 +50,19 @@ public static class EventListTransformer
             return [];
         }
 
-        var eventType = string.IsNullOrWhiteSpace(filters.EventType) ? null : filters.EventType.Trim();
-        var locationReference = string.IsNullOrWhiteSpace(filters.LocationReference)
+        string? eventType = string.IsNullOrWhiteSpace(filters.EventType) ? null : filters.EventType.Trim();
+        string? locationReference = string.IsNullOrWhiteSpace(filters.LocationReference)
             ? null
             : filters.LocationReference.Trim();
 
-        return events.Where(e =>
-            (!filters.OnlyAvailableEvents || e.IsAvailable)
+        return events.Where(movieEvent =>
+            (!filters.OnlyAvailableEvents || movieEvent.IsAvailable)
             && (eventType is null
-                || string.Equals(e.EventType, eventType, StringComparison.OrdinalIgnoreCase))
+                || string.Equals(movieEvent.EventType, eventType, StringComparison.OrdinalIgnoreCase))
             && (locationReference is null
-                || string.Equals(e.LocationReference, locationReference, StringComparison.OrdinalIgnoreCase))
-            && (!filters.MinimumTicketPrice.HasValue || e.TicketPrice >= filters.MinimumTicketPrice.Value)
-            && (!filters.MaximumTicketPrice.HasValue || e.TicketPrice <= filters.MaximumTicketPrice.Value));
+                || string.Equals(movieEvent.LocationReference, locationReference, StringComparison.OrdinalIgnoreCase))
+            && (!filters.MinimumTicketPrice.HasValue || movieEvent.TicketPrice >= filters.MinimumTicketPrice.Value)
+            && (!filters.MaximumTicketPrice.HasValue || movieEvent.TicketPrice <= filters.MaximumTicketPrice.Value));
     }
 
     /// <summary>
@@ -86,13 +86,13 @@ public static class EventListTransformer
             return events;
         }
 
-        var query = searchText.Trim();
+        string query = searchText.Trim();
 
-        return events.Where(e =>
-            e.Title.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || (e.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
-            || e.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || e.EventType.Contains(query, StringComparison.OrdinalIgnoreCase));
+        return events.Where(movieEvent =>
+            movieEvent.Title.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || (movieEvent.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false)
+            || movieEvent.LocationReference.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || movieEvent.EventType.Contains(query, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -106,7 +106,7 @@ public static class EventListTransformer
         ArgumentNullException.ThrowIfNull(events);
 
         // Strategy pattern implementation
-        var strategy = EventSortStrategyFactory.GetStrategy(sortOption);
+        IEventSortStrategy strategy = EventSortStrategyFactory.GetStrategy(sortOption);
         return strategy.Sort(events);
     }
 }
