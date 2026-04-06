@@ -66,22 +66,10 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        ContentDialog dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = selectedEvent.Title,
-            PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-
-        EventDialogViewModel model = await _dialogBuilder.BuildAsync(
+        await _dialogBuilder.ShowEventDialogAsync(
             selectedEvent,
+            XamlRoot,
             isJackpotEvent: false,
-            discountPercent: null,
-            closeDialogAction: () => dialog.Hide(),
-            xamlRoot: XamlRoot);
-
-        dialog.Content = EventDialogViewBuilder.Create(model);
-        await dialog.ShowAsync();
+            discountPercentage: null);
     }
 }

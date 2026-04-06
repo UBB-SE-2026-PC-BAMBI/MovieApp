@@ -83,24 +83,12 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        ContentDialog dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = selectedEvent.Title,
-            PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary,
-        };
+        int? discountPercentage = EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int percentage) ? (int?)percentage : null;
 
-        int? discountPct = EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int pct) ? (int?)pct : null;
-
-        EventDialogViewModel model = await _dialogBuilder.BuildAsync(
+        await _dialogBuilder.ShowEventDialogAsync(
             selectedEvent,
+            XamlRoot,
             isJackpotEvent: false,
-            discountPercent: discountPct,
-            closeDialogAction: () => dialog.Hide(),
-            xamlRoot: XamlRoot);
-
-        dialog.Content = EventDialogViewBuilder.Create(model);
-        await dialog.ShowAsync();
+            discountPercentage: discountPercentage);
     }
 }
