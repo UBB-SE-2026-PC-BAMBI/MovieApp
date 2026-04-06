@@ -16,6 +16,11 @@ using MovieApp.Core.Repositories;
 /// </summary>
 public sealed class MarathonService : IMarathonService
 {
+    /// <summary>
+    /// The maximum possible score for a single movie verification quiz.
+    /// </summary>
+    private const int PerfectQuizScore = 3;
+
     private readonly IMarathonRepository marathonRepo;
     private readonly ICurrentUserService currentUserService;
 
@@ -114,7 +119,7 @@ public sealed class MarathonService : IMarathonService
 
         if (marathonProgress != null)
         {
-            double newQuizScore = (correctAnswers / 3.0) * 100;
+            double newQuizScore = (correctAnswers / (double)PerfectQuizScore) * 100;
             marathonProgress.TriviaAccuracy = (marathonProgress.TriviaAccuracy + newQuizScore) / 2;
             marathonProgress.CompletedMoviesCount++;
             await this.marathonRepo.UpdateProgressAsync(marathonProgress);
@@ -130,7 +135,7 @@ public sealed class MarathonService : IMarathonService
     /// <returns>True if the movie was logged successfully; otherwise, false.</returns>
     public async Task<bool> LogMovieAsync(int marathonId, int movieId, int correctAnswers)
     {
-        if (correctAnswers < 3)
+        if (correctAnswers < PerfectQuizScore)
         {
             return false;
         }
@@ -142,7 +147,7 @@ public sealed class MarathonService : IMarathonService
             return false;
         }
 
-        double newScore = (correctAnswers / 3.0) * 100;
+        double newScore = (correctAnswers / (double)PerfectQuizScore) * 100;
         marathonProgress.TriviaAccuracy = marathonProgress.CompletedMoviesCount == 0
             ? newScore
             : (marathonProgress.TriviaAccuracy + newScore) / 2;

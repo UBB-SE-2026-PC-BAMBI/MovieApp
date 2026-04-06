@@ -21,12 +21,16 @@ public sealed class EventListState
     /// <summary>
     /// Gets or sets the currently selected sort option.
     /// </summary>
+    /// <remarks>
+    /// The default value is <see cref="EventSortOption.DateAscending"/> to ensure
+    /// that users see the most immediate upcoming events first by default.
+    /// </remarks>
     public EventSortOption SelectedSortOption { get; set; } = EventSortOption.DateAscending;
 
     /// <summary>
     /// Gets or sets the active filter criteria.
     /// </summary>
-    public EventFilterState ActiveFilters { get; set; } = new ();
+    public EventFilterState ActiveFilters { get; set; } = new EventFilterState();
 
     /// <summary>
     /// Gets the list of available sort options for the UI.
