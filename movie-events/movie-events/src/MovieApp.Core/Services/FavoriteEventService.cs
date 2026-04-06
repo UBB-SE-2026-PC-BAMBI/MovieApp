@@ -1,77 +1,117 @@
-using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+// <copyright file="FavoriteEventService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Core.Services;
+
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
 
 /// <summary>
 /// Implements the favorite-event workflow on top of repository abstractions.
 /// </summary>
 public sealed class FavoriteEventService : IFavoriteEventService
 {
-    private readonly IFavoriteEventRepository _favoriteEventRepository;
-    private readonly IEventRepository _eventRepository;
+    private readonly IFavoriteEventRepository favoriteEventRepository;
+    private readonly IEventRepository eventRepository;
 
     /// <summary>
-    /// Creates the service with favorite-link and event repositories.
+    /// Initializes a new instance of the <see cref="FavoriteEventService"/> class.
     /// </summary>
+    /// <param name="favoriteEventRepository">The repository for managing favorite links.</param>
+    /// <param name="eventRepository">The repository for accessing event details.</param>
     public FavoriteEventService(
         IFavoriteEventRepository favoriteEventRepository,
         IEventRepository eventRepository)
     {
-        _favoriteEventRepository = favoriteEventRepository;
-        _eventRepository = eventRepository;
+        this.favoriteEventRepository = favoriteEventRepository;
+        this.eventRepository = eventRepository;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Adds an event to the user's favorite list.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the event is already favorited or not found.</exception>
     public async Task AddFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        if (await ExistsFavoriteAsync(userId, eventId, cancellationToken))
+        bool alreadyExists = await this.ExistsFavoriteAsync(userId, eventId, cancellationToken);
+        if (alreadyExists)
         {
             throw new InvalidOperationException("Event is already favorited by this user.");
         }
 
-        var @event = await _eventRepository.FindByIdAsync(eventId, cancellationToken);
-        if (@event is null)
+        Event? favoriteEventDetails = await this.eventRepository.FindByIdAsync(eventId, cancellationToken);
+        if (favoriteEventDetails is null)
         {
             throw new InvalidOperationException("Event not found.");
         }
 
-        await _favoriteEventRepository.AddAsync(userId, eventId, cancellationToken);
+        await this.favoriteEventRepository.AddAsync(userId, eventId, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Removes an event from the user's favorite list.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     public Task RemoveFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        return _favoriteEventRepository.RemoveAsync(userId, eventId, cancellationToken);
+        return this.favoriteEventRepository.RemoveAsync(userId, eventId, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Retrieves all favorite link records for a specific user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A read-only list of favorite event links.</returns>
     public Task<IReadOnlyList<FavoriteEvent>> GetFavoritesByUserAsync(int userId, CancellationToken cancellationToken = default)
     {
-        return _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
+        return this.favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Checks if a specific event is already favorited by a user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>True if the favorite link exists; otherwise, false.</returns>
     public Task<bool> ExistsFavoriteAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        return _favoriteEventRepository.ExistsAsync(userId, eventId, cancellationToken);
+        return this.favoriteEventRepository.ExistsAsync(userId, eventId, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Gets the full event details for all items favorited by the user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A read-only list of event objects.</returns>
     public async Task<IReadOnlyList<Event>> GetFavoriteEventsByUserIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var favoriteLinks = await _favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
-        var events = new List<Event>();
+        IReadOnlyList<FavoriteEvent> favoriteEventLinks = await this.favoriteEventRepository.FindByUserAsync(userId, cancellationToken);
+        List<Event> favoriteEvents = new List<Event>();
 
-        foreach (var link in favoriteLinks)
+        foreach (FavoriteEvent favoriteEventLink in favoriteEventLinks)
         {
-            var @event = await _eventRepository.FindByIdAsync(link.EventId, cancellationToken);
-            if (@event is not null)
+            Event? favoriteEventDetails = await this.eventRepository.FindByIdAsync(favoriteEventLink.EventId, cancellationToken);
+            if (favoriteEventDetails is not null)
             {
-                events.Add(@event);
+                favoriteEvents.Add(favoriteEventDetails);
             }
         }
 
-        return events;
+        return favoriteEvents;
     }
 }
