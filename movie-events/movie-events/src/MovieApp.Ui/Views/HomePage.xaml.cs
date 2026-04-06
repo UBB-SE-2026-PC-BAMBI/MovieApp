@@ -5,6 +5,7 @@ using MovieApp.Core.Models;
 using MovieApp.Ui.Navigation;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
+using System;
 
 namespace MovieApp.Ui.Views;
 
@@ -17,6 +18,9 @@ public sealed partial class HomePage : Page
 
     public HomePage()
     {
+        if (App.Services.EventRepository == null || App.Services.ReferralValidator == null)
+            throw new InvalidOperationException("Required repositories are not initialized.");
+
         ViewModel = new HomeEventsViewModel(App.Services.EventRepository);
         _dialogBuilder = new EventDialogContentBuilder(App.Services.ReferralValidator, App.Services.CurrentUserService);
         NavigationCacheMode = NavigationCacheMode.Required;
@@ -24,17 +28,25 @@ public sealed partial class HomePage : Page
         DataContext = ViewModel;
     }
 
+    private bool IsAmbassadorSystemAvailable()
+    {
+        return App.Services.AmbassadorRepository is not null && App.Services.CurrentUserService?.CurrentUser is not null;
+    }
+
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+
+        App.EnsureServicesValid();
 
         if (!_initialized)
         {
             _initialized = true;
 
-            if (App.Services.AmbassadorRepository is not null && App.Services.CurrentUserService?.CurrentUser is { } currentUser)
+            if (IsAmbassadorSystemAvailable())
             {
-                string existingCode = await App.Services.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
+                var currentUser = App.Services.CurrentUserService!.CurrentUser;
+                string existingCode = await App.Services.AmbassadorRepository!.GetReferralCodeAsync(currentUser.Id);
                 if (string.IsNullOrEmpty(existingCode))
                 {
                     MovieApp.Core.Services.ReferralCodeGenerator generator = new MovieApp.Core.Services.ReferralCodeGenerator();

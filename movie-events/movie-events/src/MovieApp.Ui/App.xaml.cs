@@ -149,4 +149,12 @@ public partial class App : Application
             + Environment.NewLine
             + exception.Message;
     }
+
+    public static void EnsureServicesValid()
+    {
+        if (App.Services.CurrentUserService == null || App.Services.EventRepository == null || Configuration == null)
+        {
+            throw new InvalidOperationException("Critical runtime services have been reset or are unavailable. The application cannot continue.");
+        }
+    }
 }
