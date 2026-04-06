@@ -5,7 +5,7 @@ using MovieApp.Core.Repositories;
 namespace MovieApp.Infrastructure;
 
 /// <summary>
-/// SQL Server-backed repository for managing screenings that map movies to events.
+/// sqlStringCommand Server-backed repository for managing screenings that map movies to events.
 /// </summary>
 public sealed class SqlScreeningRepository : IScreeningRepository
 {
@@ -19,28 +19,28 @@ public sealed class SqlScreeningRepository : IScreeningRepository
 
     public async Task<IReadOnlyList<Screening>> GetByEventIdAsync(int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"
+        const string sqlStringCommand = @"
             SELECT Id, EventId, MovieId, ScreeningTime
             FROM dbo.Screenings
             WHERE EventId = @eventId";
 
-        var screenings = new List<Screening>();
+        List<Screening> screenings = new List<Screening>();
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        while (await sqlDataReader.ReadAsync(cancellationToken))
         {
             screenings.Add(new Screening
             {
-                Id = reader.GetInt32(0),
-                EventId = reader.GetInt32(1),
-                MovieId = reader.GetInt32(2),
-                ScreeningTime = reader.GetDateTime(3)
+                Id = sqlDataReader.GetInt32(0),
+                EventId = sqlDataReader.GetInt32(1),
+                MovieId = sqlDataReader.GetInt32(2),
+                ScreeningTime = sqlDataReader.GetDateTime(3)
             });
         }
 
@@ -49,28 +49,28 @@ public sealed class SqlScreeningRepository : IScreeningRepository
 
     public async Task<IReadOnlyList<Screening>> GetByMovieIdAsync(int movieId, CancellationToken cancellationToken = default)
     {
-        const string sql = @"
+        const string sqlStringCommand = @"
             SELECT Id, EventId, MovieId, ScreeningTime
             FROM dbo.Screenings
             WHERE MovieId = @movieId";
 
-        var screenings = new List<Screening>();
+        List<Screening> screenings = new List<Screening>();
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@movieId", movieId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@movieId", movieId);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        while (await sqlDataReader.ReadAsync(cancellationToken))
         {
             screenings.Add(new Screening
             {
-                Id = reader.GetInt32(0),
-                EventId = reader.GetInt32(1),
-                MovieId = reader.GetInt32(2),
-                ScreeningTime = reader.GetDateTime(3)
+                Id            = sqlDataReader.GetInt32(0),
+                EventId       = sqlDataReader.GetInt32(1),
+                MovieId       = sqlDataReader.GetInt32(2),
+                ScreeningTime = sqlDataReader.GetDateTime(3)
             });
         }
 
@@ -79,18 +79,18 @@ public sealed class SqlScreeningRepository : IScreeningRepository
 
     public async Task AddAsync(Screening screening, CancellationToken cancellationToken = default)
     {
-        const string sql = @"
+        const string sqlStringCommand = @"
             INSERT INTO dbo.Screenings (EventId, MovieId, ScreeningTime)
             VALUES (@eventId, @movieId, @screeningTime)";
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@eventId", screening.EventId);
-        command.Parameters.AddWithValue("@movieId", screening.MovieId);
-        command.Parameters.AddWithValue("@screeningTime", screening.ScreeningTime);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@eventId", screening.EventId);
+        sqlCommand.Parameters.AddWithValue("@movieId", screening.MovieId);
+        sqlCommand.Parameters.AddWithValue("@screeningTime", screening.ScreeningTime);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 }
