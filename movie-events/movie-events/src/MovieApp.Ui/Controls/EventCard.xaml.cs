@@ -43,7 +43,6 @@ public sealed partial class EventCard : UserControl
         set => SetValue(ModelProperty, value);
     }
 
-    // NEW: Wrapper properties
     public int DiscountPercentage
     {
         get => (int)GetValue(DiscountPercentageProperty);
@@ -100,7 +99,6 @@ public sealed partial class EventCard : UserControl
 
     public string DiscountBadgeText => $"-{DiscountPercentage}%";
 
-    // CHANGED: The join button no longer initializes its own state
     public static void AttachJoinEventHandler(Button button, int eventId)
     {
         button.Click += async (sender, _) =>
