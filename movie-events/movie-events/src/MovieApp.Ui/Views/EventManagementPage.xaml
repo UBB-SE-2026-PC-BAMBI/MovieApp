@@ -81,7 +81,8 @@
 
                         <TextBox Header="Title" PlaceholderText="Event title" Text="{x:Bind ViewModel.FormTitle, Mode=TwoWay}" />
                         <TextBox Grid.Column="1" Header="Location" PlaceholderText="Venue and hall" Text="{x:Bind ViewModel.FormLocation, Mode=TwoWay}" />
-                        <ComboBox Grid.Column="2" Header="Event type" PlaceholderText="Choose type">
+                        <ComboBox Grid.Column="2" Header="Event type" PlaceholderText="Choose type"
+                                  SelectedItem="{x:Bind ViewModel.FormEventType, Mode=TwoWay}">
                             <x:String>Premiere</x:String>
                             <x:String>Marathon</x:String>
                             <x:String>Outdoor screening</x:String>
@@ -113,7 +114,6 @@
                         <Button Content="Create" Command="{x:Bind ViewModel.CreateEventCommand}" />
                         <Button Content="Edit selected" Command="{x:Bind ViewModel.EditEventCommand}" />
                         <Button Content="Delete selected" Command="{x:Bind ViewModel.DeleteEventCommand}" />
-                        <Button Content="Simulate Update" Click="SimulateUpdate_Click" />
                     </StackPanel>
                 </StackPanel>
             </Border>

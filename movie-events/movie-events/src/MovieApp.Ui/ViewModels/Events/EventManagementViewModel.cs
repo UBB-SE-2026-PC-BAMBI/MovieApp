@@ -1,20 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
 
 namespace MovieApp.Ui.ViewModels.Events;
 
-/// <summary>
-/// Represents the event-management workspace used for organizer-facing CRUD flows.
-/// </summary>
 public sealed class EventManagementViewModel : EventListPageViewModel
 {
     private readonly IEventRepository? _eventRepository;
     private readonly INotificationService? _notificationService;
 
-    /// <summary>
-    /// Creates the management view model using the app-level repositories.
-    /// </summary>
     public EventManagementViewModel()
     {
         _eventRepository = App.Services.EventRepository;
@@ -27,18 +25,11 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     public override string PageTitle => "Event Management";
 
-    // ── existing command ──────────────────────────────────────────────────────
-    /// <summary>
-    /// Gets the command used by the placeholder management UI to simulate notifications.
-    /// </summary>
     public System.Windows.Input.ICommand SimulateUpdateCommand { get; }
-
-    // ── new CRUD commands ─────────────────────────────────────────────────────
     public System.Windows.Input.ICommand CreateEventCommand { get; }
     public System.Windows.Input.ICommand EditEventCommand { get; }
     public System.Windows.Input.ICommand DeleteEventCommand { get; }
 
-    // ── selected event ────────────────────────────────────────────────────────
     private Event? _selectedEvent;
     public Event? SelectedEvent
     {
@@ -51,16 +42,32 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         }
     }
 
-    // ── form fields ───────────────────────────────────────────────────────────
-    public string FormTitle { get; set; } = string.Empty;
-    public string FormLocation { get; set; } = string.Empty;
-    public string FormEventType { get; set; } = string.Empty;
-    public string FormDescription { get; set; } = string.Empty;
-    public DateTimeOffset? FormDate { get; set; }
-    public TimeSpan FormTime { get; set; }
-    public double FormPrice { get; set; }
-    public int FormCapacity { get; set; }
-    public string FormPosterUrl { get; set; } = string.Empty;
+    private string _formTitle = string.Empty;
+    public string FormTitle { get => _formTitle; set => SetProperty(ref _formTitle, value); }
+
+    private string _formLocation = string.Empty;
+    public string FormLocation { get => _formLocation; set => SetProperty(ref _formLocation, value); }
+
+    private string _formEventType = string.Empty;
+    public string FormEventType { get => _formEventType; set => SetProperty(ref _formEventType, value); }
+
+    private string _formDescription = string.Empty;
+    public string FormDescription { get => _formDescription; set => SetProperty(ref _formDescription, value); }
+
+    private DateTimeOffset? _formDate;
+    public DateTimeOffset? FormDate { get => _formDate; set => SetProperty(ref _formDate, value); }
+
+    private TimeSpan _formTime;
+    public TimeSpan FormTime { get => _formTime; set => SetProperty(ref _formTime, value); }
+
+    private double _formPrice;
+    public double FormPrice { get => _formPrice; set => SetProperty(ref _formPrice, value); }
+
+    private int _formCapacity;
+    public int FormCapacity { get => _formCapacity; set => SetProperty(ref _formCapacity, value); }
+
+    private string _formPosterUrl = string.Empty;
+    public string FormPosterUrl { get => _formPosterUrl; set => SetProperty(ref _formPosterUrl, value); }
 
     private string _validationMessage = string.Empty;
     public string ValidationMessage
@@ -69,8 +76,6 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         private set => SetProperty(ref _validationMessage, value);
     }
 
-    // ── loading ───────────────────────────────────────────────────────────────
-    /// <inheritdoc />
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
         if (_eventRepository is null)
@@ -78,21 +83,48 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             return [];
         }
 
-        var events = await _eventRepository.GetAllAsync();
+        IEnumerable<Event> events = await _eventRepository.GetAllAsync();
         return events.ToList();
     }
 
-    // ── CRUD operations ───────────────────────────────────────────────────────
+    private void ClearForm()
+    {
+        FormTitle = string.Empty;
+        FormLocation = string.Empty;
+        FormEventType = string.Empty;
+        FormDescription = string.Empty;
+        FormDate = null;
+        FormTime = TimeSpan.Zero;
+        FormPrice = 0;
+        FormCapacity = 0;
+        FormPosterUrl = string.Empty;
+        ValidationMessage = string.Empty;
+        SelectedEvent = null;
+    }
+
     private bool Validate(out string error)
     {
         if (string.IsNullOrWhiteSpace(FormTitle))
-        { error = "Title cannot be empty."; return false; }
+        {
+            error = "Title cannot be empty.";
+            return false;
+        }
         if (string.IsNullOrWhiteSpace(FormLocation))
-        { error = "Location cannot be empty."; return false; }
+        {
+            error = "Location cannot be empty.";
+            return false;
+        }
         if (FormPrice < 0)
-        { error = "Ticket price cannot be negative."; return false; }
+        {
+            error = "Ticket price cannot be negative.";
+            return false;
+        }
         if (FormDate is null)
-        { error = "Date is required."; return false; }
+        {
+            error = "Date is required.";
+            return false;
+        }
+
         error = string.Empty;
         return true;
     }
@@ -100,13 +132,19 @@ public sealed class EventManagementViewModel : EventListPageViewModel
     private async Task CreateEventAsync()
     {
         if (_eventRepository is null) return;
-        if (!Validate(out var error)) { ValidationMessage = error; return; }
+
+        string error;
+        if (!Validate(out error))
+        {
+            ValidationMessage = error;
+            return;
+        }
 
         ValidationMessage = string.Empty;
         var date = FormDate!.Value.Date + FormTime;
         var currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
 
-        var newEvent = new Event
+        Event newEvent = new Event
         {
             Id = 0,
             Title = FormTitle.Trim(),
@@ -114,25 +152,32 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             LocationReference = FormLocation.Trim(),
             TicketPrice = (decimal)FormPrice,
             EventDateTime = date,
-            EventType = FormEventType.Trim(),
+            EventType = FormEventType != null ? FormEventType.Trim() : string.Empty,
             MaxCapacity = FormCapacity > 0 ? FormCapacity : 50,
             PosterUrl = FormPosterUrl,
             CreatorUserId = currentUserId,
         };
 
         await _eventRepository.AddAsync(newEvent);
+        ClearForm();
         await InitializeAsync();
     }
 
     private async Task EditEventAsync()
     {
         if (_eventRepository is null || SelectedEvent is null) return;
-        if (!Validate(out var error)) { ValidationMessage = error; return; }
+
+        string error;
+        if (!Validate(out error))
+        {
+            ValidationMessage = error;
+            return;
+        }
 
         ValidationMessage = string.Empty;
-        var date = FormDate!.Value.Date + FormTime;
+        DateTime date = FormDate!.Value.Date + FormTime;
 
-        var updated = new Event
+        Event updated = new Event
         {
             Id = SelectedEvent.Id,
             Title = FormTitle.Trim(),
@@ -140,7 +185,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             LocationReference = FormLocation.Trim(),
             TicketPrice = (decimal)FormPrice,
             EventDateTime = date,
-            EventType = FormEventType.Trim(),
+            EventType = FormEventType != null ? FormEventType.Trim() : string.Empty,
             MaxCapacity = FormCapacity > 0 ? FormCapacity : SelectedEvent.MaxCapacity,
             PosterUrl = FormPosterUrl,
             CreatorUserId = SelectedEvent.CreatorUserId,
@@ -149,6 +194,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         };
 
         await _eventRepository.UpdateEventAsync(updated);
+        ClearForm();
         await InitializeAsync();
     }
 
@@ -156,37 +202,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
     {
         if (_eventRepository is null || SelectedEvent is null) return;
         await _eventRepository.DeleteAsync(SelectedEvent.Id);
-        SelectedEvent = null;
+        ClearForm();
         await InitializeAsync();
-    }
-
-    // ── existing simulation ───────────────────────────────────────────────────
-    /// <summary>
-    /// Simulates an event update so notification flows can be exercised from the placeholder UI.
-    /// </summary>
-    public async Task SimulateEventUpdateAsync()
-    {
-        if (_eventRepository is null || _notificationService is null)
-        {
-            return;
-        }
-
-        var @event = VisibleEvents.FirstOrDefault();
-        if (@event is null)
-        {
-            return;
-        }
-
-        var oldPrice = @event.TicketPrice;
-        @event.TicketPrice = oldPrice > 5 ? oldPrice - 5 : 0;
-
-        if (@event.CurrentEnrollment > 0)
-        {
-            @event.CurrentEnrollment -= 1;
-        }
-
-        await _eventRepository.UpdateEventAsync(@event);
-        await _notificationService.NotifyPriceDropAsync(@event.Id, oldPrice, @event.TicketPrice);
-        await _notificationService.NotifySeatsAvailableAsync(@event.Id, @event.MaxCapacity);
     }
 }
