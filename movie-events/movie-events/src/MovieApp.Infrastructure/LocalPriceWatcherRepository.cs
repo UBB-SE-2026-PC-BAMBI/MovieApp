@@ -42,7 +42,7 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
     {
         List<WatchedEvent> events = await GetAllWatchedEventsAsync();
 
-        if (events.Any(e => e.EventId == watchedEvent.EventId))
+        if (events.Any(ev => ev.EventId == watchedEvent.EventId))
         {
             return false;
         }
@@ -60,7 +60,7 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
     public async Task RemoveWatchAsync(int eventId)
     {
         List<WatchedEvent> events = await GetAllWatchedEventsAsync();
-        WatchedEvent? itemToRemove = events.FirstOrDefault(e => e.EventId == eventId);
+        WatchedEvent? itemToRemove = events.FirstOrDefault(ev => ev.EventId == eventId);
         
         if (itemToRemove != null)
         {
@@ -72,13 +72,13 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
     public async Task<WatchedEvent?> GetWatchAsync(int eventId)
     {
         List<WatchedEvent> events = await GetAllWatchedEventsAsync();
-        return events.FirstOrDefault(e => e.EventId == eventId);
+        return events.FirstOrDefault(ev => ev.EventId == eventId);
     }
 
     public async Task<bool> IsWatchingAsync(int eventId)
     {
         List<WatchedEvent> events = await GetAllWatchedEventsAsync();
-        return events.Any(e => e.EventId == eventId);
+        return events.Any(ev => ev.EventId == eventId);
     }
 
     private async Task SaveAllAsync(List<WatchedEvent> events)
