@@ -49,11 +49,8 @@ public sealed partial class EventManagementPage : Page
         ViewModel.FormTime = selected.EventDateTime.TimeOfDay;
         ViewModel.FormPrice = (double)selected.TicketPrice;
         ViewModel.FormCapacity = selected.MaxCapacity;
-        ViewModel.FormPosterUrl = selected.PosterUrl;
-    }
+        ViewModel.FormPosterUrl = selected.PosterUrl ?? string.Empty;
 
-    private async void SimulateUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.SimulateEventUpdateAsync();
+        Bindings.Update();
     }
 }
