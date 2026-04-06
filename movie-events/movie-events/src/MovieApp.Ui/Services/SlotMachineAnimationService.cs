@@ -11,9 +11,9 @@ namespace MovieApp.Ui.Services;
 /// </summary>
 public sealed class SlotMachineAnimationService
 {
-    private const int SpinDurationMs = 2000;
-    private const int ReelStopIntervalMs = 600;
-    private const int TickIntervalMs = 80;
+    private const int SPIN_DURATION_MS = 2000;
+    private const int REEL_STOP_INTERVAL_MS = 600;
+    private const int TICK_INTERVAL_MS = 80;
 
     /// <summary>
     /// Animates the slot machine reels. During the spin, each reel displays
@@ -47,13 +47,13 @@ public sealed class SlotMachineAnimationService
         if (genres.Count == 0 || actors.Count == 0 || directors.Count == 0)
             return;
 
-        var random = new Random();
+        Random random = new Random();
 
-        int genreStopTime = SpinDurationMs;
-        int actorStopTime = SpinDurationMs + ReelStopIntervalMs;
-        int directorStopTime = SpinDurationMs + ReelStopIntervalMs * 2;
+        int genreStopTime = SPIN_DURATION_MS;
+        int actorStopTime = SPIN_DURATION_MS + REEL_STOP_INTERVAL_MS;
+        int directorStopTime = SPIN_DURATION_MS + REEL_STOP_INTERVAL_MS * 2;
 
-        var stopwatch = Stopwatch.StartNew();
+        Stopwatch stopwatch = Stopwatch.StartNew();
 
         bool genreStopped = false;
         bool actorStopped = false;
@@ -61,7 +61,7 @@ public sealed class SlotMachineAnimationService
 
         while (!directorStopped && !cancellationToken.IsCancellationRequested)
         {
-            var elapsed = stopwatch.ElapsedMilliseconds;
+            long elapsed = stopwatch.ElapsedMilliseconds;
 
             if (!genreStopped)
             {
@@ -106,7 +106,7 @@ public sealed class SlotMachineAnimationService
             }
 
             if (!directorStopped)
-                await Task.Delay(TickIntervalMs, cancellationToken);
+                await Task.Delay(TICK_INTERVAL_MS, cancellationToken);
         }
 
         stopwatch.Stop();
