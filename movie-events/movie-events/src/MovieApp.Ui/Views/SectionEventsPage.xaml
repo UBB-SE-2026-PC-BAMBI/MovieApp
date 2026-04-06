@@ -9,10 +9,15 @@
 
     <ScrollViewer Padding="24" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="16">
+
             <Button
                 HorizontalAlignment="Left"
-                Click="BackButton_Click"
-                Content="← Back" />
+                Click="BackButton_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE72B;" FontSize="14" />
+                    <TextBlock Text="Back" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
 
             <TextBlock
                 Style="{ThemeResource HeaderTextBlockStyle}"
@@ -46,6 +51,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

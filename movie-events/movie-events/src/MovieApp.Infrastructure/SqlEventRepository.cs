@@ -247,11 +247,42 @@ public sealed class SqlEventRepository : IEventRepository
     {
         await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
+        await using var transaction = connection.BeginTransaction();
 
-        await using SqlCommand sqlCommand = new SqlCommand("DELETE FROM Events WHERE Id = @Id", connection);
-        sqlCommand.Parameters.AddWithValue("@Id", eventId);
+        try
+        {
+            await using var deleteScreenings = new SqlCommand(
+                "DELETE FROM Screenings WHERE EventId = @Id", connection, transaction);
+            deleteScreenings.Parameters.AddWithValue("@Id", eventId);
+            await deleteScreenings.ExecuteNonQueryAsync(cancellationToken);
 
-        int rows = await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
-        return rows > 0;
+            await using var deleteParticipants = new SqlCommand(
+                "DELETE FROM Participations WHERE EventId = @Id", connection, transaction);
+            deleteParticipants.Parameters.AddWithValue("@Id", eventId);
+            await deleteParticipants.ExecuteNonQueryAsync(cancellationToken);
+
+            await using var deleteFavorites = new SqlCommand(
+                "DELETE FROM FavoriteEvents WHERE EventId = @Id", connection, transaction);
+            deleteFavorites.Parameters.AddWithValue("@Id", eventId);
+            await deleteFavorites.ExecuteNonQueryAsync(cancellationToken);
+
+            await using var deleteReferrals = new SqlCommand(
+                "DELETE FROM ReferralLog WHERE EventId = @Id", connection, transaction);
+            deleteReferrals.Parameters.AddWithValue("@Id", eventId);
+            await deleteReferrals.ExecuteNonQueryAsync(cancellationToken);
+
+            await using var deleteEvent = new SqlCommand(
+                "DELETE FROM Events WHERE Id = @Id", connection, transaction);
+            deleteEvent.Parameters.AddWithValue("@Id", eventId);
+            var rows = await deleteEvent.ExecuteNonQueryAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+            return rows > 0;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 }
