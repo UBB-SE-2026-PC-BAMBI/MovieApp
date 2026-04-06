@@ -16,7 +16,7 @@ namespace MovieApp.Ui.ViewModels;
 public sealed class SlotMachineViewModel : ViewModelBase
 {
     private readonly ISlotMachineService _slotMachineService;
-    private readonly SlotMachineAnimationService _animationService;
+    private readonly ISlotMachineAnimationService _animationService;
     private readonly int _userId;
 
     private Genre _selectedGenre = new();
@@ -151,7 +151,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
     public SlotMachineViewModel(
         int userId,
         ISlotMachineService slotMachineService,
-        SlotMachineAnimationService animationService)
+        ISlotMachineAnimationService animationService)
     {
         _userId = userId;
         _slotMachineService = slotMachineService;

@@ -9,7 +9,7 @@ namespace MovieApp.Ui.Services;
 /// in the order: Genre (first), Actor (second), Director (last).
 /// The final values represent the generated roulette combination.
 /// </summary>
-public sealed class SlotMachineAnimationService
+public sealed class SlotMachineAnimationService : ISlotMachineAnimationService
 {
     private const int SPIN_DURATION_MS = 2000;
     private const int REEL_STOP_INTERVAL_MS = 600;
