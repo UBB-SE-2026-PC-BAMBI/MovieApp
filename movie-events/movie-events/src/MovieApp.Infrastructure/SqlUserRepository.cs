@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models;
@@ -5,15 +7,29 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
 
+/// <summary>
+/// A SQL Server-backed repository for managing user accounts via ADO.NET.
+/// </summary>
 public sealed class SqlUserRepository : IUserRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SqlUserRepository"/> class.
+    /// </summary>
+    /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlUserRepository(DatabaseOptions databaseOptions)
     {
         _connectionString = databaseOptions.ConnectionString;
     }
 
+    /// <summary>
+    /// Asynchronously searches for a user based on their external authentication identity.
+    /// </summary>
+    /// <param name="authProvider">The name of the external authentication provider (e.g., "Google", "Auth0").</param>
+    /// <param name="authSubject">The unique subject identifier (sub claim) issued by the authentication provider.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>The matching <see cref="User"/> if found; otherwise, <c>null</c>.</returns>
     public async Task<User?> FindByAuthIdentityAsync(string authProvider, string authSubject, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -38,10 +54,10 @@ public sealed class SqlUserRepository : IUserRepository
 
         return new User
         {
-            Id           = sqlDataReader.GetInt32(0),
+            Id = sqlDataReader.GetInt32(0),
             AuthProvider = sqlDataReader.GetString(1),
-            AuthSubject  = sqlDataReader.GetString(2),
-            Username     = sqlDataReader.GetString(3),
+            AuthSubject = sqlDataReader.GetString(2),
+            Username = sqlDataReader.GetString(3),
         };
     }
 }
