@@ -42,67 +42,37 @@ public sealed partial class SlotMachinePage : Page
 
     private async void OnJackpotHit(Movie movie, int discountPercentage)
     {
-        SolidColorBrush gold = new SolidColorBrush(Color.FromArgb(0xFF, 0xC8, 0x97, 0x1A));
-        SolidColorBrush darkBg = new SolidColorBrush(Color.FromArgb(0xFF, 0x0B, 0x0B, 0x1E));
-        SolidColorBrush lightText = new SolidColorBrush(Color.FromArgb(0xFF, 0xE8, 0xE8, 0xFF));
+        ContentDialog dialog = (ContentDialog)Resources["JackpotContentDialog"];
+        dialog.XamlRoot = XamlRoot;
 
-        ContentDialog dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            DefaultButton = ContentDialogButton.Primary,
-        };
+        JackpotDialogViewModel jackpotViewModel = new JackpotDialogViewModel(movie, discountPercentage);
 
-        dialog.Resources["ContentDialogBackground"] = darkBg;
-        dialog.Resources["ContentDialogForeground"] = lightText;
-        dialog.Resources["ContentDialogTitleForeground"] = gold;
-        dialog.Resources["ContentDialogBorderBrush"] = gold;
-
-        JackpotDialogViewModel model = new JackpotDialogViewModel(movie, discountPercentage)
-        {
-            CollectAction = () => dialog.Hide()
-        };
-
-        dialog.ContentTemplate = (DataTemplate)Resources["JackpotDialogTemplate"];
-        dialog.Content = model;
-
-        dialog.PrimaryButtonText = "Collect!";
-        dialog.PrimaryButtonClick += (_, _) => model.CollectAction?.Invoke();
-
+        dialog.Content = jackpotViewModel;
         await dialog.ShowAsync();
+
         this.Focus(FocusState.Programmatic);
     }
 
-    private async void ViewEventButton_Click(object sender, RoutedEventArgs e)
+    private async void OpenEventDetailsDialog_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.DataContext is not MatchingEventItem item)
             return;
 
         Event selectedEvent = item.Event;
-        int discountPct = item.IsJackpotEvent
-            ? (EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int pct) ? pct : 70)
+
+        int discountPercentage = item.IsJackpotEvent
+            ? (EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int percentage) ? percentage : 70)
             : 0;
 
-        ContentDialog dialog = new ContentDialog
-        {
-            XamlRoot = XamlRoot,
-            Title = selectedEvent.Title,
-            PrimaryButtonText = "Close",
-            DefaultButton = ContentDialogButton.Primary,
-        };
-
-        EventDialogViewModel model = await _dialogBuilder.BuildAsync(
+        await _dialogBuilder.ShowEventDialogAsync(
             selectedEvent,
+            XamlRoot,
             isJackpotEvent: item.IsJackpotEvent,
-            discountPercent: item.IsJackpotEvent ? discountPct : null,
-            closeDialogAction: () => dialog.Hide(),
-            xamlRoot: XamlRoot);
+            discountPercentage: item.IsJackpotEvent ? discountPercentage : null);
 
-        dialog.Content = EventDialogViewBuilder.Create(model);
-
-        await dialog.ShowAsync();
         this.Focus(FocusState.Programmatic);
 
-        if (DataContext is SlotMachineViewModel vm)
-            await vm.RefreshSpinCountAsync();
+        if (DataContext is SlotMachineViewModel slotMachineViewModel)
+            await slotMachineViewModel.RefreshSpinCountAsync();
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 using MovieApp.Ui.Controls;
+using MovieApp.Ui.Views;
 
 namespace MovieApp.Ui.Services;
 
@@ -18,33 +19,59 @@ public sealed class EventDialogContentBuilder
         _currentUserService = currentUserService;
     }
 
-    public async Task<EventDialogViewModel> BuildAsync(
-        Event @event,
+    public async Task ShowEventDialogAsync(
+        Event movieEvent,
+        XamlRoot xamlRoot,
+        bool isJackpotEvent = false,
+        int? discountPercentage = null)
+    {
+        ContentDialog dialog = new ContentDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = movieEvent.Title,
+            PrimaryButtonText = "Close",
+            DefaultButton = ContentDialogButton.Primary,
+        };
+
+        EventDialogViewModel dialogViewModel = await BuildViewModelAsync(
+            movieEvent,
+            isJackpotEvent,
+            discountPercentage,
+            () => dialog.Hide(),
+            xamlRoot);
+
+        dialog.Content = EventDialogViewBuilder.Create(dialogViewModel);
+
+        await dialog.ShowAsync();
+    }
+
+    private async Task<EventDialogViewModel> BuildViewModelAsync(
+        Event movieEvent,
         bool isJackpotEvent,
         int? discountPercent,
         Action closeDialogAction,
         XamlRoot xamlRoot)
     {
-        EventDialogViewModel model = new EventDialogViewModel(@event, isJackpotEvent, discountPercent)
+        EventDialogViewModel model = new EventDialogViewModel(movieEvent, isJackpotEvent, discountPercent)
         {
-            Description = @event.Description ?? "A curated movie experience with limited seating.",
-            FormattedDate = $"When: {@event.EventDateTime:g}",
-            Location = $"Where: {@event.LocationReference}",
-            PriceText = $"Price: {EventCard.GetPriceText(@event, CultureInfo.CurrentCulture)}",
-            RatingText = $"Rating: {EventCard.GetRatingText(@event)}",
-            CapacityText = $"Seats: {EventCard.GetCapacityText(@event)}"
+            Description = movieEvent.Description ?? "A curated movie experience with limited seating.",
+            FormattedDate = $"When: {movieEvent.EventDateTime:g}",
+            Location = $"Where: {movieEvent.LocationReference}",
+            PriceText = $"Price: {EventCard.GetPriceText(movieEvent, CultureInfo.CurrentCulture)}",
+            RatingText = $"Rating: {EventCard.GetRatingText(movieEvent)}",
+            CapacityText = $"Seats: {EventCard.GetCapacityText(movieEvent)}"
         };
 
         if (isJackpotEvent && discountPercent.HasValue)
         {
             model.ShowJackpotBanner = true;
             model.JackpotBannerText = $"{discountPercent.Value}% Jackpot Discount applies to this event!";
-            model.JackpotDiscountedPriceText = $"Discounted price: {EventCard.GetDiscountedPriceText(@event, CultureInfo.CurrentCulture, discountPercent.Value)}";
+            model.JackpotDiscountedPriceText = $"Discounted price: {EventCard.GetDiscountedPriceText(movieEvent, CultureInfo.CurrentCulture, discountPercent.Value)}";
         }
-        else if (!isJackpotEvent && discountPercent > 0 && @event.TicketPrice > 0)
+        else if (!isJackpotEvent && discountPercent > 0 && movieEvent.TicketPrice > 0)
         {
             model.ShowRegularDiscountBanner = true;
-            model.RegularDiscountedPriceText = $"Your price: {EventCard.GetDiscountedPriceText(@event, CultureInfo.CurrentCulture, discountPercent.Value)}";
+            model.RegularDiscountedPriceText = $"Your price: {EventCard.GetDiscountedPriceText(movieEvent, CultureInfo.CurrentCulture, discountPercent.Value)}";
         }
 
         User? currentUser = _currentUserService?.CurrentUser;
@@ -91,7 +118,7 @@ public sealed class EventDialogContentBuilder
         model.ShowSeatGuideAction = async () =>
         {
             closeDialogAction();
-            int capacity = @event.MaxCapacity > 0 ? @event.MaxCapacity : 50;
+            int capacity = movieEvent.MaxCapacity > 0 ? movieEvent.MaxCapacity : 50;
             SeatGuideDialog seatDialog = new SeatGuideDialog(capacity) { XamlRoot = xamlRoot };
             await seatDialog.ShowAsync();
         };

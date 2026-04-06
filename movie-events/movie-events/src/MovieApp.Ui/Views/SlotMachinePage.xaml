@@ -14,61 +14,76 @@
         <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <local:BoolToHighlightBrushConverter x:Key="BoolToHighlightBrushConverter" />
 
-        <DataTemplate x:Key="JackpotDialogTemplate">
-            <StackPanel Spacing="18" HorizontalAlignment="Center" MinWidth="320">
-                <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
-                    <FontIcon Glyph="&#xE7FC;" FontSize="22" Foreground="#C8971A" />
-                    <TextBlock Text="JACKPOT!" FontSize="22" FontWeight="Bold" Foreground="#C8971A" CharacterSpacing="40" />
-                    <FontIcon Glyph="&#xE7FC;" FontSize="22" Foreground="#C8971A" />
-                </StackPanel>
+        <ContentDialog x:Key="JackpotContentDialog" DefaultButton="Primary" PrimaryButtonText="Collect!">
 
-                <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
+            <ContentDialog.Resources>
+                <SolidColorBrush x:Key="ContentDialogBackground" Color="#0B0B1E"/>
+                <SolidColorBrush x:Key="ContentDialogForeground" Color="#E8E8FF"/>
+                <SolidColorBrush x:Key="ContentDialogBorderBrush" Color="#C8971A"/>
+                <SolidColorBrush x:Key="ContentDialogTitleForeground" Color="#C8971A"/>
+            </ContentDialog.Resources>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                </StackPanel>
+            <ContentDialog.ContentTemplate>
+                <DataTemplate>
+                    <StackPanel Spacing="18" HorizontalAlignment="Center" MinWidth="320">
+                        <StackPanel Orientation="Horizontal" Spacing="16" HorizontalAlignment="Center">
+                            <FontIcon Glyph="&#xE7FC;" FontSize="22" Foreground="#C8971A" />
+                            <TextBlock Text="JACKPOT!" FontSize="22" FontWeight="Bold" Foreground="#C8971A" CharacterSpacing="40" />
+                            <FontIcon Glyph="&#xE7FC;" FontSize="22" Foreground="#C8971A" />
+                        </StackPanel>
 
-                <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
+                        <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
 
-                <TextBlock Text="{Binding Movie.Title}" FontSize="22" FontWeight="Bold" Foreground="#C8971A" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="340" />
-                <TextBlock Text="All three reels aligned — you hit the jackpot!" FontSize="12" Foreground="#A0A0C0" HorizontalAlignment="Center" TextAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                        </StackPanel>
 
-                <Border Background="#40C8971A" BorderBrush="#C8971A" BorderThickness="1" CornerRadius="12" Padding="24,14" HorizontalAlignment="Center">
-                    <StackPanel Spacing="2" HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding FormattedDiscount}" FontSize="44" FontWeight="Bold" Foreground="#C8971A" HorizontalAlignment="Center" />
-                        <TextBlock Text="DISCOUNT EARNED" FontSize="11" FontWeight="Bold" Foreground="#C8971A" HorizontalAlignment="Center" CharacterSpacing="120" />
+                        <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
+
+                        <TextBlock Text="{Binding Movie.Title}" FontSize="22" FontWeight="Bold" Foreground="#C8971A" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="340" />
+                        <TextBlock Text="All three reels aligned — you hit the jackpot!" FontSize="12" Foreground="#A0A0C0" HorizontalAlignment="Center" TextAlignment="Center" />
+
+                        <Border Background="#40C8971A" BorderBrush="#C8971A" BorderThickness="1" CornerRadius="12" Padding="24,14" HorizontalAlignment="Center">
+                            <StackPanel Spacing="2" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding DiscountPercentage}" FontSize="44" FontWeight="Bold" Foreground="#C8971A" />
+                                    <TextBlock Text="%" FontSize="44" FontWeight="Bold" Foreground="#C8971A" />
+                                </StackPanel>
+                                <TextBlock Text="DISCOUNT EARNED" FontSize="11" FontWeight="Bold" Foreground="#C8971A" HorizontalAlignment="Center" CharacterSpacing="120" />
+                            </StackPanel>
+                        </Border>
+
+                        <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                            <Ellipse Width="10" Height="10" Fill="#C8971A" />
+                            <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
+                        </StackPanel>
+
+                        <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
                     </StackPanel>
-                </Border>
-
-                <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
-
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                    <Ellipse Width="10" Height="10" Fill="#C8971A" />
-                    <Ellipse Width="10" Height="10" Fill="#6A4E0F" />
-                </StackPanel>
-
-                <Rectangle Height="1" Fill="#80C8971A" HorizontalAlignment="Stretch" />
-            </StackPanel>
-        </DataTemplate>
+                </DataTemplate>
+            </ContentDialog.ContentTemplate>
+        </ContentDialog>
     </Page.Resources>
 
     <ScrollViewer x:Name="RootScrollViewer" VerticalScrollBarVisibility="Auto">
@@ -323,7 +338,7 @@
 
                                             <TextBlock Grid.Column="1" Text="{Binding PriceText}" VerticalAlignment="Center" FontWeight="Bold" FontSize="14" />
 
-                                            <Button Grid.Column="2" Content="View Event" Click="ViewEventButton_Click" VerticalAlignment="Center" Padding="10,6" FontSize="12" />
+                                            <Button Grid.Column="2" Content="View Event" Click="OpenEventDetailsDialog_Click" VerticalAlignment="Center" Padding="10,6" FontSize="12" />
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

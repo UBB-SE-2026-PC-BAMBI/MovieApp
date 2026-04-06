@@ -75,10 +75,10 @@ public static class EventDialogViewBuilder
             Children = { referralTextBox, validationButton }
         });
 
-        Button willAttendBtn = new Button { Content = "Will attend", Tag = "Joined!" };
-        Button buyTicketBtn = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
-        EventCard.AttachJoinEventHandler(willAttendBtn, model.Event.Id);
-        EventCard.AttachJoinEventHandler(buyTicketBtn, model.Event.Id);
+        Button willAttendButton = new Button { Content = "Will attend", Tag = "Joined!" };
+        Button buyTicketButton = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
+        EventCard.AttachJoinEventHandler(willAttendButton, model.Event.Id);
+        EventCard.AttachJoinEventHandler(buyTicketButton, model.Event.Id);
 
         Button seatGuideButton = new Button { Content = "Seat guide" };
         seatGuideButton.Click += (_, _) => model.ShowSeatGuideAction?.Invoke();
@@ -87,7 +87,7 @@ public static class EventDialogViewBuilder
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { willAttendBtn, buyTicketBtn, new Button { Content = "Favorite" }, seatGuideButton }
+            Children = { willAttendButton, buyTicketButton, new Button { Content = "Favorite" }, seatGuideButton }
         });
 
         if (model.HasFreePass)
