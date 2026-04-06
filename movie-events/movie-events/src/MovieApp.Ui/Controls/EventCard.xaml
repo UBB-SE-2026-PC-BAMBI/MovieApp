@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:converters="using:MovieApp.Ui.Converters" 
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -32,24 +31,47 @@
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 CornerRadius="8,8,0,0">
                 <Grid>
-                    <ToggleButton
-                        x:Name="WatcherButton"
-                        Width="36"
-                        Height="36"
-                        Margin="8"
-                        Padding="0"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Background="{ThemeResource ControlFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        Click="WatcherButton_Click"
-                        CornerRadius="18"
-                        ToolTipService.ToolTip="Set price alert">
-                        <FontIcon
-                            FontSize="16"
-                            Glyph="&#xEA8F;" />
-                    </ToggleButton>
+                    <StackPanel 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Top" 
+                        Margin="8" 
+                        Spacing="8">
+
+                        <ToggleButton
+                            x:Name="WatcherButton"
+                            Width="36"
+                            Height="36"
+                            Padding="0"
+                            Background="{ThemeResource ControlFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            Click="WatcherButton_Click"
+                            CornerRadius="18"
+                            ToolTipService.ToolTip="Set price alert">
+                            <FontIcon
+                                FontSize="16"
+                                Glyph="&#xEA8F;" />
+                        </ToggleButton>
+
+                        <ToggleButton
+                            x:Name="FavoriteButton"
+                            Width="36"
+                            Height="36"
+                            Padding="0"
+                            Background="{ThemeResource ControlFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            Click="FavoriteButton_Click"
+                            IsChecked="{x:Bind IsFavorited, Mode=OneWay}"
+                            CornerRadius="18"
+                            ToolTipService.ToolTip="Add to favorites">
+                            <FontIcon
+                                FontSize="16"
+                                Glyph="{x:Bind FavoriteIconGlyph, Mode=OneWay}"
+                                Foreground="{x:Bind FavoriteIconForeground, Mode=OneWay}" />
+                        </ToggleButton>
+                    </StackPanel>
 
                     <Grid Padding="16">
                         <Grid.RowDefinitions>

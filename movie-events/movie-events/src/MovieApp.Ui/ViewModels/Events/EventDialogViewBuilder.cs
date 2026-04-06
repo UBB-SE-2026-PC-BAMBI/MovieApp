@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml.Media;
 using MovieApp.Core.Models;
 using MovieApp.Ui.Services;
 using Windows.UI;
+using System;
+using System.Threading.Tasks;
 
 namespace MovieApp.Ui.Views;
 
@@ -88,7 +90,7 @@ public static class EventDialogViewBuilder
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { willAttendButton, buyTicketButton, new Button { Content = "Favorite" }, seatGuideButton }
+            Children = { willAttendButton, buyTicketButton, seatGuideButton }
         });
 
         if (model.HasFreePass)
