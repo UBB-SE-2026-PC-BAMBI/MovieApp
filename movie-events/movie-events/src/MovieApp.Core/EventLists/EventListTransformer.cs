@@ -77,14 +77,8 @@ public static class EventListTransformer
     {
         ArgumentNullException.ThrowIfNull(events);
 
-        return sortOption switch
-        {
-            EventSortOption.DateAscending => events.OrderBy(e => e.EventDateTime).ThenBy(e => e.Id),
-            EventSortOption.DateDescending => events.OrderByDescending(e => e.EventDateTime).ThenBy(e => e.Id),
-            EventSortOption.PriceAscending => events.OrderBy(e => e.TicketPrice).ThenBy(e => e.Id),
-            EventSortOption.PriceDescending => events.OrderByDescending(e => e.TicketPrice).ThenBy(e => e.Id),
-            EventSortOption.HistoricalRatingDescending => events.OrderByDescending(e => e.HistoricalRating).ThenBy(e => e.Id),
-            _ => throw new ArgumentOutOfRangeException(nameof(sortOption), sortOption, null),
-        };
+        // Strategy pattern implementation
+        var strategy = EventSortStrategyFactory.GetStrategy(sortOption);
+        return strategy.Sort(events);
     }
 }
