@@ -1,12 +1,17 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
-using MovieApp.Core.Repositories;
 using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
 
 /// <summary>
 /// SQL Server-backed implementation of <see cref="IMarathonRepository"/>.
+/// Handles data access operations for marathons, user progress, leaderboards, and weekly assignments.
 /// </summary>
 public sealed class SqlMarathonRepository : IMarathonRepository
 {
@@ -19,18 +24,20 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     private const int SECONDS = 59;
 
     /// <summary>
-    /// Initialises a new instance of <see cref="SqlMarathonRepository"/>.
+    /// Initialises a new instance of the <see cref="SqlMarathonRepository"/> class.
     /// </summary>
-    /// <param name="databaseOptions">Database sqlConnection options.</param>
+    /// <param name="databaseOptions">Database connection options containing the connection string.</param>
+    /// <exception cref="ArgumentNullException">Thrown when databaseOptions is null.</exception>
     public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-
         _connectionString = databaseOptions.ConnectionString;
     }
 
-
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves all active marathons from the database.
+    /// </summary>
+    /// <returns>A collection of active <see cref="Marathon"/> objects.</returns>
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
     {
         List<Marathon> marathons = new List<Marathon>();
@@ -45,19 +52,26 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         {
             marathons.Add(new Marathon
             {
-                Id                     = sqlDataReader.GetInt32(0),
-                Title                  = sqlDataReader.GetString(1),
-                Description            = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
-                PosterUrl              = sqlDataReader.GetString(3),
-                Theme                  = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetString(4),
+                Id = sqlDataReader.GetInt32(0),
+                Title = sqlDataReader.GetString(1),
+                Description = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
+                PosterUrl = sqlDataReader.GetString(3),
+                Theme = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetString(4),
                 PrerequisiteMarathonId = sqlDataReader.IsDBNull(5) ? null : sqlDataReader.GetInt32(5),
-                WeekScoping            = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6)
+                WeekScoping = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6)
             });
         }
         return marathons;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves the raw progress data to construct a leaderboard for a specific marathon.
+    /// </summary>
+    /// <param name="marathonId">The unique identifier of the marathon.</param>
+    /// <returns>
+    /// A collection of <see cref="MarathonProgress"/> objects ranked by completed movies (desc), 
+    /// trivia accuracy (desc), and completion time (asc).
+    /// </returns>
     public async Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
     {
         List<MarathonProgress> rankings = new List<MarathonProgress>();
@@ -69,7 +83,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
             ORDER BY CompletedMoviesCount DESC,
                      TriviaAccuracy DESC,
                      FinishedAt ASC;
-        """; 
+        """;
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
 
         sqlCommand.Parameters.AddWithValue("@MarathonId", marathonId);
@@ -80,17 +94,22 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         {
             rankings.Add(new MarathonProgress
             {
-                UserId               = sqlDataReader.GetInt32(0),
-                MarathonId           = sqlDataReader.GetInt32(1),
-                TriviaAccuracy       = sqlDataReader.GetDouble(2),
+                UserId = sqlDataReader.GetInt32(0),
+                MarathonId = sqlDataReader.GetInt32(1),
+                TriviaAccuracy = sqlDataReader.GetDouble(2),
                 CompletedMoviesCount = sqlDataReader.GetInt32(3),
-                FinishedAt           = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
+                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
             });
         }
         return rankings;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously retrieves the specific marathon progress for a given user.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="marathonId">The ID of the marathon.</param>
+    /// <returns>The <see cref="MarathonProgress"/> if found; otherwise, <c>null</c>.</returns>
     public async Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
     {
         await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
@@ -107,17 +126,22 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         {
             return new MarathonProgress
             {
-                UserId               = sqlDataReader.GetInt32(0),
-                MarathonId           = sqlDataReader.GetInt32(1),
-                TriviaAccuracy       = sqlDataReader.GetDouble(2),
+                UserId = sqlDataReader.GetInt32(0),
+                MarathonId = sqlDataReader.GetInt32(1),
+                TriviaAccuracy = sqlDataReader.GetDouble(2),
                 CompletedMoviesCount = sqlDataReader.GetInt32(3),
-                FinishedAt           = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
+                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
             };
         }
         return null;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously enrolls a user into a marathon by creating a progress record.
+    /// </summary>
+    /// <param name="userId">The ID of the joining user.</param>
+    /// <param name="marathonId">The ID of the marathon to join.</param>
+    /// <returns><c>true</c> if the user successfully joined; otherwise, <c>false</c>.</returns>
     public async Task<bool> JoinMarathonAsync(int userId, int marathonId)
     {
         await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
@@ -133,7 +157,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return await sqlCommand.ExecuteNonQueryAsync() > 0;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously updates a user's ongoing progress within a marathon.
+    /// </summary>
+    /// <param name="progress">The updated <see cref="MarathonProgress"/> object.</param>
+    /// <returns><c>true</c> if the progress was updated successfully; otherwise, <c>false</c>.</returns>
     public async Task<bool> UpdateProgressAsync(MarathonProgress progress)
     {
         await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
@@ -152,9 +180,13 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return await sqlCommand.ExecuteNonQueryAsync() > 0;
     }
 
-    /// <inheritdoc/>
-    public async Task<bool> IsPrerequisiteCompletedAsync(
-    int userId, int prerequisiteMarathonId)
+    /// <summary>
+    /// Asynchronously determines if a user has completed a required prerequisite marathon.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="prerequisiteMarathonId">The ID of the prerequisite marathon.</param>
+    /// <returns><c>true</c> if the prerequisite is completed (FinishedAt is not null); otherwise, <c>false</c>.</returns>
+    public async Task<bool> IsPrerequisiteCompletedAsync(int userId, int prerequisiteMarathonId)
     {
         const string sqlStringCommand = """
             SELECT COUNT(1) FROM dbo.MarathonProgress
@@ -174,7 +206,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return Convert.ToInt32(result) > 0;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously counts the total number of movies associated with a specific marathon.
+    /// </summary>
+    /// <param name="marathonId">The ID of the marathon.</param>
+    /// <returns>The total movie count for the marathon.</returns>
     public async Task<int> GetMarathonMovieCountAsync(int marathonId)
     {
         const string sqlStringCommand = """
@@ -192,6 +228,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return Convert.ToInt32(result);
     }
 
+    /// <summary>
+    /// Calculates the ISO week string and start/end boundaries for the current UTC week.
+    /// </summary>
+    /// <returns>A tuple containing the ISO week string, Monday start date, and Sunday end date.</returns>
     private static (string weekString, DateTime weekStart, DateTime weekEnd) GetCurrentWeekBounds()
     {
         DateTime now = DateTime.UtcNow;
@@ -205,11 +245,15 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return (weekString, monday, sunday);
     }
 
-    /// <inheritdoc/>
-    public async Task<IEnumerable<Marathon>> GetWeeklyMarathonsForUserAsync(
-    int userId, string weekString)
+    /// <summary>
+    /// Asynchronously retrieves active weekly scoped marathons that a user has not yet finished.
+    /// </summary>
+    /// <param name="userId">The ID of the user.</param>
+    /// <param name="weekString">The ISO week string to query (e.g., "2024-W15").</param>
+    /// <returns>A collection of available <see cref="Marathon"/> objects for the specified week.</returns>
+    public async Task<IEnumerable<Marathon>> GetWeeklyMarathonsForUserAsync(int userId, string weekString)
     {
-        (string _,DateTime _,DateTime weekEnd) = GetCurrentWeekBounds();
+        (string _, DateTime _, DateTime weekEnd) = GetCurrentWeekBounds();
 
         if (DateTime.UtcNow > weekEnd)
             return [];
@@ -239,19 +283,26 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         {
             marathons.Add(new Marathon
             {
-                Id                     = sqlDataReader.GetInt32(0),
-                Title                  = sqlDataReader.GetString(1),
-                Description            = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
-                PosterUrl              = sqlDataReader.GetString(3),
-                Theme                  = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetString(4),
+                Id = sqlDataReader.GetInt32(0),
+                Title = sqlDataReader.GetString(1),
+                Description = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
+                PosterUrl = sqlDataReader.GetString(3),
+                Theme = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetString(4),
                 PrerequisiteMarathonId = sqlDataReader.IsDBNull(5) ? null : sqlDataReader.GetInt32(5),
-                WeekScoping            = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6),
+                WeekScoping = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6),
             });
         }
         return marathons;
     }
-    public async Task AssignWeeklyMarathonsAsync(
-    int userId, string weekString, int count = 10)
+
+    /// <summary>
+    /// Asynchronously assigns a random selection of unfinished marathons to be active for the specified week.
+    /// Deactivates marathons from previous weeks.
+    /// </summary>
+    /// <param name="userId">The ID of the user used to exclude already finished marathons.</param>
+    /// <param name="weekString">The target ISO week string.</param>
+    /// <param name="count">The number of marathons to assign (default is 10).</param>
+    public async Task AssignWeeklyMarathonsAsync(int userId, string weekString, int count = 10)
     {
         const string selectSql = """
             SELECT TOP (@count) Id
@@ -309,9 +360,12 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         }
     }
 
-    /// <inheritdoc/>
-    public async Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(
-    int marathonId)
+    /// <summary>
+    /// Asynchronously retrieves all movies assigned to a specific marathon.
+    /// </summary>
+    /// <param name="marathonId">The ID of the marathon.</param>
+    /// <returns>A collection of <see cref="MovieApp.Core.Models.Movie.Movie"/> objects ordered by title.</returns>
+    public async Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(int marathonId)
     {
         const string sqlStringCommand = """
             SELECT m.Id, m.Title, m.Description, m.ReleaseYear, m.DurationMinutes
@@ -332,19 +386,22 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         {
             movies.Add(new MovieApp.Core.Models.Movie.Movie
             {
-                Id              = sqlDataReader.GetInt32(0),
-                Title           = sqlDataReader.GetString(1),
-                Description     = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
-                ReleaseYear     = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
+                Id = sqlDataReader.GetInt32(0),
+                Title = sqlDataReader.GetString(1),
+                Description = sqlDataReader.IsDBNull(2) ? string.Empty : sqlDataReader.GetString(2),
+                ReleaseYear = sqlDataReader.IsDBNull(3) ? 0 : sqlDataReader.GetInt32(3),
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
             });
         }
         return movies;
     }
 
-    /// <inheritdoc/>
-    public async Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(
-        int marathonId)
+    /// <summary>
+    /// Asynchronously retrieves the marathon leaderboard along with the corresponding usernames.
+    /// </summary>
+    /// <param name="marathonId">The ID of the marathon.</param>
+    /// <returns>A collection of <see cref="LeaderboardEntry"/> objects sorted by completion metrics.</returns>
+    public async Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId)
     {
         const string sqlStringCommand = """
         SELECT u.Id, u.Username, mp.CompletedMoviesCount, mp.TriviaAccuracy, mp.FinishedAt
@@ -377,7 +434,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         return entries;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Asynchronously counts the total number of users participating in a specific marathon.
+    /// </summary>
+    /// <param name="marathonId">The ID of the marathon.</param>
+    /// <returns>The total count of participants.</returns>
     public async Task<int> GetParticipantCountAsync(int marathonId)
     {
         const string sqlStringCommand = """

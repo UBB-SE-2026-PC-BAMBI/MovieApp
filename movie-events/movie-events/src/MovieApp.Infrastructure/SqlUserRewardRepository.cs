@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models;
@@ -6,13 +10,18 @@ using MovieApp.Core.Repositories;
 namespace MovieApp.Infrastructure;
 
 /// <summary>
-/// sqlStringCommand Server-backed repository for managing user discount rewards.
-/// Handles access to the user_movie_discounts table.
+/// A SQL Server-backed repository for managing user discount rewards.
+/// Handles data access to the dbo.UserMovieDiscounts table via ADO.NET.
 /// </summary>
 public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SqlUserRewardRepository"/> class.
+    /// </summary>
+    /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the databaseOptions parameter is null.</exception>
     public SqlUserRewardRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
@@ -20,8 +29,10 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     }
 
     /// <summary>
-    /// Creates a new discount reward record for a user.
+    /// Asynchronously creates a new discount reward record for a user.
     /// </summary>
+    /// <param name="reward">The <see cref="Reward"/> entity containing the discount details.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     public async Task AddAsync(Reward reward, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -40,8 +51,11 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     }
 
     /// <summary>
-    /// Retrieves all discount rewards associated with a user.
+    /// Asynchronously retrieves all discount rewards associated with a specific user.
     /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A list of <see cref="Reward"/> objects, ordered from newest to oldest.</returns>
     public async Task<List<Reward>> GetDiscountsForUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -63,12 +77,12 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
         {
             rewards.Add(new Reward
             {
-                RewardId           = sqlDataReader.GetInt32(0),
-                OwnerUserId        = sqlDataReader.GetInt32(1),
-                EventId            = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetInt32(2),
-                DiscountValue      = sqlDataReader.IsDBNull(3) ? 0 : (double)sqlDataReader.GetDecimal(3),
-                RewardType         = "MovieDiscount",
-                RedemptionStatus   = false,
+                RewardId = sqlDataReader.GetInt32(0),
+                OwnerUserId = sqlDataReader.GetInt32(1),
+                EventId = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetInt32(2),
+                DiscountValue = sqlDataReader.IsDBNull(3) ? 0 : (double)sqlDataReader.GetDecimal(3),
+                RewardType = "MovieDiscount",
+                RedemptionStatus = false,
                 ApplicabilityScope = "MovieSpecific"
             });
         }
@@ -77,8 +91,10 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     }
 
     /// <summary>
-    /// Marks the specified reward as redeemed in the database.
+    /// Asynchronously marks the specified reward as redeemed in the database.
     /// </summary>
+    /// <param name="rewardId">The unique identifier of the reward to mark as redeemed.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     public async Task MarkRedeemedAsync(int rewardId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"

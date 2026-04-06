@@ -6,21 +6,32 @@ using MovieApp.Core.Repositories;
 namespace MovieApp.Infrastructure;
 
 /// <summary>
-/// sqlStringCommand Server implementation of <see cref="IFavoriteEventRepository"/>.
+/// SQL Server implementation of <see cref="IFavoriteEventRepository"/>.
+/// Provides methods for managing user favorite events in the database.
 /// </summary>
 public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
 {
     private readonly string _connectionString;
 
     /// <summary>
-    /// Creates the repository using the configured database sqlConnection string.
+    /// Initializes a new instance of the <see cref="SqlFavoriteEventRepository"/> class.
     /// </summary>
+    /// <param name="databaseOptions">The database configuration options containing the connection string.</param>
     public SqlFavoriteEventRepository(DatabaseOptions databaseOptions)
     {
         _connectionString = databaseOptions.ConnectionString;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Adds a favorite event entry for a specific user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <remarks>
+    /// Inserts a new record into the <c>FavoriteEvents</c> table.
+    /// </remarks>
     public async Task AddAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -38,7 +49,16 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Removes a favorite event entry for a specific user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <remarks>
+    /// Deletes the matching record from the <c>FavoriteEvents</c> table if it exists.
+    /// </remarks>
     public async Task RemoveAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -57,7 +77,15 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Retrieves all favorite events for a given user.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A read-only list of <see cref="FavoriteEvent"/> objects associated with the user,
+    /// ordered by creation date descending.
+    /// </returns>
     public async Task<IReadOnlyList<FavoriteEvent>> FindByUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -76,7 +104,15 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         return await ReadFavoriteEventsAsync(sqlCommand, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Determines whether a favorite event entry exists for a given user and event.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// <c>true</c> if a matching favorite event exists; otherwise, <c>false</c>.
+    /// </returns>
     public async Task<bool> ExistsAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -97,7 +133,14 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         return result is not null;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Retrieves all user IDs that have marked a specific event as favorite.
+    /// </summary>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A read-only list of user IDs who have favorited the specified event.
+    /// </returns>
     public async Task<IReadOnlyList<int>> GetUsersByFavoriteEventAsync(int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -113,7 +156,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
-        
+
         List<int> userIds = new List<int>();
 
         while (await sqlDataReader.ReadAsync(cancellationToken))
@@ -124,7 +167,15 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         return userIds;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Retrieves all favorite event entries for a given event.
+    /// </summary>
+    /// <param name="eventId">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A read-only list of <see cref="FavoriteEvent"/> objects associated with the event,
+    /// ordered by creation date descending.
+    /// </returns>
     public async Task<IReadOnlyList<FavoriteEvent>> FindByEventAsync(int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -143,6 +194,18 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
         return await ReadFavoriteEventsAsync(sqlCommand, cancellationToken);
     }
 
+    /// <summary>
+    /// Executes the provided SQL command and maps the result set to a list of <see cref="FavoriteEvent"/> objects.
+    /// </summary>
+    /// <param name="sqlCommand">The SQL command to execute.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A read-only list of mapped <see cref="FavoriteEvent"/> instances.
+    /// </returns>
+    /// <remarks>
+    /// This method assumes the query returns columns in the following order:
+    /// Id, UserId, EventId, CreatedAt.
+    /// </remarks>
     private static async Task<IReadOnlyList<FavoriteEvent>> ReadFavoriteEventsAsync(SqlCommand sqlCommand, CancellationToken cancellationToken)
     {
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
