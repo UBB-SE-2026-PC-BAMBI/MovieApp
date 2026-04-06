@@ -31,8 +31,8 @@ public sealed partial class SlotMachinePage : Page
 
         SlotMachineViewModel viewModel = new SlotMachineViewModel(
             currentUser.Id,
-            App.SlotMachineService ?? throw new InvalidOperationException("SlotMachineService not initialized"),
-            App.SlotMachineAnimationService ?? throw new InvalidOperationException("SlotMachineAnimationService not initialized"));
+            App.SlotMachineService ?? throw new System.InvalidOperationException("SlotMachineService not initialized"),
+            App.SlotMachineAnimationService ?? throw new System.InvalidOperationException("SlotMachineAnimationService not initialized"));
 
         viewModel.JackpotHit += OnJackpotHit;
         DataContext = viewModel;
@@ -60,9 +60,20 @@ public sealed partial class SlotMachinePage : Page
 
         Event selectedEvent = item.Event;
 
-        int discountPercentage = item.IsJackpotEvent
-            ? (EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int percentage) ? percentage : 70)
-            : 0;
+        int discountPercentage = 0;
+
+        if (item.IsJackpotEvent)
+        {
+            if (App.EventUserStateService is not null)
+            {
+                int percentage = await App.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
+                discountPercentage = percentage > 0 ? percentage : 70;
+            }
+            else
+            {
+                discountPercentage = 70;
+            }
+        }
 
         ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
             selectedEvent,
