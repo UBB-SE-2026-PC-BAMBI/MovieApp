@@ -66,9 +66,6 @@
   </ItemGroup>
 
   <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
     <Page Update="Controls\EventCard.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -153,6 +150,10 @@
     <Page Update="Views\HomePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\Interfaces\" />
   </ItemGroup>
   <!-- Publish Properties -->
   <PropertyGroup>

@@ -6,10 +6,6 @@ using MovieApp.Ui.ViewModels.Events;
 
 namespace MovieApp.Ui.Views;
 
-/// <summary>
-/// Owns the personal event workspace for created events, joined events,
-/// and the locally persisted price watchlist.
-/// </summary>
 public sealed partial class MyEventsPage : Page
 {
     private bool _initialized;
@@ -24,10 +20,6 @@ public sealed partial class MyEventsPage : Page
 
     public MyEventsViewModel ViewModel { get; }
 
-    /// <summary>
-    /// Initializes the page once after load so bound event-list state is ready
-    /// when the implementation team connects live data.
-    /// </summary>
     private async void MyEventsPage_Loaded(object sender, RoutedEventArgs e)
     {
         if (_initialized)
@@ -50,21 +42,16 @@ public sealed partial class MyEventsPage : Page
         await ViewModel.SaveSelectedWatchlistAsync();
     }
 
-    /// <summary>
-    /// Centralizes the initial view-model load path for the page.
-    /// </summary>
     private Task InitializeViewModelAsync()
     {
         return ViewModel.InitializeAsync();
     }
+
     private void SearchBox_SearchTextChanged(object? sender, string searchText)
     {
         ViewModel.SetSearchText(searchText);
     }
 
-    /// <summary>
-    /// Applies the shared event sort behavior to the current personal event-list state.
-    /// </summary>
     private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
     {
         ViewModel.SetSortOption(sortOption);

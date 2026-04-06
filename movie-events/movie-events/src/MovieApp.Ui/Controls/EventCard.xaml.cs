@@ -1,10 +1,15 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using MovieApp.Core.Models;
+using MovieApp.Ui.Services;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 [assembly: InternalsVisibleTo("MovieApp.Ui.Tests")]
@@ -27,6 +32,12 @@ public sealed partial class EventCard : UserControl
 
     public static readonly DependencyProperty IsJoinedProperty = DependencyProperty.Register(
         nameof(IsJoined),
+        typeof(bool),
+        typeof(EventCard),
+        new PropertyMetadata(false, OnComputedPropertyChanged));
+
+    public static readonly DependencyProperty IsFavoritedProperty = DependencyProperty.Register(
+        nameof(IsFavorited),
         typeof(bool),
         typeof(EventCard),
         new PropertyMetadata(false, OnComputedPropertyChanged));
@@ -54,6 +65,12 @@ public sealed partial class EventCard : UserControl
         set => SetValue(IsJoinedProperty, value);
     }
 
+    public bool IsFavorited
+    {
+        get => (bool)GetValue(IsFavoritedProperty);
+        set => SetValue(IsFavoritedProperty, value);
+    }
+
     private Event? EventModel => Model as Event;
 
     public string TitleText => GetTitleText(EventModel);
@@ -62,12 +79,16 @@ public sealed partial class EventCard : UserControl
     public string DateBadgeDay => GetDateBadgeDay(EventModel, CultureInfo.CurrentCulture);
     public string ScheduleText => GetScheduleText(EventModel, CultureInfo.CurrentCulture);
     public string LocationText => GetLocationText(EventModel);
-
     public string PriceText => GetDiscountedPriceText(EventModel, CultureInfo.CurrentCulture, DiscountPercentage);
-
     public string RatingText => GetRatingText(EventModel);
     public string CapacityText => GetCapacityText(EventModel);
     public string StatusText => GetStatusText(EventModel, DateTime.Now);
+
+    public string FavoriteIconGlyph => IsFavorited ? "\uEB52" : "\uEB51";
+
+    public Brush FavoriteIconForeground => IsFavorited
+        ? new SolidColorBrush(Microsoft.UI.Colors.Red)
+        : (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"];
 
     public Brush StatusBackgroundBrush
     {
@@ -93,11 +114,9 @@ public sealed partial class EventCard : UserControl
     }
 
     public bool HasDiscount => DiscountPercentage > 0;
-
     public Visibility DiscountBadgeVisibility => HasDiscount ? Visibility.Visible : Visibility.Collapsed;
     public Visibility JoinButtonVisibility => IsJoined ? Visibility.Collapsed : Visibility.Visible;
     public Visibility JoinedStatusVisibility => IsJoined ? Visibility.Visible : Visibility.Collapsed;
-
     public string DiscountBadgeText => $"-{DiscountPercentage}%";
 
     internal static string GetTitleText(Event? movieEvent) => movieEvent?.Title ?? "Untitled event";
@@ -149,24 +168,10 @@ public sealed partial class EventCard : UserControl
 
     internal static string GetStatusText(Event? movieEvent, DateTime now)
     {
-        if (movieEvent is null)
-        {
-            return "Pending";
-        }
-
-        if (movieEvent.EventDateTime <= now)
-        {
-            return "Ended";
-        }
-
-        if (movieEvent.AvailableSpots <= 0)
-        {
-            return "Sold out";
-        }
-
-        return movieEvent.AvailableSpots == 1
-            ? "1 spot left"
-            : $"{movieEvent.AvailableSpots} spots left";
+        if (movieEvent is null) return "Pending";
+        if (movieEvent.EventDateTime <= now) return "Ended";
+        if (movieEvent.AvailableSpots <= 0) return "Sold out";
+        return movieEvent.AvailableSpots == 1 ? "1 spot left" : $"{movieEvent.AvailableSpots} spots left";
     }
 
     private static void OnEventChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -174,6 +179,7 @@ public sealed partial class EventCard : UserControl
         if (dependencyObject is EventCard card)
         {
             card.IsJoined = false;
+            card.IsFavorited = false;
             card.RefreshComputedProperties();
         }
     }
@@ -190,14 +196,11 @@ public sealed partial class EventCard : UserControl
     {
         try
         {
-            if (EventModel == null) return;
+            if (EventModel == null || App.WatchlistPathProvider == null) return;
 
             ToggleButton button = (ToggleButton)sender;
             bool isWatching = button.IsChecked ?? false;
-
-            string folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
-            System.IO.Directory.CreateDirectory(folderPath);
-
+            string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
             MovieApp.Infrastructure.LocalPriceWatcherRepository repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
 
             if (isWatching)
@@ -221,7 +224,6 @@ public sealed partial class EventCard : UserControl
                 if (result == ContentDialogResult.Primary)
                 {
                     string cleanInput = inputTextBox.Text.Replace(",", ".");
-
                     if (decimal.TryParse(cleanInput, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal targetPrice))
                     {
                         bool success = await repo.AddWatchAsync(new WatchedEvent { EventId = EventModel.Id, EventTitle = EventModel.Title, TargetPrice = targetPrice });
@@ -255,17 +257,31 @@ public sealed partial class EventCard : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Eroare la click: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
         }
+    }
+
+    private async void FavoriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (EventModel == null || App.FavoriteEventService == null) return;
+
+        if (IsFavorited)
+        {
+            await App.FavoriteEventService.RemoveFavoriteAsync(App.CurrentUserId, EventModel.Id);
+        }
+        else
+        {
+            await App.FavoriteEventService.AddFavoriteAsync(App.CurrentUserId, EventModel.Id);
+        }
+
+        IsFavorited = !IsFavorited;
+        Bindings.Update();
     }
 
     private async Task SyncWatcherStateAsync()
     {
-        if (EventModel == null || WatcherButton == null) return;
-
-        string folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
-        System.IO.Directory.CreateDirectory(folderPath);
-
+        if (EventModel == null || WatcherButton == null || App.WatchlistPathProvider == null) return;
+        string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
         MovieApp.Infrastructure.LocalPriceWatcherRepository repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
         WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
     }
@@ -273,10 +289,15 @@ public sealed partial class EventCard : UserControl
     private async Task SyncJoinedStateAsync()
     {
         if (EventModel == null || App.EventUserStateService == null) return;
-
         bool joined = await App.EventUserStateService.IsEventJoinedByUserAsync(EventModel.Id);
-
         IsJoined = joined;
+        Bindings.Update();
+    }
+
+    private async Task SyncFavoriteStateAsync()
+    {
+        if (EventModel == null || App.FavoriteEventService == null) return;
+        IsFavorited = await App.FavoriteEventService.ExistsFavoriteAsync(App.CurrentUserId, EventModel.Id);
         Bindings.Update();
     }
 
@@ -285,15 +306,14 @@ public sealed partial class EventCard : UserControl
         Bindings.Update();
         _ = SyncWatcherStateAsync();
         _ = SyncJoinedStateAsync();
+        _ = SyncFavoriteStateAsync();
     }
 
     private async void JoinEventButton_Click(object sender, RoutedEventArgs e)
     {
         if (EventModel is null || App.EventJoinService is null) return;
-
         Button button = (Button)sender;
         button.IsEnabled = false;
-
         string tag = button.Tag?.ToString() ?? string.Empty;
         JoinEventResult result = await App.EventJoinService.JoinEventAsync(EventModel.Id, tag);
 

@@ -1,11 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
+using MovieApp.Infrastructure;
 using MovieApp.Ui.Navigation;
 using MovieApp.Ui.ViewModels;
 using Windows.System;
@@ -51,20 +49,20 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            var folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
-            if (!System.IO.Directory.Exists(folderPath)) return;
+            if (App.WatchlistPathProvider == null) return;
 
-            var watcherRepo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
-            var watchedEvents = await watcherRepo.GetAllWatchedEventsAsync();
-            
+            string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
+            LocalPriceWatcherRepository watcherRepo = new LocalPriceWatcherRepository(folderPath);
+            IEnumerable<WatchedEvent> watchedEvents = await watcherRepo.GetAllWatchedEventsAsync();
+
             if (!watchedEvents.Any()) return;
 
-            var priceDroppedMessages = new List<string>();
+            List<string> priceDroppedMessages = new List<string>();
 
-            foreach (var watched in watchedEvents)
+            foreach (WatchedEvent watched in watchedEvents)
             {
-                var realEvent = await _eventRepository.FindByIdAsync(watched.EventId);
-                
+                Event realEvent = await _eventRepository.FindByIdAsync(watched.EventId);
+
                 if (realEvent != null && realEvent.TicketPrice <= watched.TargetPrice)
                 {
                     priceDroppedMessages.Add($"Target reached! '{realEvent.Title}' is now {realEvent.TicketPrice:C} (Target: {watched.TargetPrice:C})");
@@ -86,7 +84,7 @@ public sealed partial class MainWindow : Window
 
     public void NavigateToRoute(string tag)
     {
-        var pageType = AppRouteResolver.ResolvePageType(tag);
+        Type pageType = AppRouteResolver.ResolvePageType(tag);
         SyncSelectedNavigationItem(tag);
 
         if (ContentFrame.CurrentSourcePageType != pageType)
@@ -105,7 +103,7 @@ public sealed partial class MainWindow : Window
 
     private void SyncSelectedNavigationItem(string tag)
     {
-        var selectedItem = AppNavigationView.MenuItems
+        NavigationViewItem selectedItem = AppNavigationView.MenuItems
             .OfType<NavigationViewItem>()
             .Concat(AppNavigationView.FooterMenuItems.OfType<NavigationViewItem>())
             .FirstOrDefault(item => string.Equals(item.Tag as string, tag, StringComparison.Ordinal));
