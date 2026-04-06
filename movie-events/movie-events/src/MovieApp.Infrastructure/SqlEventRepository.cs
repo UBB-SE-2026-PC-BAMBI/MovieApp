@@ -4,10 +4,14 @@ using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
 
-public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEventRepository
+public sealed class SqlEventRepository : IEventRepository
 {
-    private readonly string _connectionString = databaseOptions.ConnectionString;
+    private readonly string _connectionString;
 
+    public SqlEventRepository(DatabaseOptions databaseOptions)
+    {
+        _connectionString = databaseOptions.ConnectionString;
+    }
     public async Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         var events = new List<Event>();
@@ -15,7 +19,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(EventSqlQueries.SelectAll, connection);
+        await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectAll, connection);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
@@ -33,7 +37,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(EventSqlQueries.SelectByType, connection);
+        await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectByType, connection);
         command.Parameters.AddWithValue("@eventType", eventType);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -50,7 +54,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(EventSqlQueries.Insert, connection);
+        await using SqlCommand command = new SqlCommand(EventSqlQueries.Insert, connection);
         command.Parameters.AddWithValue("@title", @event.Title);
         command.Parameters.AddWithValue("@description", (object?)@event.Description ?? DBNull.Value);
         command.Parameters.AddWithValue("@posterUrl", @event.PosterUrl);
@@ -77,7 +81,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(EventSqlQueries.SelectById, connection);
+        await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectById, connection);
         command.Parameters.AddWithValue("@id", id);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -110,7 +114,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
+        await using SqlCommand command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@id", @event.Id);
         command.Parameters.AddWithValue("@title", @event.Title);
         command.Parameters.AddWithValue("@description", (object?)@event.Description ?? DBNull.Value);
@@ -139,7 +143,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
+        await using SqlCommand command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@newCount", newCount);
         command.Parameters.AddWithValue("@eventId", eventId);
 
@@ -167,7 +171,7 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
+        await using SqlCommand command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@id", updatedEvent.Id);
         command.Parameters.AddWithValue("@title", updatedEvent.Title);
         command.Parameters.AddWithValue("@description", updatedEvent.Description ?? (object)DBNull.Value);
@@ -183,9 +187,6 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Maps an event row using the column order defined in <see cref="EventSqlQueries.Projection"/>.
-    /// </summary>
     private static Event MapEvent(SqlDataReader reader)
     {
         return new Event
@@ -212,30 +213,31 @@ public sealed class SqlEventRepository(DatabaseOptions databaseOptions) : IEvent
 
         try
         {
-            await using var deleteScreenings = new SqlCommand(
+            await using SqlCommand deleteScreenings = new SqlCommand(
                 "DELETE FROM Screenings WHERE EventId = @Id", connection, transaction);
             deleteScreenings.Parameters.AddWithValue("@Id", eventId);
             await deleteScreenings.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var deleteParticipants = new SqlCommand(
+            await using SqlCommand deleteParticipants = new SqlCommand(
                 "DELETE FROM Participations WHERE EventId = @Id", connection, transaction);
             deleteParticipants.Parameters.AddWithValue("@Id", eventId);
             await deleteParticipants.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var deleteFavorites = new SqlCommand(
+            await using SqlCommand deleteFavorites = new SqlCommand(
                 "DELETE FROM FavoriteEvents WHERE EventId = @Id", connection, transaction);
             deleteFavorites.Parameters.AddWithValue("@Id", eventId);
             await deleteFavorites.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var deleteReferrals = new SqlCommand(
+            await using SqlCommand deleteReferrals = new SqlCommand(
                 "DELETE FROM ReferralLog WHERE EventId = @Id", connection, transaction);
             deleteReferrals.Parameters.AddWithValue("@Id", eventId);
             await deleteReferrals.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var deleteEvent = new SqlCommand(
+            await using SqlCommand deleteEvent = new SqlCommand(
                 "DELETE FROM Events WHERE Id = @Id", connection, transaction);
             deleteEvent.Parameters.AddWithValue("@Id", eventId);
-            var rows = await deleteEvent.ExecuteNonQueryAsync(cancellationToken);
+
+            int rows = await deleteEvent.ExecuteNonQueryAsync(cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             return rows > 0;
