@@ -10,53 +10,53 @@ public sealed class SqlTriviaRepository(DatabaseOptions databaseOptions) : ITriv
 
     public async Task<IEnumerable<TriviaQuestion>> GetByCategoryAsync(string category, CancellationToken cancellationToken = default)
     {
-        var questions = new List<TriviaQuestion>();
+        List<TriviaQuestion> questions = new List<TriviaQuestion>();
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(TriviaSqlQueries.SelectByCategory, connection);
-        command.Parameters.AddWithValue("@category", category);
+        await using SqlCommand sqlCommand = new SqlCommand(TriviaSqlQueries.SelectByCategory, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@category", category);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        while (await sqlDataReader.ReadAsync(cancellationToken))
         {
-            questions.Add(MapTriviaQuestion(reader));
+            questions.Add(MapTriviaQuestion(sqlDataReader));
         }
 
         return questions;
     }
 
-    private static TriviaQuestion MapTriviaQuestion(SqlDataReader reader)
+    private static TriviaQuestion MapTriviaQuestion(SqlDataReader sqlDataReader)
     {
         return new TriviaQuestion
         {
-            Id = reader.GetInt32(0),
-            QuestionText = reader.GetString(1),
-            Category = reader.GetString(2),
-            OptionA = reader.GetString(3),
-            OptionB = reader.GetString(4),
-            OptionC = reader.GetString(5),
-            OptionD = reader.GetString(6),
-            CorrectOption = reader.GetString(7)[0],
-            MovieId = reader.IsDBNull(8) ? null : reader.GetInt32(8)
+            Id            = sqlDataReader.GetInt32(0),
+            QuestionText  = sqlDataReader.GetString(1),
+            Category      = sqlDataReader.GetString(2),
+            OptionA       = sqlDataReader.GetString(3),
+            OptionB       = sqlDataReader.GetString(4),
+            OptionC       = sqlDataReader.GetString(5),
+            OptionD       = sqlDataReader.GetString(6),
+            CorrectOption = sqlDataReader.GetString(7)[0],
+            MovieId       = sqlDataReader.IsDBNull(8) ? null : sqlDataReader.GetInt32(8)
         };
     }
     public async Task<IEnumerable<TriviaQuestion>> GetByMovieIdAsync(
     int movieId, int count = 3, CancellationToken cancellationToken = default)
     {
-        var questions = new List<TriviaQuestion>();
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        List<TriviaQuestion> questions = new List<TriviaQuestion>();
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(
-            TriviaSqlQueries.SelectRandomByMovieId, connection);
-        command.Parameters.AddWithValue("@movieId", movieId);
-        command.Parameters.AddWithValue("@count", count);
+        await using var sqlCommand = new SqlCommand(
+            TriviaSqlQueries.SelectRandomByMovieId, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@movieId", movieId);
+        sqlCommand.Parameters.AddWithValue("@count", count);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-            questions.Add(MapTriviaQuestion(reader));
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        while (await sqlDataReader.ReadAsync(cancellationToken))
+            questions.Add(MapTriviaQuestion(sqlDataReader));
 
         return questions;
     }
