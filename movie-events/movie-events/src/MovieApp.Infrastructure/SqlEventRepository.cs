@@ -14,14 +14,14 @@ public sealed class SqlEventRepository : IEventRepository
     }
     public async Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var events = new List<Event>();
+        List<Event> events = new List<Event>();
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectAll, connection);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
             events.Add(MapEvent(reader));
@@ -32,15 +32,15 @@ public sealed class SqlEventRepository : IEventRepository
 
     public async Task<IEnumerable<Event>> GetAllByTypeAsync(string eventType, CancellationToken cancellationToken = default)
     {
-        var events = new List<Event>();
+        List<Event> events = new List<Event>();
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectByType, connection);
         command.Parameters.AddWithValue("@eventType", eventType);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
             events.Add(MapEvent(reader));
@@ -51,7 +51,7 @@ public sealed class SqlEventRepository : IEventRepository
 
     public async Task<int> AddAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(EventSqlQueries.Insert, connection);
@@ -67,7 +67,7 @@ public sealed class SqlEventRepository : IEventRepository
         command.Parameters.AddWithValue("@currentEnrollment", @event.CurrentEnrollment);
         command.Parameters.AddWithValue("@creatorUserId", @event.CreatorUserId);
 
-        var result = await command.ExecuteScalarAsync(cancellationToken);
+        object? result = await command.ExecuteScalarAsync(cancellationToken);
         if (result is null or DBNull)
         {
             throw new InvalidOperationException("Expected the event insert to return the new identity value.");
@@ -78,13 +78,13 @@ public sealed class SqlEventRepository : IEventRepository
 
     public async Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(EventSqlQueries.SelectById, connection);
         command.Parameters.AddWithValue("@id", id);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
         {
             return null;
@@ -111,7 +111,7 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @id;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(sql, connection);
@@ -128,7 +128,7 @@ public sealed class SqlEventRepository : IEventRepository
         command.Parameters.AddWithValue("@currentEnrollment", @event.CurrentEnrollment);
         command.Parameters.AddWithValue("@creatorUserId", @event.CreatorUserId);
 
-        var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+        int rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
         return rowsAffected > 0;
     }
 
@@ -140,14 +140,14 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @eventId;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@newCount", newCount);
         command.Parameters.AddWithValue("@eventId", eventId);
 
-        var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+        int rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
         return rowsAffected > 0;
     }
 
@@ -168,7 +168,7 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @id;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand command = new SqlCommand(sql, connection);
@@ -207,9 +207,9 @@ public sealed class SqlEventRepository : IEventRepository
     }
     public async Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default)
     {
-        await using var connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(_connectionString);
         await connection.OpenAsync(cancellationToken);
-        await using var transaction = connection.BeginTransaction();
+        await using SqlTransaction transaction = connection.BeginTransaction();
 
         try
         {
