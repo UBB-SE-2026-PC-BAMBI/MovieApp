@@ -11,7 +11,7 @@ namespace MovieApp.Core.Services;
 public sealed class SlotMachineResultService
 {
     private readonly IUserMovieDiscountRepository _discountRepository;
-    private const int JackpotDiscountPercentage = 70;
+    private const int JACKPOT_DISCOUNT_PERCENTAGE = 70;
 
     public SlotMachineResultService(IUserMovieDiscountRepository discountRepository)
     {
@@ -36,7 +36,7 @@ public sealed class SlotMachineResultService
         List<Event> matchingEvents,
         Movie? jackpotMovie)
     {
-        var result = new SlotMachineResult
+        SlotMachineResult result = new SlotMachineResult
         {
             Genre = genre,
             Actor = actor,
@@ -44,7 +44,7 @@ public sealed class SlotMachineResultService
             MatchingEvents = matchingEvents,
             JackpotMovie = jackpotMovie,
             JackpotDiscountApplied = jackpotMovie is not null,
-            DiscountPercentage = jackpotMovie is not null ? JackpotDiscountPercentage : 0
+            DiscountPercentage = jackpotMovie is not null ? JACKPOT_DISCOUNT_PERCENTAGE : 0
         };
 
         return result;
