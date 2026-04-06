@@ -1,7 +1,7 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using MovieApp.Ui.Controls;
+using MovieApp.Core.Models;
 using MovieApp.Ui.Services;
 using Windows.UI;
 
@@ -58,7 +58,7 @@ public static class EventDialogViewBuilder
         TextBox referralTextBox = new TextBox { PlaceholderText = "Optional referral code", Width = 200 };
         Button validationButton = new Button { Content = new FontIcon { Glyph = "\uE73E", FontSize = 14 } };
 
-        validationButton.Click += async (_, _) =>
+        validationButton.Click += async (object sender, RoutedEventArgs e) =>
         {
             if (model.ValidateReferralAction is not null)
             {
@@ -77,11 +77,12 @@ public static class EventDialogViewBuilder
 
         Button willAttendButton = new Button { Content = "Will attend", Tag = "Joined!" };
         Button buyTicketButton = new Button { Content = "Buy ticket", Tag = "Ticket purchased!" };
-        EventCard.AttachJoinEventHandler(willAttendButton, model.Event.Id);
-        EventCard.AttachJoinEventHandler(buyTicketButton, model.Event.Id);
+
+        willAttendButton.Click += async (object sender, RoutedEventArgs e) => await HandleJoinClick(willAttendButton, model.Event.Id);
+        buyTicketButton.Click += async (object sender, RoutedEventArgs e) => await HandleJoinClick(buyTicketButton, model.Event.Id);
 
         Button seatGuideButton = new Button { Content = "Seat guide" };
-        seatGuideButton.Click += (_, _) => model.ShowSeatGuideAction?.Invoke();
+        seatGuideButton.Click += (object sender, RoutedEventArgs e) => model.ShowSeatGuideAction?.Invoke();
 
         layout.Children.Add(new StackPanel
         {
@@ -99,7 +100,7 @@ public static class EventDialogViewBuilder
             buttonContent.Children.Add(new TextBlock { Text = $"Use Free Pass ({model.FreePassBalance} left)" });
             freePassButton.Content = buttonContent;
 
-            freePassButton.Click += async (_, _) =>
+            freePassButton.Click += async (object sender, RoutedEventArgs e) =>
             {
                 if (model.UseFreePassAction is not null)
                 {
@@ -120,5 +121,17 @@ public static class EventDialogViewBuilder
         }
 
         return layout;
+    }
+
+    private static async Task HandleJoinClick(Button button, int eventId)
+    {
+        button.IsEnabled = false;
+
+        if (App.EventJoinService is not null)
+        {
+            string tag = button.Tag?.ToString() ?? string.Empty;
+            JoinEventResult result = await App.EventJoinService.JoinEventAsync(eventId, tag);
+            button.Content = result.Message;
+        }
     }
 }
