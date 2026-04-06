@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
@@ -141,8 +137,8 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         }
 
         ValidationMessage = string.Empty;
-        var date = FormDate!.Value.Date + FormTime;
-        var currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
+        DateTime date = FormDate!.Value.Date + FormTime;
+        int currentUserId = App.CurrentUserService?.CurrentUser.Id ?? 0;
 
         Event newEvent = new Event
         {
