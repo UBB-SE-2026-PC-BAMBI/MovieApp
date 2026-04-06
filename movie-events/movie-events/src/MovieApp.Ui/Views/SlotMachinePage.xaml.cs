@@ -16,7 +16,7 @@ public sealed partial class SlotMachinePage : Page
 
     public SlotMachinePage()
     {
-        _dialogBuilder = new EventDialogContentBuilder(App.ReferralValidator, App.CurrentUserService);
+        _dialogBuilder = new EventDialogContentBuilder(App.Services.ReferralValidator, App.Services.CurrentUserService);
         InitializeComponent();
         Loaded += OnPageLoaded;
     }
@@ -25,14 +25,14 @@ public sealed partial class SlotMachinePage : Page
     {
         Loaded -= OnPageLoaded;
 
-        User? currentUser = App.CurrentUserService?.CurrentUser;
+        User? currentUser = App.Services.CurrentUserService?.CurrentUser;
         if (currentUser is null)
             return;
 
         SlotMachineViewModel viewModel = new SlotMachineViewModel(
             currentUser.Id,
-            App.SlotMachineService ?? throw new System.InvalidOperationException("SlotMachineService not initialized"),
-            App.SlotMachineAnimationService ?? throw new System.InvalidOperationException("SlotMachineAnimationService not initialized"));
+            App.Services.SlotMachineService ?? throw new System.InvalidOperationException("SlotMachineService not initialized"),
+            App.Services.SlotMachineAnimationService ?? throw new System.InvalidOperationException("SlotMachineAnimationService not initialized"));
 
         viewModel.JackpotHit += OnJackpotHit;
         DataContext = viewModel;
@@ -64,9 +64,9 @@ public sealed partial class SlotMachinePage : Page
 
         if (item.IsJackpotEvent)
         {
-            if (App.EventUserStateService is not null)
+            if (App.Services.EventUserStateService is not null)
             {
-                int percentage = await App.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
+                int percentage = await App.Services.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
                 discountPercentage = percentage > 0 ? percentage : 70;
             }
             else

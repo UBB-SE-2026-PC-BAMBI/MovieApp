@@ -17,8 +17,8 @@ public sealed class EventManagementViewModel : EventListPageViewModel
     /// </summary>
     public EventManagementViewModel()
     {
-        _eventRepository = App.EventRepository;
-        _notificationService = App.NotificationService;
+        _eventRepository = App.Services.EventRepository;
+        _notificationService = App.Services.NotificationService;
         SimulateUpdateCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(SimulateEventUpdateAsync);
         CreateEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(CreateEventAsync);
         EditEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
@@ -104,7 +104,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
         ValidationMessage = string.Empty;
         var date = FormDate!.Value.Date + FormTime;
-        var currentUserId = App.CurrentUserService?.CurrentUser.Id ?? 0;
+        var currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
 
         var newEvent = new Event
         {

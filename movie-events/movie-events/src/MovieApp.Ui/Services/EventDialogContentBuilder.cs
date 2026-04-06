@@ -76,9 +76,9 @@ public sealed class EventDialogContentBuilder
 
         User? currentUser = _currentUserService?.CurrentUser;
 
-        if (App.AmbassadorRepository is not null && currentUser is not null)
+        if (App.Services.AmbassadorRepository is not null && currentUser is not null)
         {
-            int balance = await App.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
+            int balance = await App.Services.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
             if (balance > 0)
             {
                 model.HasFreePass = true;
@@ -113,7 +113,7 @@ public sealed class EventDialogContentBuilder
             ContentDialogResult result = await confirmDialog.ShowAsync();
             if (result == ContentDialogResult.Primary && currentUser is not null)
             {
-                await App.AmbassadorRepository!.DecrementRewardBalanceAsync(currentUser.Id);
+                await App.Services.AmbassadorRepository!.DecrementRewardBalanceAsync(currentUser.Id);
                 return true;
             }
             return false;

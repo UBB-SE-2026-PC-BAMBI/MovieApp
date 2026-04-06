@@ -37,21 +37,21 @@ public sealed partial class RewardsPage : Page
     {
         base.OnNavigatedTo(e);
 
-        User? currentUser = App.CurrentUserService?.CurrentUser;
+        User? currentUser = App.Services.CurrentUserService?.CurrentUser;
 
         if (currentUser is not null)
         {
-            if (App.AmbassadorRepository is not null)
+            if (App.Services.AmbassadorRepository is not null)
             {
-                RewardBalance = await App.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
+                RewardBalance = await App.Services.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
             }
 
             await LoadSlotRewardsAsync(currentUser.Id);
         }
 
-        if (App.TriviaRewardRepository is not null)
+        if (App.Services.TriviaRewardRepository is not null)
         {
-            _viewModel = new RewardsViewModel(App.TriviaRewardRepository, App.CurrentUserId);
+            _viewModel = new RewardsViewModel(App.Services.TriviaRewardRepository, App.CurrentUserId);
             await _viewModel.LoadAsync();
             UpdateTriviaRewardUI();
         }
@@ -84,10 +84,10 @@ public sealed partial class RewardsPage : Page
 
     private async Task LoadSlotRewardsAsync(int userId)
     {
-        if (App.UserMovieDiscountRepository is null)
+        if (App.Services.UserMovieDiscountRepository is null)
             return;
 
-        IEnumerable<Reward> rewards = await App.UserMovieDiscountRepository.GetDiscountsForUserAsync(userId);
+        IEnumerable<Reward> rewards = await App.Services.UserMovieDiscountRepository.GetDiscountsForUserAsync(userId);
 
         _loadedSlotRewards = rewards
             .Select(r => new SlotRewardItem
@@ -148,16 +148,16 @@ public sealed partial class RewardsPage : Page
         if (SlotsListView.SelectedItem is not SlotRewardItem item || item.IsRedeemed)
             return;
 
-        if (App.UserMovieDiscountRepository is null || App.CurrentUserService?.CurrentUser is null)
+        if (App.Services.UserMovieDiscountRepository is null || App.Services.CurrentUserService?.CurrentUser is null)
             return;
 
-        await App.UserMovieDiscountRepository.MarkRedeemedAsync(item.RewardId);
+        await App.Services.UserMovieDiscountRepository.MarkRedeemedAsync(item.RewardId);
 
         item.IsRedeemed = true;
         DetailStatusBox.Text = "Redeemed";
         RedeemButton.IsEnabled = false;
 
-        await LoadSlotRewardsAsync(App.CurrentUserService.CurrentUser.Id);
+        await LoadSlotRewardsAsync(App.Services.CurrentUserService.CurrentUser.Id);
     }
 
     private async void TriviaRedeemButton_Click(object sender, RoutedEventArgs e)

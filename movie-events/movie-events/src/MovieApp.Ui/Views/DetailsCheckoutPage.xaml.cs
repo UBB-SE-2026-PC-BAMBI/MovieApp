@@ -17,9 +17,9 @@ public sealed partial class DetailsCheckoutPage : Page
     {
         if (string.IsNullOrWhiteSpace(ReferralCodeTextBox.Text)) return;
 
-        if (App.ReferralValidator is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
+        if (App.Services.ReferralValidator is not null && App.Services.CurrentUserService?.CurrentUser is { } currentUser)
         {
-            bool isValid = await App.ReferralValidator.IsValidReferralAsync(ReferralCodeTextBox.Text, currentUser.Id);
+            bool isValid = await App.Services.ReferralValidator.IsValidReferralAsync(ReferralCodeTextBox.Text, currentUser.Id);
             ReferralCodeTextBox.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 isValid ? Microsoft.UI.Colors.Green : Microsoft.UI.Colors.Red);
             ReferralCodeTextBox.BorderThickness = new Microsoft.UI.Xaml.Thickness(2);

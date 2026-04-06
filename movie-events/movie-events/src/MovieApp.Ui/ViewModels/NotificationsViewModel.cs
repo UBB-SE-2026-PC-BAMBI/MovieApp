@@ -54,7 +54,7 @@ public sealed partial class NotificationsViewModel : ObservableObject
     /// </summary>
     public NotificationsViewModel()
     {
-        _notificationService = App.NotificationService;
+        _notificationService = App.Services.NotificationService;
         _currentUserId = App.CurrentUserId;
 
         OpenEventCommand = new RelayCommand(OpenEvent, () => SelectedNotification is not null);

@@ -49,9 +49,9 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            if (App.WatchlistPathProvider == null) return;
+            if (App.Services.WatchlistPathProvider == null) return;
 
-            string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
+            string folderPath = App.Services.WatchlistPathProvider.GetWatchlistFolderPath();
             LocalPriceWatcherRepository watcherRepo = new LocalPriceWatcherRepository(folderPath);
             IEnumerable<WatchedEvent> watchedEvents = await watcherRepo.GetAllWatchedEventsAsync();
 

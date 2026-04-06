@@ -11,7 +11,7 @@ public sealed class NotificationsViewModel : ViewModelBase
 
     public NotificationsViewModel()
     {
-        _notificationService = App.NotificationService ?? throw new InvalidOperationException("NotificationService is not initialized.");
+        _notificationService = App.Services.NotificationService ?? throw new InvalidOperationException("NotificationService is not initialized.");
         Notifications = new ObservableCollection<Notification>();
     }
 
@@ -32,7 +32,7 @@ public sealed class NotificationsViewModel : ViewModelBase
         
         try
         {
-            var currentUser = App.CurrentUserService?.CurrentUser;
+            var currentUser = App.Services.CurrentUserService?.CurrentUser;
             if (currentUser == null) return;
 
             var notifications = await _notificationService.GetNotificationsByUserAsync(currentUser.Id);

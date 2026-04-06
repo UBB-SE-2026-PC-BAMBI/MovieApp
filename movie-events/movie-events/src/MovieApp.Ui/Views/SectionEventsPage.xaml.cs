@@ -16,7 +16,7 @@ public sealed partial class SectionEventsPage : Page
 
     public SectionEventsPage()
     {
-        _dialogBuilder = new EventDialogContentBuilder(App.ReferralValidator, App.CurrentUserService);
+        _dialogBuilder = new EventDialogContentBuilder(App.Services.ReferralValidator, App.Services.CurrentUserService);
         InitializeComponent();
     }
 
@@ -34,7 +34,7 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        ViewModel = new SectionEventsViewModel(App.EventRepository, context);
+        ViewModel = new SectionEventsViewModel(App.Services.EventRepository, context);
         DataContext = ViewModel;
 
         _initialized = true;
@@ -84,10 +84,10 @@ public sealed partial class SectionEventsPage : Page
 
         button.IsEnabled = false;
 
-        if (App.EventJoinService is not null)
+        if (App.Services.EventJoinService is not null)
         {
             string tag = button.Tag?.ToString() ?? string.Empty;
-            JoinEventResult result = await App.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
+            JoinEventResult result = await App.Services.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
             button.Content = result.Message;
         }
     }

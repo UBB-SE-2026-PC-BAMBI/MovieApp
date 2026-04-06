@@ -9,14 +9,14 @@ public sealed class FavoritesViewModel : EventListPageViewModel
 
     public FavoritesViewModel()
     {
-        _favoriteEventService = App.FavoriteEventService ?? throw new InvalidOperationException("FavoriteEventService is not initialized.");
+        _favoriteEventService = App.Services.FavoriteEventService ?? throw new InvalidOperationException("FavoriteEventService is not initialized.");
     }
 
     public override string PageTitle => "My Favorites";
 
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        var currentUser = App.CurrentUserService?.CurrentUser;
+        var currentUser = App.Services.CurrentUserService?.CurrentUser;
         if (currentUser == null)
         {
             return new List<Event>();
@@ -24,7 +24,7 @@ public sealed class FavoritesViewModel : EventListPageViewModel
 
         var favorites = await _favoriteEventService.GetFavoritesByUserAsync(currentUser.Id);
         
-        var eventRepository = App.EventRepository 
+        var eventRepository = App.Services.EventRepository 
             ?? throw new InvalidOperationException("EventRepository is not initialized.");
             
         var events = new List<Event>();
@@ -42,7 +42,7 @@ public sealed class FavoritesViewModel : EventListPageViewModel
 
     public async Task RemoveFavoriteAsync(int eventId)
     {
-        var currentUser = App.CurrentUserService?.CurrentUser;
+        var currentUser = App.Services.CurrentUserService?.CurrentUser;
         if (currentUser == null) return;
 
         await _favoriteEventService.RemoveFavoriteAsync(currentUser.Id, eventId);

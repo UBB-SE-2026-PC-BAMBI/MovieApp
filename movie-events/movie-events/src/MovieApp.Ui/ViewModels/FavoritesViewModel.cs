@@ -54,7 +54,7 @@ public sealed partial class FavoritesViewModel : ObservableObject
     /// </summary>
     public FavoritesViewModel()
     {
-        _favoriteEventService = App.FavoriteEventService;
+        _favoriteEventService = App.Services.FavoriteEventService;
         _currentUserId = App.CurrentUserId;
 
         OpenDetailsCommand = new RelayCommand(OpenDetails, () => SelectedFavorite is not null);
