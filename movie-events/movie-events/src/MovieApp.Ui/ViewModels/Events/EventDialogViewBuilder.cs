@@ -82,9 +82,10 @@ public static class EventDialogViewBuilder
 
         layout.Loaded += async (object sender, RoutedEventArgs e) =>
         {
-            if (App.EventUserStateService is not null)
+            // FIXED: Added .Services to App calls here
+            if (App.Services.EventUserStateService is not null)
             {
-                bool isAlreadyJoined = await App.EventUserStateService.IsEventJoinedByUserAsync(model.Event.Id);
+                bool isAlreadyJoined = await App.Services.EventUserStateService.IsEventJoinedByUserAsync(model.Event.Id);
 
                 if (isAlreadyJoined)
                 {
