@@ -1,18 +1,19 @@
 using Microsoft.Data.SqlClient;
+
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
 
 /// <summary>
-/// SQL Server implementation of <see cref="IFavoriteEventRepository"/>.
+/// sqlStringCommand Server implementation of <see cref="IFavoriteEventRepository"/>.
 /// </summary>
 public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
 {
     private readonly string _connectionString;
 
     /// <summary>
-    /// Creates the repository using the configured database connection string.
+    /// Creates the repository using the configured database sqlConnection string.
     /// </summary>
     public SqlFavoriteEventRepository(DatabaseOptions databaseOptions)
     {
@@ -22,141 +23,142 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
     /// <inheritdoc />
     public async Task AddAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             INSERT INTO dbo.FavoriteEvents (UserId, EventId)
             VALUES (@userId, @eventId);
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", userId);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", userId);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task RemoveAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             DELETE FROM dbo.FavoriteEvents
             WHERE UserId = @userId
               AND EventId = @eventId;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", userId);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", userId);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<FavoriteEvent>> FindByUserAsync(int userId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             SELECT Id, UserId, EventId, CreatedAt
             FROM dbo.FavoriteEvents
             WHERE UserId = @userId
             ORDER BY CreatedAt DESC;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", userId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", userId);
 
-        return await ReadFavoriteEventsAsync(command, cancellationToken);
+        return await ReadFavoriteEventsAsync(sqlCommand, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<bool> ExistsAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             SELECT TOP 1 1
             FROM dbo.FavoriteEvents
             WHERE UserId = @userId
               AND EventId = @eventId;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@userId", userId);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@userId", userId);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        var result = await command.ExecuteScalarAsync(cancellationToken);
+        var result = await sqlCommand.ExecuteScalarAsync(cancellationToken);
         return result is not null;
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<int>> GetUsersByFavoriteEventAsync(int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             SELECT UserId
             FROM dbo.FavoriteEvents
             WHERE EventId = @eventId;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<int>();
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        
+        List<int> userIds = new List<int>();
 
-        while (await reader.ReadAsync(cancellationToken))
+        while (await sqlDataReader.ReadAsync(cancellationToken))
         {
-            results.Add(reader.GetInt32(0));
+            userIds.Add(sqlDataReader.GetInt32(0));
         }
 
-        return results;
+        return userIds;
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<FavoriteEvent>> FindByEventAsync(int eventId, CancellationToken cancellationToken = default)
     {
-        const string sql = """
+        const string sqlStringCommand = """
             SELECT Id, UserId, EventId, CreatedAt
             FROM dbo.FavoriteEvents
             WHERE EventId = @eventId
             ORDER BY CreatedAt DESC;
             """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync(cancellationToken);
 
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@eventId", eventId);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
+        sqlCommand.Parameters.AddWithValue("@eventId", eventId);
 
-        return await ReadFavoriteEventsAsync(command, cancellationToken);
+        return await ReadFavoriteEventsAsync(sqlCommand, cancellationToken);
     }
 
-    private static async Task<IReadOnlyList<FavoriteEvent>> ReadFavoriteEventsAsync(SqlCommand command, CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<FavoriteEvent>> ReadFavoriteEventsAsync(SqlCommand sqlCommand, CancellationToken cancellationToken)
     {
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var results = new List<FavoriteEvent>();
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        List<FavoriteEvent> favoriteEvents = new List<FavoriteEvent>();
 
-        while (await reader.ReadAsync(cancellationToken))
+        while (await sqlDataReader.ReadAsync(cancellationToken))
         {
-            results.Add(new FavoriteEvent
+            favoriteEvents.Add(new FavoriteEvent
             {
-                Id = reader.GetInt32(0),
-                UserId = reader.GetInt32(1),
-                EventId = reader.GetInt32(2),
-                CreatedAt = reader.GetDateTime(3),
+                Id = sqlDataReader.GetInt32(0),
+                UserId = sqlDataReader.GetInt32(1),
+                EventId = sqlDataReader.GetInt32(2),
+                CreatedAt = sqlDataReader.GetDateTime(3),
             });
         }
 
-        return results;
+        return favoriteEvents;
     }
 }
