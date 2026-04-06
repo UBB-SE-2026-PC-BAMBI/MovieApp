@@ -1,19 +1,36 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
 
+/// <summary>
+/// A SQL Server-backed repository for managing user notifications via ADO.NET.
+/// </summary>
 public sealed class SqlNotificationRepository : INotificationRepository
 {
     private readonly string _connectionString;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SqlNotificationRepository"/> class.
+    /// </summary>
+    /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlNotificationRepository(DatabaseOptions databaseOptions)
     {
         _connectionString = databaseOptions.ConnectionString;
     }
 
+    /// <summary>
+    /// Asynchronously inserts a new notification into the database.
+    /// </summary>
+    /// <param name="notification">The <see cref="Notification"/> to add.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <remarks>The notification's state is stored as its string representation.</remarks>
     public async Task AddAsync(Notification notification, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -35,6 +52,11 @@ public sealed class SqlNotificationRepository : INotificationRepository
         await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Asynchronously deletes a specific notification from the database.
+    /// </summary>
+    /// <param name="notificationId">The unique identifier of the notification to remove.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     public async Task RemoveAsync(int notificationId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -51,6 +73,12 @@ public sealed class SqlNotificationRepository : INotificationRepository
         await sqlCommand.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// Asynchronously retrieves all notifications belonging to a specific user, ordered from newest to oldest.
+    /// </summary>
+    /// <param name="userId">The ID of the user to retrieve notifications for.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>A read-only list of <see cref="Notification"/> objects.</returns>
     public async Task<IReadOnlyList<Notification>> FindByUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -76,12 +104,12 @@ public sealed class SqlNotificationRepository : INotificationRepository
 
             notifications.Add(new Notification
             {
-                Id        = sqlDataReader.GetInt32(0),
-                UserId    = sqlDataReader.GetInt32(1),
-                EventId   = sqlDataReader.GetInt32(2),
-                Type      = sqlDataReader.GetString(3),
-                Message   = sqlDataReader.GetString(4),
-                State     = state,
+                Id = sqlDataReader.GetInt32(0),
+                UserId = sqlDataReader.GetInt32(1),
+                EventId = sqlDataReader.GetInt32(2),
+                Type = sqlDataReader.GetString(3),
+                Message = sqlDataReader.GetString(4),
+                State = state,
                 CreatedAt = sqlDataReader.GetDateTime(6),
             });
         }
