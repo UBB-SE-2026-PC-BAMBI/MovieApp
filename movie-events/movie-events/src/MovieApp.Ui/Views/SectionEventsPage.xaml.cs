@@ -74,4 +74,21 @@ public sealed partial class SectionEventsPage : Page
 
         await dialog.ShowAsync();
     }
+
+    private async void JoinEventButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not Event selectedEvent)
+        {
+            return;
+        }
+
+        button.IsEnabled = false;
+
+        if (App.EventJoinService is not null)
+        {
+            string tag = button.Tag?.ToString() ?? string.Empty;
+            JoinEventResult result = await App.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
+            button.Content = result.Message;
+        }
+    }
 }
