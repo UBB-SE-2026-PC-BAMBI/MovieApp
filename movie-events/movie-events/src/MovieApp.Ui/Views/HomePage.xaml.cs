@@ -17,8 +17,8 @@ public sealed partial class HomePage : Page
 
     public HomePage()
     {
-        ViewModel = new HomeEventsViewModel(App.EventRepository);
-        _dialogBuilder = new EventDialogContentBuilder(App.ReferralValidator, App.CurrentUserService);
+        ViewModel = new HomeEventsViewModel(App.Services.EventRepository);
+        _dialogBuilder = new EventDialogContentBuilder(App.Services.ReferralValidator, App.Services.CurrentUserService);
         NavigationCacheMode = NavigationCacheMode.Required;
         InitializeComponent();
         DataContext = ViewModel;
@@ -32,14 +32,14 @@ public sealed partial class HomePage : Page
         {
             _initialized = true;
 
-            if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
+            if (App.Services.AmbassadorRepository is not null && App.Services.CurrentUserService?.CurrentUser is { } currentUser)
             {
-                string existingCode = await App.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
+                string existingCode = await App.Services.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
                 if (string.IsNullOrEmpty(existingCode))
                 {
                     MovieApp.Core.Services.ReferralCodeGenerator generator = new MovieApp.Core.Services.ReferralCodeGenerator();
                     string newCode = generator.Generate(currentUser.Username, currentUser.Id);
-                    await App.AmbassadorRepository.CreateAmbassadorProfileAsync(currentUser.Id, newCode);
+                    await App.Services.AmbassadorRepository.CreateAmbassadorProfileAsync(currentUser.Id, newCode);
                 }
             }
         }
@@ -82,9 +82,9 @@ public sealed partial class HomePage : Page
 
         int? discountPercentage = null;
 
-        if (App.EventUserStateService is not null)
+        if (App.Services.EventUserStateService is not null)
         {
-            int percentage = await App.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
+            int percentage = await App.Services.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
             if (percentage > 0)
             {
                 discountPercentage = percentage;
@@ -109,10 +109,10 @@ public sealed partial class HomePage : Page
 
         button.IsEnabled = false;
 
-        if (App.EventJoinService is not null)
+        if (App.Services.EventJoinService is not null)
         {
             string tag = button.Tag?.ToString() ?? string.Empty;
-            JoinEventResult result = await App.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
+            JoinEventResult result = await App.Services.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
             button.Content = result.Message;
         }
     }

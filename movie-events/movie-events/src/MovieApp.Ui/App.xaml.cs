@@ -6,6 +6,7 @@ using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
+using System;
 
 namespace MovieApp.Ui;
 
@@ -13,32 +14,10 @@ public partial class App : Application
 {
     private Window? _window;
     private ICurrentUserService? _currentUserService;
-
-    public static ICurrentUserService? CurrentUserService { get; private set; }
-    public static IPriceWatcherRepository? PriceWatcherRepository { get; private set; }
-    public static IEventRepository? EventRepository { get; private set; }
-    public static ITriviaRepository? TriviaRepository { get; private set; }
-    public static ITriviaRewardRepository? TriviaRewardRepository { get; private set; }
-    public static IAmbassadorRepository? AmbassadorRepository { get; private set; }
-    public static IReferralValidator? ReferralValidator { get; private set; }
+    public static IAppServices Services { get; private set; } = new AppServices();
     public static MainWindow? CurrentMainWindow { get; private set; }
     public static IConfigurationRoot? Configuration { get; private set; }
-    public static IMarathonRepository? MarathonRepository { get; private set; }
-    public static IFavoriteEventService? FavoriteEventService { get; private set; }
-    public static INotificationService? NotificationService { get; private set; }
     public static int CurrentUserId { get; private set; }
-    public static IMovieRepository? MovieRepository { get; private set; }
-    public static IUserSlotMachineStateRepository? SlotMachineStateRepository { get; private set; }
-    public static IUserMovieDiscountRepository? UserMovieDiscountRepository { get; private set; }
-    public static IScreeningRepository? ScreeningRepository { get; private set; }
-    public static IUserEventAttendanceRepository? UserEventAttendanceRepository { get; private set; }
-    public static ISlotMachineService? SlotMachineService { get; private set; }
-    public static ISlotMachineResultService? SlotMachineResultService { get; private set; }
-    public static ReelAnimationService? ReelAnimationService { get; private set; }
-    public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
-    public static IEventUserStateService? EventUserStateService { get; private set; }
-    public static IEventJoinService? EventJoinService { get; private set; }
-    public static IWatchlistPathProvider? WatchlistPathProvider { get; private set; }
     public static bool StreakSpinGrantedOnLogin { get; private set; }
 
     public App()
@@ -97,31 +76,37 @@ public partial class App : Application
             ReelAnimationService reelAnimationService = new ReelAnimationService();
             SlotMachineAnimationService slotMachineAnimationService = new SlotMachineAnimationService();
 
-            CurrentUserService = _currentUserService;
-            EventRepository = eventRepository;
-            TriviaRepository = triviaRepository;
-            TriviaRewardRepository = triviaRewardRepository;
-            AmbassadorRepository = ambassadorRepository;
-            ReferralValidator = new ReferralValidator(ambassadorRepository);
-            FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository);
-            NotificationService = new NotificationService(notificationRepository, favoriteEventRepository, eventRepository);
-            CurrentUserId = _currentUserService.CurrentUser.Id;
-            MovieRepository = movieRepository;
-            SlotMachineStateRepository = slotMachineStateRepository;
-            UserMovieDiscountRepository = userMovieDiscountRepository;
-            ScreeningRepository = screeningRepository;
-            UserEventAttendanceRepository = userEventAttendanceRepository;
-            SlotMachineService = slotMachineService;
-            SlotMachineResultService = slotMachineResultService;
-            ReelAnimationService = reelAnimationService;
-            SlotMachineAnimationService = slotMachineAnimationService;
-            MarathonRepository = marathonRepository;
-            EventUserStateService = new EventUserStateService();
-            EventJoinService = new EventJoinService();
+            var appServices = new AppServices
+            {
+                CurrentUserService = _currentUserService,
+                EventRepository = eventRepository,
+                TriviaRepository = triviaRepository,
+                TriviaRewardRepository = triviaRewardRepository,
+                AmbassadorRepository = ambassadorRepository,
+                ReferralValidator = new ReferralValidator(ambassadorRepository),
+                FavoriteEventService = new FavoriteEventService(favoriteEventRepository, eventRepository),
+                NotificationService = new NotificationService(notificationRepository, favoriteEventRepository, eventRepository),
+                MovieRepository = movieRepository,
+                SlotMachineStateRepository = slotMachineStateRepository,
+                UserMovieDiscountRepository = userMovieDiscountRepository,
+                ScreeningRepository = screeningRepository,
+                UserEventAttendanceRepository = userEventAttendanceRepository,
+                SlotMachineService = slotMachineService,
+                SlotMachineResultService = slotMachineResultService,
+                ReelAnimationService = reelAnimationService,
+                SlotMachineAnimationService = slotMachineAnimationService,
+                MarathonRepository = marathonRepository,
+                EventUserStateService = new EventUserStateService(),
+                EventJoinService = new EventJoinService(),
+                WatchlistPathProvider = new WatchlistPathProvider()
+            };
 
-            WatchlistPathProvider = new WatchlistPathProvider();
-            string localDataFolder = WatchlistPathProvider.GetWatchlistFolderPath();
-            PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
+            string localDataFolder = appServices.WatchlistPathProvider.GetWatchlistFolderPath();
+            appServices.PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
+
+            Services = appServices;
+
+            CurrentUserId = _currentUserService.CurrentUser.Id;
 
             StreakSpinGrantedOnLogin = await slotMachineService.RecordLoginAndCheckStreakAsync(
                 _currentUserService.CurrentUser.Id);
@@ -134,7 +119,7 @@ public partial class App : Application
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
-        CurrentMainWindow = new MainWindow(viewModel, EventRepository!);
+        CurrentMainWindow = new MainWindow(viewModel, Services.EventRepository!);
         _window = CurrentMainWindow;
         _window.Activate();
     }
@@ -150,29 +135,9 @@ public partial class App : Application
     private void ResetRuntimeServices()
     {
         _currentUserService = null;
-        CurrentUserService = null;
-        EventRepository = null;
-        TriviaRepository = null;
-        TriviaRewardRepository = null;
-        AmbassadorRepository = null;
-        ReferralValidator = null;
+        Services = new AppServices();
         Configuration = null;
-        MarathonRepository = null;
-        FavoriteEventService = null;
-        NotificationService = null;
-        PriceWatcherRepository = null;
-        WatchlistPathProvider = null;
         CurrentUserId = 0;
-        MovieRepository = null;
-        SlotMachineStateRepository = null;
-        UserMovieDiscountRepository = null;
-        ScreeningRepository = null;
-        SlotMachineService = null;
-        SlotMachineResultService = null;
-        ReelAnimationService = null;
-        SlotMachineAnimationService = null;
-        EventUserStateService = null;
-        EventJoinService = null;
     }
 
     private static string BuildStartupErrorMessage(Exception exception)

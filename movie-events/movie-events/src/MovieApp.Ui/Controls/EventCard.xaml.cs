@@ -196,11 +196,11 @@ public sealed partial class EventCard : UserControl
     {
         try
         {
-            if (EventModel == null || App.WatchlistPathProvider == null) return;
+            if (EventModel == null || App.Services.WatchlistPathProvider == null) return;
 
             ToggleButton button = (ToggleButton)sender;
             bool isWatching = button.IsChecked ?? false;
-            string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
+            string folderPath = App.Services.WatchlistPathProvider.GetWatchlistFolderPath();
             MovieApp.Infrastructure.LocalPriceWatcherRepository repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
 
             if (isWatching)
@@ -263,15 +263,15 @@ public sealed partial class EventCard : UserControl
 
     private async void FavoriteButton_Click(object sender, RoutedEventArgs e)
     {
-        if (EventModel == null || App.FavoriteEventService == null) return;
+        if (EventModel == null || App.Services.FavoriteEventService == null) return;
 
         if (IsFavorited)
         {
-            await App.FavoriteEventService.RemoveFavoriteAsync(App.CurrentUserId, EventModel.Id);
+            await App.Services.FavoriteEventService.RemoveFavoriteAsync(App.CurrentUserId, EventModel.Id);
         }
         else
         {
-            await App.FavoriteEventService.AddFavoriteAsync(App.CurrentUserId, EventModel.Id);
+            await App.Services.FavoriteEventService.AddFavoriteAsync(App.CurrentUserId, EventModel.Id);
         }
 
         IsFavorited = !IsFavorited;
@@ -280,24 +280,24 @@ public sealed partial class EventCard : UserControl
 
     private async Task SyncWatcherStateAsync()
     {
-        if (EventModel == null || WatcherButton == null || App.WatchlistPathProvider == null) return;
-        string folderPath = App.WatchlistPathProvider.GetWatchlistFolderPath();
+        if (EventModel == null || WatcherButton == null || App.Services.WatchlistPathProvider == null) return;
+        string folderPath = App.Services.WatchlistPathProvider.GetWatchlistFolderPath();
         MovieApp.Infrastructure.LocalPriceWatcherRepository repo = new MovieApp.Infrastructure.LocalPriceWatcherRepository(folderPath);
         WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
     }
 
     private async Task SyncJoinedStateAsync()
     {
-        if (EventModel == null || App.EventUserStateService == null) return;
-        bool joined = await App.EventUserStateService.IsEventJoinedByUserAsync(EventModel.Id);
+        if (EventModel == null || App.Services.EventUserStateService == null) return;
+        bool joined = await App.Services.EventUserStateService.IsEventJoinedByUserAsync(EventModel.Id);
         IsJoined = joined;
         Bindings.Update();
     }
 
     private async Task SyncFavoriteStateAsync()
     {
-        if (EventModel == null || App.FavoriteEventService == null) return;
-        IsFavorited = await App.FavoriteEventService.ExistsFavoriteAsync(App.CurrentUserId, EventModel.Id);
+        if (EventModel == null || App.Services.FavoriteEventService == null) return;
+        IsFavorited = await App.Services.FavoriteEventService.ExistsFavoriteAsync(App.CurrentUserId, EventModel.Id);
         Bindings.Update();
     }
 
@@ -311,11 +311,11 @@ public sealed partial class EventCard : UserControl
 
     private async void JoinEventButton_Click(object sender, RoutedEventArgs e)
     {
-        if (EventModel is null || App.EventJoinService is null) return;
+        if (EventModel is null || App.Services.EventJoinService is null) return;
         Button button = (Button)sender;
         button.IsEnabled = false;
         string tag = button.Tag?.ToString() ?? string.Empty;
-        JoinEventResult result = await App.EventJoinService.JoinEventAsync(EventModel.Id, tag);
+        JoinEventResult result = await App.Services.EventJoinService.JoinEventAsync(EventModel.Id, tag);
 
         if (result.Success)
         {

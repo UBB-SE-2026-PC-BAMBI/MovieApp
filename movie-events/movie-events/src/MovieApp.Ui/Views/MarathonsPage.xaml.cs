@@ -23,14 +23,14 @@ public sealed partial class MarathonsPage : Page
 
         var db = new DatabaseOptions { ConnectionString = connectionString };
         var marathonRepo = new SqlMarathonRepository(db);
-        var marathonService = new MarathonService(marathonRepo, App.CurrentUserService!);
+        var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService!);
 
         ViewModel = new MarathonPageViewModel(marathonService, marathonRepo);
         InitializeComponent();
 
         Loaded += async (_, _) =>
         {
-            _currentUserId = App.CurrentUserService?.CurrentUser.Id ?? 0;
+            _currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
             await ViewModel.LoadAsync(_currentUserId);
         };
     }
@@ -89,14 +89,14 @@ public sealed partial class MarathonsPage : Page
     {
         if (sender is not Button btn) return;
         if (btn.Tag is not int movieId) return;
-        if (App.TriviaRepository is null) return;
+        if (App.Services.TriviaRepository is null) return;
 
         _currentMovieId = movieId;
 
         var movie = ViewModel.Movies.FirstOrDefault(m => m.MovieId == movieId);
         QuizMovieTitle.Text = movie?.Title ?? "Movie";
 
-        _triviaVm = new MarathonTriviaViewModel(App.TriviaRepository);
+        _triviaVm = new MarathonTriviaViewModel(App.Services.TriviaRepository);
 
         try
         {
@@ -154,7 +154,7 @@ public sealed partial class MarathonsPage : Page
         var connectionString = App.Configuration?["Database:ConnectionString"]!;
         var db = new DatabaseOptions { ConnectionString = connectionString };
         var repo = new SqlMarathonRepository(db);
-        var service = new MarathonService(repo, App.CurrentUserService!);
+        var service = new MarathonService(repo, App.Services.CurrentUserService!);
 
         await service.LogMovieAsync(marathonId, movieId, correctCount);
         await ViewModel.RefreshAfterMovieLoggedAsync();
@@ -165,7 +165,7 @@ public sealed partial class MarathonsPage : Page
 
     private async void TryAgainButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_triviaVm is null || App.TriviaRepository is null) return;
+        if (_triviaVm is null || App.Services.TriviaRepository is null) return;
         _triviaVm.Reset();
         await _triviaVm.StartAsync(_currentMovieId);
         ShowPlaying();

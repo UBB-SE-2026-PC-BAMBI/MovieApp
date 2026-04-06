@@ -68,14 +68,14 @@ public sealed partial class TriviaWheelPage : Page
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
     {
-        if (App.TriviaRepository is not null
-            && App.TriviaRewardRepository is not null
-            && App.SlotMachineStateRepository is not null)
+        if (App.Services.TriviaRepository is not null
+            && App.Services.TriviaRewardRepository is not null
+            && App.Services.SlotMachineStateRepository is not null)
         {
             _viewModel = new TriviaWheelViewModel(
-                App.TriviaRepository,
-                App.TriviaRewardRepository,
-                App.SlotMachineStateRepository,
+                App.Services.TriviaRepository,
+                App.Services.TriviaRewardRepository,
+                App.Services.SlotMachineStateRepository,
                 App.CurrentUserId);
 
             await _viewModel.InitializeAsync();

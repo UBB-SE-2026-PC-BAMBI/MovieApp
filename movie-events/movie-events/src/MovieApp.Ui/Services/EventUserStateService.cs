@@ -10,13 +10,13 @@ public class EventUserStateService : IEventUserStateService
 {
     public async Task<int> GetDiscountForEventAsync(int eventId)
     {
-        User? user = App.CurrentUserService?.CurrentUser;
-        if (user is null || App.UserMovieDiscountRepository is null || App.ScreeningRepository is null)
+        User? user = App.Services.CurrentUserService?.CurrentUser;
+        if (user is null || App.Services.UserMovieDiscountRepository is null || App.Services.ScreeningRepository is null)
         {
             return 0;
         }
 
-        IEnumerable<Reward> discounts = await App.UserMovieDiscountRepository.GetDiscountsForUserAsync(user.Id);
+        IEnumerable<Reward> discounts = await App.Services.UserMovieDiscountRepository.GetDiscountsForUserAsync(user.Id);
 
         Dictionary<int, int> bestDiscountByMovie = discounts
             .Where(r => !r.RedemptionStatus && r.EventId.HasValue)
@@ -26,7 +26,7 @@ public class EventUserStateService : IEventUserStateService
         int bestDiscount = 0;
         foreach (KeyValuePair<int, int> kvp in bestDiscountByMovie)
         {
-            IEnumerable<Screening> screenings = await App.ScreeningRepository.GetByMovieIdAsync(kvp.Key);
+            IEnumerable<Screening> screenings = await App.Services.ScreeningRepository.GetByMovieIdAsync(kvp.Key);
             foreach (Screening screening in screenings)
             {
                 if (screening.EventId == eventId && kvp.Value > bestDiscount)
@@ -41,13 +41,13 @@ public class EventUserStateService : IEventUserStateService
 
     public async Task<bool> IsEventJoinedByUserAsync(int eventId)
     {
-        User? user = App.CurrentUserService?.CurrentUser;
-        if (user is null || App.UserEventAttendanceRepository is null)
+        User? user = App.Services.CurrentUserService?.CurrentUser;
+        if (user is null || App.Services.UserEventAttendanceRepository is null)
         {
             return false;
         }
 
-        IEnumerable<int> ids = await App.UserEventAttendanceRepository.GetJoinedEventIdsAsync(user.Id);
+        IEnumerable<int> ids = await App.Services.UserEventAttendanceRepository.GetJoinedEventIdsAsync(user.Id);
         return ids.Contains(eventId);
     }
 }

@@ -129,10 +129,10 @@ public static class EventDialogViewBuilder
     {
         button.IsEnabled = false;
 
-        if (App.EventJoinService is not null)
+        if (App.Services.EventJoinService is not null)
         {
             string tag = button.Tag?.ToString() ?? string.Empty;
-            JoinEventResult result = await App.EventJoinService.JoinEventAsync(eventId, tag);
+            JoinEventResult result = await App.Services.EventJoinService.JoinEventAsync(eventId, tag);
             button.Content = result.Message;
         }
     }

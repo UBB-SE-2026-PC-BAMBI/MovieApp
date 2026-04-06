@@ -43,12 +43,12 @@ public sealed partial class ReferralAreaPage : Page, INotifyPropertyChanged
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        if (App.AmbassadorRepository is not null && App.CurrentUserService?.CurrentUser is { } currentUser)
+        if (App.Services.AmbassadorRepository is not null && App.Services.CurrentUserService?.CurrentUser is { } currentUser)
         {
-            var code = await App.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
+            var code = await App.Services.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
             ReferralCode = code ?? "No code generated";
 
-            var history = await App.AmbassadorRepository.GetReferralHistoryAsync(currentUser.Id);
+            var history = await App.Services.AmbassadorRepository.GetReferralHistoryAsync(currentUser.Id);
             ReferralHistory.Clear();
             foreach (var item in history)
             {

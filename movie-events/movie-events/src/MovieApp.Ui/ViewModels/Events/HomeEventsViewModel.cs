@@ -72,12 +72,12 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         IEnumerable<Event> allEvents = await _repository.GetAllAsync();
         List<Event> eventsList = allEvents.ToList();
 
-        if (App.EventUserStateService is not null)
+        if (App.Services.EventUserStateService is not null)
         {
             foreach (Event evt in eventsList)
             {
-                evt.DiscountPercentage = await App.EventUserStateService.GetDiscountForEventAsync(evt.Id);
-                evt.IsJoined = await App.EventUserStateService.IsEventJoinedByUserAsync(evt.Id);
+                evt.DiscountPercentage = await App.Services.EventUserStateService.GetDiscountForEventAsync(evt.Id);
+                evt.IsJoined = await App.Services.EventUserStateService.IsEventJoinedByUserAsync(evt.Id);
             }
         }
 
