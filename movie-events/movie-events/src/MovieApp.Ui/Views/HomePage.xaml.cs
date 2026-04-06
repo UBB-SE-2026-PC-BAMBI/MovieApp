@@ -45,8 +45,6 @@ public sealed partial class HomePage : Page
             }
         }
 
-        await EventCard.RefreshDiscountsAsync();
-        await EventCard.RefreshJoinedEventIdsAsync();
         await ViewModel.InitializeAsync();
     }
 
@@ -83,11 +81,22 @@ public sealed partial class HomePage : Page
             return;
         }
 
+        int? discountPercentage = null;
+
+        if (App.EventUserStateService is not null)
+        {
+            int percentage = await App.EventUserStateService.GetDiscountForEventAsync(selectedEvent.Id);
+            if (percentage > 0)
+            {
+                discountPercentage = percentage;
+            }
+        }
+
         ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
             selectedEvent,
             XamlRoot,
             isJackpotEvent: false,
-            discountPercentage: null);
+            discountPercentage: discountPercentage);
 
         await dialog.ShowAsync();
     }
