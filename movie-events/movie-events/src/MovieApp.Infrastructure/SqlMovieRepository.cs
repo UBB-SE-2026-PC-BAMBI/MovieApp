@@ -1,7 +1,3 @@
-// <copyright file="SqlMovieRepository.cs" company="MovieApp">
-// Copyright (c) MovieApp. All rights reserved.
-// </copyright>
-
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models.Movie;

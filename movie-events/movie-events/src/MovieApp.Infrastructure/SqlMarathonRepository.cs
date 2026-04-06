@@ -1,8 +1,4 @@
-﻿// <copyright file="SqlMarathonRepository.cs" company="MovieApp">
-// Copyright (c) MovieApp. All rights reserved.
-// </copyright>
-
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Models;
@@ -16,10 +12,16 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 {
     private readonly string _connectionString;
 
+    private const int DAYS_IN_WEEK = 7;
+    private const int DAYS = 6;
+    private const int HOURS = 23;
+    private const int MINUTES = 59;
+    private const int SECONDS = 59;
+
     /// <summary>
     /// Initialises a new instance of <see cref="SqlMarathonRepository"/>.
     /// </summary>
-    /// <param name="databaseOptions">Database connection options.</param>
+    /// <param name="databaseOptions">Database sqlConnection options.</param>
     public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
@@ -32,12 +34,12 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
     {
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT Id, Title, Description, PosterUrl, Theme, PrerequisiteMarathonId, WeekScoping " +
-            "FROM dbo.Marathons WHERE IsActive = 1", connection);
+            "FROM dbo.Marathons WHERE IsActive = 1", sqlConnection);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
         {
@@ -59,7 +61,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
     {
         List<MarathonProgress> rankings = new List<MarathonProgress>();
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
         const string sqlStringCommand = """
             SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt
             FROM dbo.MarathonProgress
@@ -68,11 +70,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                      TriviaAccuracy DESC,
                      FinishedAt ASC;
         """; 
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
 
         sqlCommand.Parameters.AddWithValue("@MarathonId", marathonId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
         {
@@ -91,15 +93,15 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <inheritdoc/>
     public async Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt " +
-            "FROM dbo.MarathonProgress WHERE UserId = @UserId AND MarathonId = @MarathonId", connection);
+            "FROM dbo.MarathonProgress WHERE UserId = @UserId AND MarathonId = @MarathonId", sqlConnection);
 
         sqlCommand.Parameters.AddWithValue("@UserId", userId);
         sqlCommand.Parameters.AddWithValue("@MarathonId", marathonId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         if (await sqlDataReader.ReadAsync())
         {
@@ -118,27 +120,27 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <inheritdoc/>
     public async Task<bool> JoinMarathonAsync(int userId, int marathonId)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "INSERT INTO dbo.MarathonProgress (UserId, MarathonId, JoinedAt) " +
-            "VALUES (@UserId, @MarathonId, @JoinedAt)", connection);
+            "VALUES (@UserId, @MarathonId, @JoinedAt)", sqlConnection);
 
         sqlCommand.Parameters.AddWithValue("@UserId", userId);
         sqlCommand.Parameters.AddWithValue("@MarathonId", marathonId);
         sqlCommand.Parameters.AddWithValue("@JoinedAt", DateTime.Now);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         return await sqlCommand.ExecuteNonQueryAsync() > 0;
     }
 
     /// <inheritdoc/>
     public async Task<bool> UpdateProgressAsync(MarathonProgress progress)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "UPDATE dbo.MarathonProgress SET " +
             "TriviaAccuracy = @Accuracy, CompletedMoviesCount = @Count, FinishedAt = @FinishedAt " +
-            "WHERE UserId = @UserId AND MarathonId = @MarathonId", connection);
+            "WHERE UserId = @UserId AND MarathonId = @MarathonId", sqlConnection);
 
         sqlCommand.Parameters.AddWithValue("@Accuracy", progress.TriviaAccuracy);
         sqlCommand.Parameters.AddWithValue("@Count", progress.CompletedMoviesCount);
@@ -146,7 +148,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         sqlCommand.Parameters.AddWithValue("@UserId", progress.UserId);
         sqlCommand.Parameters.AddWithValue("@MarathonId", progress.MarathonId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         return await sqlCommand.ExecuteNonQueryAsync() > 0;
     }
 
@@ -161,10 +163,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
               AND FinishedAt IS NOT NULL;
         """;
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync();
 
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@userId", userId);
         sqlCommand.Parameters.AddWithValue("@prereqId", prerequisiteMarathonId);
 
@@ -180,10 +182,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         WHERE MarathonId = @marathonId;
         """;
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await using var sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync();
 
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
         object? result = await sqlCommand.ExecuteScalarAsync();
@@ -196,9 +198,9 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         string? weekString = $"{now.Year}-W" +
             System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
 
-        int daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        int daysFromMonday = ((int)now.DayOfWeek + DAYS) % DAYS_IN_WEEK;
         DateTime monday = now.Date.AddDays(-daysFromMonday);
-        DateTime sunday = monday.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
+        DateTime sunday = monday.AddDays(DAYS).AddHours(HOURS).AddMinutes(MINUTES).AddSeconds(SECONDS);
 
         return (weekString, monday, sunday);
     }
@@ -226,12 +228,12 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@week", weekString);
         sqlCommand.Parameters.AddWithValue("@userId", userId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
         {
@@ -265,10 +267,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         List<int> ids = new List<int>();
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync();
 
-        await using SqlCommand selectCmd = new SqlCommand(selectSql, connection);
+        await using SqlCommand selectCmd = new SqlCommand(selectSql, sqlConnection);
         selectCmd.Parameters.AddWithValue("@count", count);
         selectCmd.Parameters.AddWithValue("@userId", userId);
         selectCmd.Parameters.AddWithValue("@week", weekString);
@@ -288,9 +290,9 @@ public sealed class SqlMarathonRepository : IMarathonRepository
               AND WeekScoping <> @week;
         """;
 
-        await using SqlCommand deactivateCmd = new SqlCommand(deactivateSql, connection);
-        deactivateCmd.Parameters.AddWithValue("@week", weekString);
-        await deactivateCmd.ExecuteNonQueryAsync();
+        await using SqlCommand deactivateCommand = new SqlCommand(deactivateSql, sqlConnection);
+        deactivateCommand.Parameters.AddWithValue("@week", weekString);
+        await deactivateCommand.ExecuteNonQueryAsync();
 
         foreach (int id in ids)
         {
@@ -300,10 +302,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 WHERE Id = @id;
             """;
 
-            await using SqlCommand updateCmd = new SqlCommand(updateSql, connection);
-            updateCmd.Parameters.AddWithValue("@week", weekString);
-            updateCmd.Parameters.AddWithValue("@id", id);
-            await updateCmd.ExecuteNonQueryAsync();
+            await using SqlCommand updateCommand = new SqlCommand(updateSql, sqlConnection);
+            updateCommand.Parameters.AddWithValue("@week", weekString);
+            updateCommand.Parameters.AddWithValue("@id", id);
+            await updateCommand.ExecuteNonQueryAsync();
         }
     }
 
@@ -320,11 +322,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<MovieApp.Core.Models.Movie.Movie> movies = new List<MovieApp.Core.Models.Movie.Movie>();
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
         {
@@ -355,11 +357,11 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
-        await connection.OpenAsync();
+        await sqlConnection.OpenAsync();
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
         {
@@ -383,10 +385,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
             WHERE MarathonId = @marathonId;
         """;
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await sqlConnection.OpenAsync();
 
-        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, connection);
+        await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
         object? result = await sqlCommand.ExecuteScalarAsync();
