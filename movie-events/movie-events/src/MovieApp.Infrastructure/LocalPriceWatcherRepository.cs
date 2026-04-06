@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
@@ -12,7 +13,7 @@ namespace MovieApp.Infrastructure;
 public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
 {
     private readonly string _filePath;
-    private const int MaxWatchLimit = 10;
+    private const int MAX_WATCH_LIMIT = 10;
 
     public LocalPriceWatcherRepository(string folderPath)
     {
@@ -28,7 +29,7 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
 
         try
         {
-            var json = await File.ReadAllTextAsync(_filePath);
+            string json = await File.ReadAllTextAsync(_filePath);
             return JsonSerializer.Deserialize<List<WatchedEvent>>(json) ?? new List<WatchedEvent>();
         }
         catch
@@ -39,14 +40,14 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
 
     public async Task<bool> AddWatchAsync(WatchedEvent watchedEvent)
     {
-        var events = await GetAllWatchedEventsAsync();
+        List<WatchedEvent> events = await GetAllWatchedEventsAsync();
 
         if (events.Any(e => e.EventId == watchedEvent.EventId))
         {
             return false;
         }
 
-        if (events.Count >= MaxWatchLimit)
+        if (events.Count >= MAX_WATCH_LIMIT)
         {
             return false;
         }
@@ -58,8 +59,8 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
 
     public async Task RemoveWatchAsync(int eventId)
     {
-        var events = await GetAllWatchedEventsAsync();
-        var itemToRemove = events.FirstOrDefault(e => e.EventId == eventId);
+        List<WatchedEvent> events = await GetAllWatchedEventsAsync();
+        WatchedEvent? itemToRemove = events.FirstOrDefault(e => e.EventId == eventId);
         
         if (itemToRemove != null)
         {
@@ -70,19 +71,19 @@ public sealed class LocalPriceWatcherRepository : IPriceWatcherRepository
 
     public async Task<WatchedEvent?> GetWatchAsync(int eventId)
     {
-        var events = await GetAllWatchedEventsAsync();
+        List<WatchedEvent> events = await GetAllWatchedEventsAsync();
         return events.FirstOrDefault(e => e.EventId == eventId);
     }
 
     public async Task<bool> IsWatchingAsync(int eventId)
     {
-        var events = await GetAllWatchedEventsAsync();
+        List<WatchedEvent> events = await GetAllWatchedEventsAsync();
         return events.Any(e => e.EventId == eventId);
     }
 
     private async Task SaveAllAsync(List<WatchedEvent> events)
     {
-        var json = JsonSerializer.Serialize(events);
+        string json = JsonSerializer.Serialize(events);
         await File.WriteAllTextAsync(_filePath, json);
     }
 }
