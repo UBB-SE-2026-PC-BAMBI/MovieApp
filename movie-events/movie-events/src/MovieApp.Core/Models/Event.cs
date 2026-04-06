@@ -85,4 +85,15 @@ public sealed class Event
     /// Gets a value indicating whether the event is available for enrollment.
     /// </summary>
     public bool IsAvailable => this.AvailableSpots > 0 && this.EventDateTime > DateTime.Now;
+
+    /// <summary>
+    /// Gets or sets the discount percentage applied to this event for the current user.
+    /// </summary>
+    public int DiscountPercentage { get; set; }
+
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the current user has already joined this event.
+    /// </summary>
+    public bool IsJoined { get; set; }
 }
