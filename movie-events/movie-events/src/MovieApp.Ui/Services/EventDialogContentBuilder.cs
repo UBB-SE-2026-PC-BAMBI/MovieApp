@@ -96,6 +96,8 @@ public sealed class EventDialogContentBuilder
 
         model.UseFreePassAction = async () =>
         {
+            closeDialogAction();
+
             ContentDialog confirmDialog = new ContentDialog
             {
                 XamlRoot = xamlRoot,
@@ -105,6 +107,8 @@ public sealed class EventDialogContentBuilder
                 CloseButtonText = "Cancel",
                 DefaultButton = ContentDialogButton.Primary,
             };
+
+            await Task.Delay(150);
 
             ContentDialogResult result = await confirmDialog.ShowAsync();
             if (result == ContentDialogResult.Primary && currentUser is not null)
@@ -118,6 +122,7 @@ public sealed class EventDialogContentBuilder
         model.ShowSeatGuideAction = async () =>
         {
             closeDialogAction();
+            await Task.Delay(150);
             int capacity = movieEvent.MaxCapacity > 0 ? movieEvent.MaxCapacity : 50;
             SeatGuideDialog seatDialog = new SeatGuideDialog(capacity) { XamlRoot = xamlRoot };
             await seatDialog.ShowAsync();
