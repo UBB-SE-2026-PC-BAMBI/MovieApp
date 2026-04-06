@@ -6,6 +6,8 @@ using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
+using System;
+using System.IO;
 
 namespace MovieApp.Ui;
 
@@ -37,6 +39,7 @@ public partial class App : Application
     public static ReelAnimationService? ReelAnimationService { get; private set; }
     public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
     public static IEventUserStateService? EventUserStateService { get; private set; }
+    public static IEventJoinService? EventJoinService { get; private set; }
     public static bool StreakSpinGrantedOnLogin { get; private set; }
 
     public App()
@@ -115,6 +118,7 @@ public partial class App : Application
             SlotMachineAnimationService = slotMachineAnimationService;
             MarathonRepository = marathonRepository;
             EventUserStateService = new EventUserStateService();
+            EventJoinService = new EventJoinService();
 
             string localDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MovieApp");
             Directory.CreateDirectory(localDataFolder);
@@ -168,6 +172,7 @@ public partial class App : Application
         ReelAnimationService = null;
         SlotMachineAnimationService = null;
         EventUserStateService = null;
+        EventJoinService = null;
     }
 
     private static string BuildStartupErrorMessage(Exception exception)

@@ -2,7 +2,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MovieApp.Core.Models;
-using MovieApp.Ui.Controls;
 using MovieApp.Ui.Navigation;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
@@ -99,5 +98,22 @@ public sealed partial class HomePage : Page
             discountPercentage: discountPercentage);
 
         await dialog.ShowAsync();
+    }
+
+    private async void JoinEventButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.DataContext is not Event selectedEvent)
+        {
+            return;
+        }
+
+        button.IsEnabled = false;
+
+        if (App.EventJoinService is not null)
+        {
+            string tag = button.Tag?.ToString() ?? string.Empty;
+            JoinEventResult result = await App.EventJoinService.JoinEventAsync(selectedEvent.Id, tag);
+            button.Content = result.Message;
+        }
     }
 }
