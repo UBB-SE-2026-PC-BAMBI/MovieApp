@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
@@ -17,9 +13,9 @@ public sealed class EventManagementViewModel : EventListPageViewModel
     {
         _eventRepository = App.EventRepository;
         _notificationService = App.NotificationService;
-        CreateEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(CreateEventAsync);
-        EditEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
-        DeleteEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(DeleteEventAsync, () => SelectedEvent is not null);
+        CreateEventCommand = new AsyncRelayCommand(CreateEventAsync);
+        EditEventCommand = new AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
+        DeleteEventCommand = new AsyncRelayCommand(DeleteEventAsync, () => SelectedEvent is not null);
     }
 
     public override string PageTitle => "Event Management";
