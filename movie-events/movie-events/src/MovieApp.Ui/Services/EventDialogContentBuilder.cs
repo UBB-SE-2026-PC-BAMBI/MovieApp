@@ -19,7 +19,7 @@ public sealed class EventDialogContentBuilder
         _currentUserService = currentUserService;
     }
 
-    public async Task ShowEventDialogAsync(
+    public async Task<ContentDialog> BuildDialogAsync(
         Event movieEvent,
         XamlRoot xamlRoot,
         bool isJackpotEvent = false,
@@ -42,7 +42,7 @@ public sealed class EventDialogContentBuilder
 
         dialog.Content = EventDialogViewBuilder.Create(dialogViewModel);
 
-        await dialog.ShowAsync();
+        return dialog;
     }
 
     private async Task<EventDialogViewModel> BuildViewModelAsync(

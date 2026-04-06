@@ -66,10 +66,12 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        await _dialogBuilder.ShowEventDialogAsync(
+        ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
             selectedEvent,
             XamlRoot,
             isJackpotEvent: false,
             discountPercentage: null);
+
+        await dialog.ShowAsync();
     }
 }

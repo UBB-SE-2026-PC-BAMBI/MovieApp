@@ -83,12 +83,12 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        int? discountPercentage = EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int percentage) ? (int?)percentage : null;
-
-        await _dialogBuilder.ShowEventDialogAsync(
+        ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
             selectedEvent,
             XamlRoot,
             isJackpotEvent: false,
-            discountPercentage: discountPercentage);
+            discountPercentage: null);
+
+        await dialog.ShowAsync();
     }
 }

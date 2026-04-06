@@ -64,11 +64,13 @@ public sealed partial class SlotMachinePage : Page
             ? (EventCard.DiscountByEventId.TryGetValue(selectedEvent.Id, out int percentage) ? percentage : 70)
             : 0;
 
-        await _dialogBuilder.ShowEventDialogAsync(
+        ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
             selectedEvent,
             XamlRoot,
             isJackpotEvent: item.IsJackpotEvent,
             discountPercentage: item.IsJackpotEvent ? discountPercentage : null);
+
+        await dialog.ShowAsync();
 
         this.Focus(FocusState.Programmatic);
 
