@@ -1,12 +1,7 @@
-// <copyright file="SqlEventRepository.cs" company="MovieApp">
-// Copyright (c) MovieApp. All rights reserved.
-// </copyright>
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
 
 using Microsoft.Data.SqlClient;
 

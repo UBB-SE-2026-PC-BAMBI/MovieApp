@@ -1,8 +1,4 @@
-﻿// <copyright file="SqlMarathonRepository.cs" company="MovieApp">
-// Copyright (c) MovieApp. All rights reserved.
-// </copyright>
-
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Models;

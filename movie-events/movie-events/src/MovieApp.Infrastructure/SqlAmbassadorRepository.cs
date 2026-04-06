@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+
 using MovieApp.Core.Repositories;
 
 namespace MovieApp.Infrastructure;
