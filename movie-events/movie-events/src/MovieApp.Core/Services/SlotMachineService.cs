@@ -12,12 +12,12 @@ public sealed class SlotMachineService
     private readonly IUserMovieDiscountRepository _discountRepository;
     private readonly Random _random = new();
 
-    private readonly int RESET_SPINS = 5;
-    private readonly int NO_SPINS = 0;
-    private readonly int DISCOUNT_PERCENTAGE = 70;
-    private readonly double DISCOUNT_PERCENTAGE_DOUBLE = 70.0;
-    private readonly int STREAK = 3;
-
+    private const int RESET_SPINS = 5;
+    private const int NO_SPINS = 0;
+    private const int DISCOUNT_PERCENTAGE = 70;
+    private const double DISCOUNT_PERCENTAGE_DOUBLE = 70.0;
+    private const int LOGIN_STREAK = 3;
+    private const int MAX_EVENT_SPIN_PER_DAY = 2;
     public SlotMachineService(
         IUserSlotMachineStateRepository stateRepository,
         IMovieRepository movieRepository,
@@ -133,7 +133,7 @@ public sealed class SlotMachineService
     public async Task<bool> GrantBonusSpinForEventParticipationAsync(int userId)
     {
         UserSpinData state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
-        if (state.EventSpinRewardsToday < 2)
+        if (state.EventSpinRewardsToday < MAX_EVENT_SPIN_PER_DAY)
         {
             state.BonusSpins++;
             state.EventSpinRewardsToday++;
@@ -159,7 +159,7 @@ public sealed class SlotMachineService
         state.UpdateLoginStreak();
 
         bool granted = false;
-        if (state.LoginStreak >= STREAK)
+        if (state.LoginStreak >= LOGIN_STREAK)
         {
             state.BonusSpins++;
             state.LoginStreak = 0;
@@ -173,7 +173,7 @@ public sealed class SlotMachineService
     public async Task<bool> GrantStreakSpinAsync(int userId)
     {
         UserSpinData state = await _stateRepository.GetByUserIdAsync(userId) ?? throw new InvalidOperationException("User state not found");
-        if (state.LoginStreak >= STREAK)
+        if (state.LoginStreak >= LOGIN_STREAK)
         {
             state.BonusSpins++;
             state.LoginStreak = 0;
