@@ -6,8 +6,6 @@ using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
-using System;
-using System.IO;
 
 namespace MovieApp.Ui;
 
@@ -40,6 +38,7 @@ public partial class App : Application
     public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
     public static IEventUserStateService? EventUserStateService { get; private set; }
     public static IEventJoinService? EventJoinService { get; private set; }
+    public static IWatchlistPathProvider? WatchlistPathProvider { get; private set; }
     public static bool StreakSpinGrantedOnLogin { get; private set; }
 
     public App()
@@ -120,8 +119,8 @@ public partial class App : Application
             EventUserStateService = new EventUserStateService();
             EventJoinService = new EventJoinService();
 
-            string localDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MovieApp");
-            Directory.CreateDirectory(localDataFolder);
+            WatchlistPathProvider = new WatchlistPathProvider();
+            string localDataFolder = WatchlistPathProvider.GetWatchlistFolderPath();
             PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
 
             StreakSpinGrantedOnLogin = await slotMachineService.RecordLoginAndCheckStreakAsync(
@@ -162,6 +161,7 @@ public partial class App : Application
         FavoriteEventService = null;
         NotificationService = null;
         PriceWatcherRepository = null;
+        WatchlistPathProvider = null;
         CurrentUserId = 0;
         MovieRepository = null;
         SlotMachineStateRepository = null;
