@@ -16,7 +16,7 @@ public sealed class LocalPriceWatcherRepositoryTests : IDisposable
     {
         _testFolderPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_testFolderPath);
-        
+
         _repository = new LocalPriceWatcherRepository(_testFolderPath);
     }
 
@@ -94,7 +94,7 @@ public sealed class LocalPriceWatcherRepositoryTests : IDisposable
         Assert.Single(allEvents);
         Assert.Equal(2, allEvents.First().EventId);
     }
-    
+
     [Fact]
     public async Task IsWatchingAsync_WhenEventIsWatched_ReturnsTrue()
     {
@@ -103,5 +103,67 @@ public sealed class LocalPriceWatcherRepositoryTests : IDisposable
         var result = await _repository.IsWatchingAsync(5);
 
         Assert.True(result);
+    }
+
+
+    // ── New Edge Case & Integration Tests ───────────────────────────────
+
+    [Fact]
+    public async Task RemoveWatchAsync_WhenEventDoesNotExist_DoesNotThrow()
+    {
+        var exception = await Record.ExceptionAsync(() => _repository.RemoveWatchAsync(999));
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public async Task GetWatchAsync_WhenEventIsWatched_ReturnsCorrectTargetPrice()
+    {
+        var newWatch = new WatchedEvent { EventId = 1, TargetPrice = 15.50m };
+        await _repository.AddWatchAsync(newWatch);
+
+        var result = await _repository.GetWatchAsync(1);
+
+        Assert.NotNull(result);
+        Assert.Equal(15.50m, result.TargetPrice);
+    }
+
+    [Fact]
+    public async Task GetWatchAsync_WhenEventIsNotWatched_ReturnsNull()
+    {
+        var result = await _repository.GetWatchAsync(999);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task AddWatchAsync_WhenFileIsCorrupt_ReturnsEmptyListAndDoesNotThrow()
+    {
+        var filePath = Path.Combine(_testFolderPath, "watched_events.json");
+        await File.WriteAllTextAsync(filePath, "{ this is not valid json! ::: }");
+
+        var newWatch = new WatchedEvent { EventId = 1 };
+
+        var exception = await Record.ExceptionAsync(() => _repository.AddWatchAsync(newWatch));
+
+        Assert.Null(exception);
+
+        var allEvents = await _repository.GetAllWatchedEventsAsync();
+        Assert.Single(allEvents);
+        Assert.Equal(1, allEvents.First().EventId);
+    }
+
+    [Fact]
+    public async Task GetAllWatchedEventsAsync_WhenMultipleEventsAdded_ReturnsAllInAdditionOrder()
+    {
+        await _repository.AddWatchAsync(new WatchedEvent { EventId = 3 });
+        await _repository.AddWatchAsync(new WatchedEvent { EventId = 1 });
+        await _repository.AddWatchAsync(new WatchedEvent { EventId = 2 });
+
+        var result = await _repository.GetAllWatchedEventsAsync();
+
+        Assert.Equal(3, result.Count);
+        Assert.Equal(3, result[0].EventId);
+        Assert.Equal(1, result[1].EventId);
+        Assert.Equal(2, result[2].EventId);
     }
 }

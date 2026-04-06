@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <Platforms>AnyCPU;ARM32;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
