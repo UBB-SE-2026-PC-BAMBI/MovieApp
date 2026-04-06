@@ -1,3 +1,4 @@
+namespace MovieApp.Infrastructure;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,15 +6,13 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing user slot-machine state. 
 /// Handles data access to the dbo.UserSpins table and maps records to <see cref="UserSpinData"/>.
 /// </summary>
 public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlUserSlotMachineStateRepository"/> class.
@@ -23,7 +22,7 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
     public SqlUserSlotMachineStateRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -36,7 +35,7 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
     {
         const string sqlStringCommand = "SELECT UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday FROM dbo.UserSpins WHERE UserId = @userId";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -44,7 +43,9 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
 
         await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
         if (!await sqlDataReader.ReadAsync(cancellationToken))
+        {
             return null;
+        }
 
         return new UserSpinData
         {
@@ -55,7 +56,7 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
             LastTriviaSpinReset = sqlDataReader.IsDBNull(4) ? default : sqlDataReader.GetDateTime(4),
             LoginStreak = sqlDataReader.GetInt32(5),
             LastLoginDate = sqlDataReader.IsDBNull(6) ? default : sqlDataReader.GetDateTime(6),
-            EventSpinRewardsToday = sqlDataReader.GetInt32(7)
+            EventSpinRewardsToday = sqlDataReader.GetInt32(7),
         };
     }
 
@@ -65,11 +66,12 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
     /// <param name="state">The <see cref="UserSpinData"/> object to insert.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <remarks>Uninitialized (default) DateTime fields are stored as database NULLs.</remarks>
+    /// <returns>Returns a Task.</returns>
     public async Task CreateAsync(UserSpinData state, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = "INSERT INTO dbo.UserSpins (UserId, DailySpinsRemaining, BonusSpins, LastSlotSpinReset, LastTriviaSpinReset, LoginStreak, LastLoginDate, EventSpinRewardsToday) VALUES (@userId, @dailySpins, @bonusSpins, @lastSlotReset, @lastTriviaReset, @loginStreak, @lastLoginDate, @eventRewards)";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -91,11 +93,12 @@ public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRep
     /// <param name="state">The <see cref="UserSpinData"/> object containing the updated values.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <remarks>Uninitialized (default) DateTime fields are stored as database NULLs.</remarks>
+    /// <returns>Returns a Task.</returns>
     public async Task UpdateAsync(UserSpinData state, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = "UPDATE dbo.UserSpins SET DailySpinsRemaining = @dailySpins, BonusSpins = @bonusSpins, LastSlotSpinReset = @lastSlotReset, LastTriviaSpinReset = @lastTriviaReset, LoginStreak = @loginStreak, LastLoginDate = @lastLoginDate, EventSpinRewardsToday = @eventRewards WHERE UserId = @userId";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

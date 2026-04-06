@@ -1,4 +1,5 @@
-﻿using System;
+﻿namespace MovieApp.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,23 +8,22 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// SQL Server-backed implementation of <see cref="IMarathonRepository"/>.
 /// Handles data access operations for marathons, user progress, leaderboards, and weekly assignments.
 /// </summary>
 public sealed class SqlMarathonRepository : IMarathonRepository
 {
-    private readonly string _connectionString;
+    private const int DaysInWeek = 7;
+    private const int Days = 6;
+    private const int Hours = 23;
+    private const int Minutes = 59;
+    private const int Seconds = 59;
 
-    private const int DAYS_IN_WEEK = 7;
-    private const int DAYS = 6;
-    private const int HOURS = 23;
-    private const int MINUTES = 59;
-    private const int SECONDS = 59;
+    private readonly string connectionString;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="SqlMarathonRepository"/> class.
     /// Initialises a new instance of the <see cref="SqlMarathonRepository"/> class.
     /// </summary>
     /// <param name="databaseOptions">Database connection options containing the connection string.</param>
@@ -31,7 +31,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
     {
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT Id, Title, Description, PosterUrl, Theme, PrerequisiteMarathonId, WeekScoping " +
             "FROM dbo.Marathons WHERE IsActive = 1", sqlConnection);
@@ -58,9 +58,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 PosterUrl = sqlDataReader.GetString(3),
                 Theme = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetString(4),
                 PrerequisiteMarathonId = sqlDataReader.IsDBNull(5) ? null : sqlDataReader.GetInt32(5),
-                WeekScoping = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6)
+                WeekScoping = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6),
             });
         }
+
         return marathons;
     }
 
@@ -69,13 +70,13 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// </summary>
     /// <param name="marathonId">The unique identifier of the marathon.</param>
     /// <returns>
-    /// A collection of <see cref="MarathonProgress"/> objects ranked by completed movies (desc), 
+    /// A collection of <see cref="MarathonProgress"/> objects ranked by completed movies (desc),
     /// trivia accuracy (desc), and completion time (asc).
     /// </returns>
     public async Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
     {
         List<MarathonProgress> rankings = new List<MarathonProgress>();
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         const string sqlStringCommand = """
             SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt
             FROM dbo.MarathonProgress
@@ -98,9 +99,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 MarathonId = sqlDataReader.GetInt32(1),
                 TriviaAccuracy = sqlDataReader.GetDouble(2),
                 CompletedMoviesCount = sqlDataReader.GetInt32(3),
-                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
+                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4),
             });
         }
+
         return rankings;
     }
 
@@ -112,7 +114,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns>The <see cref="MarathonProgress"/> if found; otherwise, <c>null</c>.</returns>
     public async Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt " +
             "FROM dbo.MarathonProgress WHERE UserId = @UserId AND MarathonId = @MarathonId", sqlConnection);
@@ -130,9 +132,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 MarathonId = sqlDataReader.GetInt32(1),
                 TriviaAccuracy = sqlDataReader.GetDouble(2),
                 CompletedMoviesCount = sqlDataReader.GetInt32(3),
-                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4)
+                FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4),
             };
         }
+
         return null;
     }
 
@@ -144,7 +147,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns><c>true</c> if the user successfully joined; otherwise, <c>false</c>.</returns>
     public async Task<bool> JoinMarathonAsync(int userId, int marathonId)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "INSERT INTO dbo.MarathonProgress (UserId, MarathonId, JoinedAt) " +
             "VALUES (@UserId, @MarathonId, @JoinedAt)", sqlConnection);
@@ -164,7 +167,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns><c>true</c> if the progress was updated successfully; otherwise, <c>false</c>.</returns>
     public async Task<bool> UpdateProgressAsync(MarathonProgress progress)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "UPDATE dbo.MarathonProgress SET " +
             "TriviaAccuracy = @Accuracy, CompletedMoviesCount = @Count, FinishedAt = @FinishedAt " +
@@ -195,7 +198,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
               AND FinishedAt IS NOT NULL;
         """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -218,7 +221,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         WHERE MarathonId = @marathonId;
         """;
 
-        await using var sqlConnection = new SqlConnection(_connectionString);
+        await using var sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -226,23 +229,6 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         object? result = await sqlCommand.ExecuteScalarAsync();
         return Convert.ToInt32(result);
-    }
-
-    /// <summary>
-    /// Calculates the ISO week string and start/end boundaries for the current UTC week.
-    /// </summary>
-    /// <returns>A tuple containing the ISO week string, Monday start date, and Sunday end date.</returns>
-    private static (string weekString, DateTime weekStart, DateTime weekEnd) GetCurrentWeekBounds()
-    {
-        DateTime now = DateTime.UtcNow;
-        string? weekString = $"{now.Year}-W" +
-            System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
-
-        int daysFromMonday = ((int)now.DayOfWeek + DAYS) % DAYS_IN_WEEK;
-        DateTime monday = now.Date.AddDays(-daysFromMonday);
-        DateTime sunday = monday.AddDays(DAYS).AddHours(HOURS).AddMinutes(MINUTES).AddSeconds(SECONDS);
-
-        return (weekString, monday, sunday);
     }
 
     /// <summary>
@@ -256,7 +242,9 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         (string _, DateTime _, DateTime weekEnd) = GetCurrentWeekBounds();
 
         if (DateTime.UtcNow > weekEnd)
+        {
             return [];
+        }
 
         const string sqlStringCommand = """
             SELECT Id, Title, Description, PosterUrl, Theme,
@@ -272,7 +260,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@week", weekString);
         sqlCommand.Parameters.AddWithValue("@userId", userId);
@@ -292,6 +280,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 WeekScoping = sqlDataReader.IsDBNull(6) ? null : sqlDataReader.GetString(6),
             });
         }
+
         return marathons;
     }
 
@@ -302,6 +291,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <param name="userId">The ID of the user used to exclude already finished marathons.</param>
     /// <param name="weekString">The target ISO week string.</param>
     /// <param name="count">The number of marathons to assign (default is 10).</param>
+    /// <returns>Returns a Task.</returns>
     public async Task AssignWeeklyMarathonsAsync(int userId, string weekString, int count = 10)
     {
         const string selectSql = """
@@ -318,7 +308,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         List<int> ids = new List<int>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand selectCmd = new SqlCommand(selectSql, sqlConnection);
@@ -328,11 +318,16 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         await using SqlDataReader sqlDataReader = await selectCmd.ExecuteReaderAsync();
         while (await sqlDataReader.ReadAsync())
+        {
             ids.Add(sqlDataReader.GetInt32(0));
+        }
 
         await sqlDataReader.CloseAsync();
 
-        if (ids.Count == 0) return;
+        if (ids.Count == 0)
+        { 
+            return;
+        }
 
         const string deactivateSql = """
             UPDATE dbo.Marathons
@@ -376,7 +371,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<MovieApp.Core.Models.Movie.Movie> movies = new List<MovieApp.Core.Models.Movie.Movie>();
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
@@ -393,6 +388,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
             });
         }
+
         return movies;
     }
 
@@ -414,7 +410,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
@@ -431,6 +427,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 FinishedAt = sqlDataReader.IsDBNull(4) ? null : sqlDataReader.GetDateTime(4),
             });
         }
+
         return entries;
     }
 
@@ -446,7 +443,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
             WHERE MarathonId = @marathonId;
         """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -454,5 +451,22 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         object? result = await sqlCommand.ExecuteScalarAsync();
         return Convert.ToInt32(result);
+    }
+
+    /// <summary>
+    /// Calculates the ISO week string and start/end boundaries for the current UTC week.
+    /// </summary>
+    /// <returns>A tuple containing the ISO week string, Monday start date, and Sunday end date.</returns>
+    private static (string weekString, DateTime weekStart, DateTime weekEnd) GetCurrentWeekBounds()
+    {
+        DateTime now = DateTime.UtcNow;
+        string? weekString = $"{now.Year}-W" +
+            System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
+
+        int daysFromMonday = ((int)now.DayOfWeek + Days) % DaysInWeek;
+        DateTime monday = now.Date.AddDays(-daysFromMonday);
+        DateTime sunday = monday.AddDays(Days).AddHours(Hours).AddMinutes(Minutes).AddSeconds(Seconds);
+
+        return (weekString, monday, sunday);
     }
 }

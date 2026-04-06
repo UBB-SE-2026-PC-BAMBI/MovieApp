@@ -1,3 +1,4 @@
+namespace MovieApp.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -6,14 +7,12 @@ using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing user event attendance via ADO.NET.
 /// </summary>
 public sealed class SqlUserEventAttendanceRepository : IUserEventAttendanceRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlUserEventAttendanceRepository"/> class.
@@ -23,7 +22,7 @@ public sealed class SqlUserEventAttendanceRepository : IUserEventAttendanceRepos
     public SqlUserEventAttendanceRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -38,15 +37,17 @@ public sealed class SqlUserEventAttendanceRepository : IUserEventAttendanceRepos
 
         List<int> eventIds = new List<int>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@userId", userId);
 
-        await using SqlDataReader SqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
-        while (await SqlDataReader.ReadAsync(cancellationToken))
-            eventIds.Add(SqlDataReader.GetInt32(0));
+        await using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync(cancellationToken);
+        while (await sqlDataReader.ReadAsync(cancellationToken))
+        {
+            eventIds.Add(sqlDataReader.GetInt32(0));
+        }
 
         return eventIds;
     }
@@ -60,6 +61,7 @@ public sealed class SqlUserEventAttendanceRepository : IUserEventAttendanceRepos
     /// <remarks>
     /// This method is idempotent. It will safely do nothing if the user is already registered for the specified event.
     /// </remarks>
+    /// <returns>Returns a Task.</returns>
     public async Task JoinAsync(int userId, int eventId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
@@ -70,7 +72,7 @@ public sealed class SqlUserEventAttendanceRepository : IUserEventAttendanceRepos
             INSERT INTO dbo.UserEventAttendance (UserId, EventId)
             VALUES (@userId, @eventId)";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

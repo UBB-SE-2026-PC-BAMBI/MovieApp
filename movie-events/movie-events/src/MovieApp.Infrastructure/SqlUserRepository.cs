@@ -1,3 +1,4 @@
+namespace MovieApp.Infrastructure;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
@@ -5,14 +6,12 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing user accounts via ADO.NET.
 /// </summary>
 public sealed class SqlUserRepository : IUserRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlUserRepository"/> class.
@@ -20,7 +19,7 @@ public sealed class SqlUserRepository : IUserRepository
     /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlUserRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -39,7 +38,7 @@ public sealed class SqlUserRepository : IUserRepository
               AND AuthSubject = @authSubject;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

@@ -1,3 +1,5 @@
+namespace MovieApp.Infrastructure;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -7,15 +9,13 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing screenings that map movies to events.
 /// Handles database operations via ADO.NET.
 /// </summary>
 public sealed class SqlScreeningRepository : IScreeningRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlScreeningRepository"/> class.
@@ -25,7 +25,7 @@ public sealed class SqlScreeningRepository : IScreeningRepository
     public SqlScreeningRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public sealed class SqlScreeningRepository : IScreeningRepository
 
         List<Screening> screenings = new List<Screening>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -57,7 +57,7 @@ public sealed class SqlScreeningRepository : IScreeningRepository
                 Id = sqlDataReader.GetInt32(0),
                 EventId = sqlDataReader.GetInt32(1),
                 MovieId = sqlDataReader.GetInt32(2),
-                ScreeningTime = sqlDataReader.GetDateTime(3)
+                ScreeningTime = sqlDataReader.GetDateTime(3),
             });
         }
 
@@ -79,7 +79,7 @@ public sealed class SqlScreeningRepository : IScreeningRepository
 
         List<Screening> screenings = new List<Screening>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -93,7 +93,7 @@ public sealed class SqlScreeningRepository : IScreeningRepository
                 Id = sqlDataReader.GetInt32(0),
                 EventId = sqlDataReader.GetInt32(1),
                 MovieId = sqlDataReader.GetInt32(2),
-                ScreeningTime = sqlDataReader.GetDateTime(3)
+                ScreeningTime = sqlDataReader.GetDateTime(3),
             });
         }
 
@@ -105,13 +105,14 @@ public sealed class SqlScreeningRepository : IScreeningRepository
     /// </summary>
     /// <param name="screening">The <see cref="Screening"/> object containing the event ID, movie ID, and screening time.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns name="Task">Returns a Task.</returns>
     public async Task AddAsync(Screening screening, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
             INSERT INTO dbo.Screenings (EventId, MovieId, ScreeningTime)
             VALUES (@eventId, @movieId, @screeningTime)";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿namespace MovieApp.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,14 +8,12 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing user notifications via ADO.NET.
 /// </summary>
 public sealed class SqlNotificationRepository : INotificationRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlNotificationRepository"/> class.
@@ -22,7 +21,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
     /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlNotificationRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -31,6 +30,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
     /// <param name="notification">The <see cref="Notification"/> to add.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <remarks>The notification's state is stored as its string representation.</remarks>
+    /// <returns>Returns a Task.</returns>
     public async Task AddAsync(Notification notification, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -38,7 +38,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
             VALUES (@userId, @eventId, @type, @message, @state, @createdAt);
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -57,6 +57,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
     /// </summary>
     /// <param name="notificationId">The unique identifier of the notification to remove.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>Returns a Task.</returns>
     public async Task RemoveAsync(int notificationId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = """
@@ -64,7 +65,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
             WHERE Id = @id;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -88,7 +89,7 @@ public sealed class SqlNotificationRepository : INotificationRepository
             ORDER BY CreatedAt DESC;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

@@ -1,10 +1,9 @@
-using Microsoft.Data.SqlClient;
-using MovieApp.Core.Repositories;
+namespace MovieApp.Infrastructure;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
-namespace MovieApp.Infrastructure;
+using Microsoft.Data.SqlClient;
+using MovieApp.Core.Repositories;
 
 /// <summary>
 /// A SQL Server implementation of <see cref="IAmbassadorRepository"/> using ADO.NET.
@@ -12,7 +11,7 @@ namespace MovieApp.Infrastructure;
 /// </summary>
 public sealed class SqlAmbassadorRepository : IAmbassadorRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlAmbassadorRepository"/> class.
@@ -20,7 +19,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlAmbassadorRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -31,7 +30,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns><c>true</c> if the referral code is valid and exists; otherwise, <c>false</c>.</returns>
     public async Task<bool> IsReferralCodeValidAsync(string referralCode, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.CheckReferralCodeExists, sqlConnection);
@@ -49,7 +48,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns>The user's referral code, or <c>null</c> if not found.</returns>
     public async Task<string?> GetReferralCodeAsync(int userId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.SelectReferralCodeByUserId, sqlConnection);
@@ -64,9 +63,10 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <param name="userId">The unique identifier of the user to become an ambassador.</param>
     /// <param name="referralCode">The new referral code to assign.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns name="Task">Returns a Task.</returns>
     public async Task CreateAmbassadorProfileAsync(int userId, string referralCode, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.InsertAmbassadorProfile, sqlConnection);
@@ -84,7 +84,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns>The user ID associated with the referral code, or <c>null</c> if not found.</returns>
     public async Task<int?> GetUserIdByReferralCodeAsync(string referralCode, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.SelectUserIdByReferralCode, sqlConnection);
@@ -101,9 +101,10 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <param name="friendId">The ID of the friend who used the code.</param>
     /// <param name="eventId">The ID of the event associated with the referral.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// /// <returns name="Task">Returns a Task.</returns>
     public async Task AddReferralLogAsync(int ambassadorId, int friendId, int eventId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.InsertReferralLog, sqlConnection);
@@ -122,7 +123,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns><c>true</c> if a reward was successfully applied; otherwise, <c>false</c>.</returns>
     public async Task<bool> TryApplyRewardAsync(int ambassadorId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.ApplyRewardIfEligible, sqlConnection);
@@ -140,7 +141,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns>An <see cref="IEnumerable{ReferralHistoryItem}"/> representing the ambassador's successful referrals.</returns>
     public async Task<IEnumerable<MovieApp.Core.Models.ReferralHistoryItem>> GetReferralHistoryAsync(int ambassadorId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.SelectReferralHistoryByAmbassadorId, sqlConnection);
@@ -169,7 +170,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// <returns>The user's current reward balance. Returns 0 if no balance exists.</returns>
     public async Task<int> GetRewardBalanceAsync(int userId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.SelectRewardBalance, sqlConnection);
@@ -184,9 +185,10 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
     /// </summary>
     /// <param name="userId">The unique identifier of the user.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// /// <returns name="Task">Returns a Task.</returns>
     public async Task DecrementRewardBalanceAsync(int userId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(ReferralSqlQueries.DecrementRewardBalance, sqlConnection);
@@ -214,7 +216,7 @@ public sealed class SqlAmbassadorRepository : IAmbassadorRepository
             ) THEN 1 ELSE 0 END AS BIT);
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

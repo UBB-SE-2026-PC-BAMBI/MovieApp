@@ -1,17 +1,15 @@
+namespace MovieApp.Infrastructure;
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
-
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// SQL Server implementation of <see cref="IFavoriteEventRepository"/>.
 /// Provides methods for managing user favorite events in the database.
 /// </summary>
 public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlFavoriteEventRepository"/> class.
@@ -19,7 +17,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
     /// <param name="databaseOptions">The database configuration options containing the connection string.</param>
     public SqlFavoriteEventRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -39,7 +37,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
             VALUES (@userId, @eventId);
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -67,7 +65,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
               AND EventId = @eventId;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -95,7 +93,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
             ORDER BY CreatedAt DESC;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -122,7 +120,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
               AND EventId = @eventId;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -149,7 +147,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
             WHERE EventId = @eventId;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -185,7 +183,7 @@ public sealed class SqlFavoriteEventRepository : IFavoriteEventRepository
             ORDER BY CreatedAt DESC;
             """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
