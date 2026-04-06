@@ -16,6 +16,12 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 {
     private readonly string _connectionString;
 
+    private const int DAYS_IN_WEEK = 7;
+    private const int DAYS = 6;
+    private const int HOURS = 23;
+    private const int MINUTES = 59;
+    private const int SECONDS = 59;
+
     /// <summary>
     /// Initialises a new instance of <see cref="SqlMarathonRepository"/>.
     /// </summary>
@@ -196,9 +202,9 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         string? weekString = $"{now.Year}-W" +
             System.Globalization.ISOWeek.GetWeekOfYear(now).ToString("D2");
 
-        int daysFromMonday = ((int)now.DayOfWeek + 6) % 7;
+        int daysFromMonday = ((int)now.DayOfWeek + DAYS) % DAYS_IN_WEEK;
         DateTime monday = now.Date.AddDays(-daysFromMonday);
-        DateTime sunday = monday.AddDays(6).AddHours(23).AddMinutes(59).AddSeconds(59);
+        DateTime sunday = monday.AddDays(DAYS).AddHours(HOURS).AddMinutes(MINUTES).AddSeconds(SECONDS);
 
         return (weekString, monday, sunday);
     }
@@ -300,10 +306,10 @@ public sealed class SqlMarathonRepository : IMarathonRepository
                 WHERE Id = @id;
             """;
 
-            await using SqlCommand updateCmd = new SqlCommand(updateSql, sqlConnection);
-            updateCmd.Parameters.AddWithValue("@week", weekString);
-            updateCmd.Parameters.AddWithValue("@id", id);
-            await updateCmd.ExecuteNonQueryAsync();
+            await using SqlCommand updateCommand = new SqlCommand(updateSql, sqlConnection);
+            updateCommand.Parameters.AddWithValue("@week", weekString);
+            updateCommand.Parameters.AddWithValue("@id", id);
+            await updateCommand.ExecuteNonQueryAsync();
         }
     }
 
