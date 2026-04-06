@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:MovieApp.Ui.Converters" 
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -146,12 +147,12 @@
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
                         Padding="10,6"
-                        Background="{x:Bind StatusBackgroundBrush, Mode=OneTime}"
+                        Background="{x:Bind StatusBackgroundBrush, Mode=OneWay}"
                         CornerRadius="999">
                         <TextBlock
                             FontSize="12"
                             FontWeight="SemiBold"
-                            Text="{x:Bind StatusText, Mode=OneTime}" />
+                            Text="{x:Bind StatusText, Mode=OneWay}" />
                     </Border>
                 </Grid>
 
@@ -197,20 +198,23 @@
                     </StackPanel>
                 </Grid>
 
-                <Border
-                    Margin="0,15,0,0"
-                    Padding="0"
-                    Background="Transparent">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon
-                            FontSize="14"
-                            Glyph="&#xE7FC;"
-                            Opacity="0.7" />
-                        <TextBlock
-                            Opacity="0.7"
-                            Text="Open for event details" />
-                    </StackPanel>
-                </Border>
+                <Grid Margin="0,15,0,0">
+                    <Button
+                        x:Name="JoinButton"
+                        HorizontalAlignment="Stretch"
+                        Content="Join Event"
+                        Tag="Join Event"
+                        Visibility="{x:Bind JoinButtonVisibility, Mode=OneWay}"
+                        Click="JoinEventButton_Click" />
+
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Opacity="0.7"
+                        Text="Already joined"
+                        Visibility="{x:Bind JoinedStatusVisibility, Mode=OneWay}" />
+                </Grid>
             </StackPanel>
         </Grid>
     </Border>

@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using MovieApp.Core.Models;
-using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -96,40 +95,10 @@ public sealed partial class EventCard : UserControl
     public bool HasDiscount => DiscountPercentage > 0;
 
     public Visibility DiscountBadgeVisibility => HasDiscount ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility JoinButtonVisibility => IsJoined ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility JoinedStatusVisibility => IsJoined ? Visibility.Visible : Visibility.Collapsed;
 
     public string DiscountBadgeText => $"-{DiscountPercentage}%";
-
-    public static void AttachJoinEventHandler(Button button, int eventId)
-    {
-        button.Click += async (sender, _) =>
-        {
-            if (sender is not Button btn) return;
-
-            btn.IsEnabled = false;
-
-            if (App.CurrentUserService?.CurrentUser is { } user)
-            {
-                if (App.UserEventAttendanceRepository is not null)
-                {
-                    await App.UserEventAttendanceRepository.JoinAsync(user.Id, eventId);
-                }
-
-                if (App.SlotMachineService is not null)
-                {
-                    bool granted = await App.SlotMachineService.GrantBonusSpinForEventParticipationAsync(user.Id);
-                    btn.Content = granted ? $"{btn.Tag} (+1 bonus spin)" : $"{btn.Tag}";
-                }
-                else
-                {
-                    btn.Content = $"{btn.Tag}";
-                }
-            }
-            else
-            {
-                btn.Content = $"{btn.Tag}";
-            }
-        };
-    }
 
     internal static string GetTitleText(Event? movieEvent) => movieEvent?.Title ?? "Untitled event";
 
@@ -204,6 +173,7 @@ public sealed partial class EventCard : UserControl
     {
         if (dependencyObject is EventCard card)
         {
+            card.IsJoined = false;
             card.RefreshComputedProperties();
         }
     }
@@ -288,6 +258,7 @@ public sealed partial class EventCard : UserControl
             System.Diagnostics.Debug.WriteLine($"Eroare la click: {ex.Message}");
         }
     }
+
     private async Task SyncWatcherStateAsync()
     {
         if (EventModel == null || WatcherButton == null) return;
@@ -299,9 +270,41 @@ public sealed partial class EventCard : UserControl
         WatcherButton.IsChecked = await repo.IsWatchingAsync(EventModel.Id);
     }
 
+    private async Task SyncJoinedStateAsync()
+    {
+        if (EventModel == null || App.EventUserStateService == null) return;
+
+        bool joined = await App.EventUserStateService.IsEventJoinedByUserAsync(EventModel.Id);
+
+        IsJoined = joined;
+        Bindings.Update();
+    }
+
     private void RefreshComputedProperties()
     {
         Bindings.Update();
         _ = SyncWatcherStateAsync();
+        _ = SyncJoinedStateAsync();
+    }
+
+    private async void JoinEventButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (EventModel is null || App.EventJoinService is null) return;
+
+        Button button = (Button)sender;
+        button.IsEnabled = false;
+
+        string tag = button.Tag?.ToString() ?? string.Empty;
+        JoinEventResult result = await App.EventJoinService.JoinEventAsync(EventModel.Id, tag);
+
+        if (result.Success)
+        {
+            IsJoined = true;
+            Bindings.Update();
+        }
+        else
+        {
+            button.IsEnabled = true;
+        }
     }
 }
