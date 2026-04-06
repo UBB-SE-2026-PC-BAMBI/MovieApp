@@ -1,3 +1,7 @@
+// <copyright file="EventListState.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Core.EventLists;
 
 /// <summary>
@@ -14,10 +18,19 @@ public sealed class EventListState
     /// </remarks>
     public string SearchText { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Gets or sets the currently selected sort option.
+    /// </summary>
     public EventSortOption SelectedSortOption { get; set; } = EventSortOption.DateAscending;
 
-    public EventFilterState ActiveFilters { get; set; } = new();
+    /// <summary>
+    /// Gets or sets the active filter criteria.
+    /// </summary>
+    public EventFilterState ActiveFilters { get; set; } = new ();
 
+    /// <summary>
+    /// Gets the list of available sort options for the UI.
+    /// </summary>
     public IReadOnlyList<EventSortOption> AvailableSortOptions { get; } =
     [
         EventSortOption.DateAscending,
@@ -30,13 +43,14 @@ public sealed class EventListState
     /// <summary>
     /// Creates a deep-enough copy for UI workflows that need to compare or edit state.
     /// </summary>
+    /// <returns>A new instance of <see cref="EventListState"/>.</returns>
     public EventListState Clone()
     {
         return new EventListState
         {
-            SearchText = SearchText,
-            SelectedSortOption = SelectedSortOption,
-            ActiveFilters = ActiveFilters.Clone(),
+            SearchText = this.SearchText,
+            SelectedSortOption = this.SelectedSortOption,
+            ActiveFilters = this.ActiveFilters.Clone(),
         };
     }
 
@@ -45,8 +59,8 @@ public sealed class EventListState
     /// </summary>
     public void Reset()
     {
-        SearchText = string.Empty;
-        SelectedSortOption = EventSortOption.DateAscending;
-        ActiveFilters.Reset();
+        this.SearchText = string.Empty;
+        this.SelectedSortOption = EventSortOption.DateAscending;
+        this.ActiveFilters.Reset();
     }
 }
