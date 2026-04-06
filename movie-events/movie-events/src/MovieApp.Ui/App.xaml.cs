@@ -6,8 +6,6 @@ using MovieApp.Infrastructure;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
-using System;
-using System.IO;
 
 namespace MovieApp.Ui;
 
@@ -38,6 +36,7 @@ public partial class App : Application
     public static SlotMachineResultService? SlotMachineResultService { get; private set; }
     public static ReelAnimationService? ReelAnimationService { get; private set; }
     public static SlotMachineAnimationService? SlotMachineAnimationService { get; private set; }
+    public static IEventUserStateService? EventUserStateService { get; private set; }
     public static bool StreakSpinGrantedOnLogin { get; private set; }
 
     public App()
@@ -52,15 +51,16 @@ public partial class App : Application
 
         try
         {
-            var configuration = BuildConfiguration();
+            IConfigurationRoot configuration = BuildConfiguration();
             Configuration = configuration;
 
-            var databaseOptions = new DatabaseOptions
+            DatabaseOptions databaseOptions = new DatabaseOptions
             {
                 ConnectionString = configuration["Database:ConnectionString"]
                     ?? throw new InvalidOperationException("Missing configuration value 'Database:ConnectionString'."),
             };
-            var bootstrapUserOptions = new BootstrapUserOptions
+
+            BootstrapUserOptions bootstrapUserOptions = new BootstrapUserOptions
             {
                 AuthProvider = configuration["Authentication:BootstrapUser:AuthProvider"]
                     ?? throw new InvalidOperationException("Missing configuration value 'Authentication:BootstrapUser:AuthProvider'."),
@@ -68,32 +68,32 @@ public partial class App : Application
                     ?? throw new InvalidOperationException("Missing configuration value 'Authentication:BootstrapUser:AuthSubject'."),
             };
 
-            var userRepository = new SqlUserRepository(databaseOptions);
-            var eventRepository = new SqlEventRepository(databaseOptions);
-            var triviaRepository = new SqlTriviaRepository(databaseOptions);
-            var triviaRewardRepository = new SqlTriviaRewardRepository(databaseOptions);
-            var ambassadorRepository = new SqlAmbassadorRepository(databaseOptions);
-            var favoriteEventRepository = new SqlFavoriteEventRepository(databaseOptions);
-            var notificationRepository = new SqlNotificationRepository(databaseOptions);
-            var movieRepository = new SqlMovieRepository(databaseOptions);
-            var slotMachineStateRepository = new SqlUserSlotMachineStateRepository(databaseOptions);
-            var userMovieDiscountRepository = new SqlUserRewardRepository(databaseOptions);
-            var screeningRepository = new SqlScreeningRepository(databaseOptions);
-            var userEventAttendanceRepository = new SqlUserEventAttendanceRepository(databaseOptions);
-            var marathonRepository = new SqlMarathonRepository(databaseOptions);
+            SqlUserRepository userRepository = new SqlUserRepository(databaseOptions);
+            SqlEventRepository eventRepository = new SqlEventRepository(databaseOptions);
+            SqlTriviaRepository triviaRepository = new SqlTriviaRepository(databaseOptions);
+            SqlTriviaRewardRepository triviaRewardRepository = new SqlTriviaRewardRepository(databaseOptions);
+            SqlAmbassadorRepository ambassadorRepository = new SqlAmbassadorRepository(databaseOptions);
+            SqlFavoriteEventRepository favoriteEventRepository = new SqlFavoriteEventRepository(databaseOptions);
+            SqlNotificationRepository notificationRepository = new SqlNotificationRepository(databaseOptions);
+            SqlMovieRepository movieRepository = new SqlMovieRepository(databaseOptions);
+            SqlUserSlotMachineStateRepository slotMachineStateRepository = new SqlUserSlotMachineStateRepository(databaseOptions);
+            SqlUserRewardRepository userMovieDiscountRepository = new SqlUserRewardRepository(databaseOptions);
+            SqlScreeningRepository screeningRepository = new SqlScreeningRepository(databaseOptions);
+            SqlUserEventAttendanceRepository userEventAttendanceRepository = new SqlUserEventAttendanceRepository(databaseOptions);
+            SqlMarathonRepository marathonRepository = new SqlMarathonRepository(databaseOptions);
 
             _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
             await _currentUserService.InitializeAsync();
 
-            var slotMachineService = new SlotMachineService(
+            SlotMachineService slotMachineService = new SlotMachineService(
                 slotMachineStateRepository,
                 movieRepository,
                 eventRepository,
                 userMovieDiscountRepository);
 
-            var slotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
-            var reelAnimationService = new ReelAnimationService();
-            var slotMachineAnimationService = new SlotMachineAnimationService();
+            SlotMachineResultService slotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
+            ReelAnimationService reelAnimationService = new ReelAnimationService();
+            SlotMachineAnimationService slotMachineAnimationService = new SlotMachineAnimationService();
 
             CurrentUserService = _currentUserService;
             EventRepository = eventRepository;
@@ -114,20 +114,12 @@ public partial class App : Application
             ReelAnimationService = reelAnimationService;
             SlotMachineAnimationService = slotMachineAnimationService;
             MarathonRepository = marathonRepository;
+            EventUserStateService = new EventUserStateService();
 
             string localDataFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MovieApp");
             Directory.CreateDirectory(localDataFolder);
             PriceWatcherRepository = new LocalPriceWatcherRepository(localDataFolder);
 
-            SlotMachineService = new SlotMachineService(
-                slotMachineStateRepository,
-                movieRepository,
-                eventRepository,
-                userMovieDiscountRepository);
-            SlotMachineResultService = new SlotMachineResultService(userMovieDiscountRepository);
-            ReelAnimationService = new ReelAnimationService();
-
-            // SM.32/SM.33: record login, advance streak, and award bonus spin if streak reached 3
             StreakSpinGrantedOnLogin = await slotMachineService.RecordLoginAndCheckStreakAsync(
                 _currentUserService.CurrentUser.Id);
 
@@ -174,6 +166,8 @@ public partial class App : Application
         SlotMachineService = null;
         SlotMachineResultService = null;
         ReelAnimationService = null;
+        SlotMachineAnimationService = null;
+        EventUserStateService = null;
     }
 
     private static string BuildStartupErrorMessage(Exception exception)
