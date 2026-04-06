@@ -1,3 +1,4 @@
+namespace MovieApp.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -7,15 +8,13 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// A SQL Server-backed repository for managing user discount rewards.
 /// Handles data access to the dbo.UserMovieDiscounts table via ADO.NET.
 /// </summary>
 public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlUserRewardRepository"/> class.
@@ -25,7 +24,7 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     public SqlUserRewardRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -33,13 +32,14 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     /// </summary>
     /// <param name="reward">The <see cref="Reward"/> entity containing the discount details.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>Returns a Task.</returns>
     public async Task AddAsync(Reward reward, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"
             INSERT INTO dbo.UserMovieDiscounts (UserId, MovieId, DiscountPercentage)
             VALUES (@userId, @movieId, @discountPercentage)";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -66,7 +66,7 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
 
         List<Reward> rewards = new List<Reward>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -83,7 +83,7 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
                 DiscountValue = sqlDataReader.IsDBNull(3) ? 0 : (double)sqlDataReader.GetDecimal(3),
                 RewardType = "MovieDiscount",
                 RedemptionStatus = false,
-                ApplicabilityScope = "MovieSpecific"
+                ApplicabilityScope = "MovieSpecific",
             });
         }
 
@@ -102,7 +102,7 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
             SET IsRedeemed = 1
             WHERE Id = @rewardId";
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);

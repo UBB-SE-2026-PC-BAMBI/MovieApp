@@ -1,3 +1,4 @@
+namespace MovieApp.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,23 +9,22 @@ using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Infrastructure;
-
 /// <summary>
 /// SQL Server–backed implementation of <see cref="IEventRepository"/>.
 /// Handles data access operations for Events via ADO.NET.
 /// </summary>
 public sealed class SqlEventRepository : IEventRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="SqlEventRepository"/> class.
     /// Initialises a new instance of the <see cref="SqlEventRepository"/> class.
     /// </summary>
     /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
     public SqlEventRepository(DatabaseOptions databaseOptions)
     {
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -36,7 +36,7 @@ public sealed class SqlEventRepository : IEventRepository
     {
         List<Event> events = new List<Event>();
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(EventSqlQueries.SelectAll, connection);
@@ -60,7 +60,7 @@ public sealed class SqlEventRepository : IEventRepository
     {
         List<Event> events = new List<Event>();
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(EventSqlQueries.SelectByType, connection);
@@ -78,13 +78,13 @@ public sealed class SqlEventRepository : IEventRepository
     /// <summary>
     /// Asynchronously inserts a new event into the database.
     /// </summary>
-    /// <param name="@event">The <see cref="Event"/> to add.</param>
+    /// <param name="event">The <see cref="Event"/> to add.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns>The newly generated database identity ID for the inserted event.</returns>
     /// <exception cref="InvalidOperationException">Thrown if the database fails to return the new identity value.</exception>
     public async Task<int> AddAsync(Event @event, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(EventSqlQueries.Insert, connection);
@@ -117,7 +117,7 @@ public sealed class SqlEventRepository : IEventRepository
     /// <returns>The <see cref="Event"/> if found; otherwise, <c>null</c>.</returns>
     public async Task<Event?> FindByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(EventSqlQueries.SelectById, connection);
@@ -135,7 +135,7 @@ public sealed class SqlEventRepository : IEventRepository
     /// <summary>
     /// Asynchronously updates all fields of an existing event, including the CreatorUserId.
     /// </summary>
-    /// <param name="@event">The <see cref="Event"/> containing the updated data.</param>
+    /// <param name="event">The <see cref="Event"/> containing the updated data.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns><c>true</c> if the event was successfully updated; otherwise, <c>false</c>.</returns>
     public async Task<bool> UpdateAsync(Event @event, CancellationToken cancellationToken = default)
@@ -156,7 +156,7 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @id;
             """;
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sql, connection);
@@ -192,7 +192,7 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @eventId;
             """;
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sql, connection);
@@ -213,6 +213,7 @@ public sealed class SqlEventRepository : IEventRepository
     /// or require a return value indicating whether a row was matched.
     /// This overload exists for callers that do not need to update <c>CreatorUserId</c>.
     /// </remarks>
+    /// /// <returns name="Task">Returns a Task.</returns>
     public async Task UpdateEventAsync(Event updatedEvent, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -230,7 +231,7 @@ public sealed class SqlEventRepository : IEventRepository
             WHERE Id = @id;
             """;
 
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sql, connection);
@@ -250,30 +251,6 @@ public sealed class SqlEventRepository : IEventRepository
     }
 
     /// <summary>
-    /// Maps an event row using the column order defined in <see cref="EventSqlQueries.Projection"/>.
-    /// </summary>
-    /// <param name="sqlDataReader">The active data reader positioned on an event row.</param>
-    /// <returns>A mapped <see cref="Event"/> object.</returns>
-    private static Event MapEvent(SqlDataReader sqlDataReader)
-    {
-        return new Event
-        {
-            Id = sqlDataReader.GetInt32(0),
-            Title = sqlDataReader.GetString(1),
-            Description = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
-            PosterUrl = sqlDataReader.GetString(3),
-            EventDateTime = sqlDataReader.GetDateTime(4),
-            LocationReference = sqlDataReader.GetString(5),
-            TicketPrice = sqlDataReader.GetDecimal(6),
-            HistoricalRating = sqlDataReader.GetDouble(7),
-            EventType = sqlDataReader.GetString(8),
-            MaxCapacity = sqlDataReader.GetInt32(9),
-            CurrentEnrollment = sqlDataReader.GetInt32(10),
-            CreatorUserId = sqlDataReader.GetInt32(11)
-        };
-    }
-
-    /// <summary>
     /// Asynchronously deletes an event and all of its related records safely using a database transaction.
     /// </summary>
     /// <param name="eventId">The unique identifier of the event to delete.</param>
@@ -284,9 +261,10 @@ public sealed class SqlEventRepository : IEventRepository
     /// (Screenings, Participations, FavoriteEvents, ReferralLogs) before removing the event.
     /// If any deletion fails, the transaction is rolled back.
     /// </remarks>
+    /// /// <returns name="Task">Returns a Task.</returns>
     public async Task<bool> DeleteAsync(int eventId, CancellationToken cancellationToken = default)
     {
-        await using SqlConnection connection = new SqlConnection(_connectionString);
+        await using SqlConnection connection = new SqlConnection(this.connectionString);
         await connection.OpenAsync(cancellationToken);
         await using SqlTransaction transaction = connection.BeginTransaction();
 
@@ -326,5 +304,29 @@ public sealed class SqlEventRepository : IEventRepository
             await transaction.RollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Maps an event row using the column order defined in <see cref="EventSqlQueries.Projection"/>.
+    /// </summary>
+    /// <param name="sqlDataReader">The active data reader positioned on an event row.</param>
+    /// <returns>A mapped <see cref="Event"/> object.</returns>
+    private static Event MapEvent(SqlDataReader sqlDataReader)
+    {
+        return new Event
+        {
+            Id = sqlDataReader.GetInt32(0),
+            Title = sqlDataReader.GetString(1),
+            Description = sqlDataReader.IsDBNull(2) ? null : sqlDataReader.GetString(2),
+            PosterUrl = sqlDataReader.GetString(3),
+            EventDateTime = sqlDataReader.GetDateTime(4),
+            LocationReference = sqlDataReader.GetString(5),
+            TicketPrice = sqlDataReader.GetDecimal(6),
+            HistoricalRating = sqlDataReader.GetDouble(7),
+            EventType = sqlDataReader.GetString(8),
+            MaxCapacity = sqlDataReader.GetInt32(9),
+            CurrentEnrollment = sqlDataReader.GetInt32(10),
+            CreatorUserId = sqlDataReader.GetInt32(11),
+        };
     }
 }

@@ -1,13 +1,13 @@
+namespace MovieApp.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Microsoft.Data.SqlClient;
 
 using MovieApp.Core.Models.Movie;
 using MovieApp.Core.Repositories;
-
-namespace MovieApp.Infrastructure;
 
 /// <summary>
 /// SQL Server-backed repository for managing movies and related entities
@@ -15,9 +15,10 @@ namespace MovieApp.Infrastructure;
 /// </summary>
 public sealed class SqlMovieRepository : IMovieRepository
 {
-    private readonly string _connectionString;
+    private readonly string connectionString;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="SqlMovieRepository"/> class.
     /// Initialises a new instance of the <see cref="SqlMovieRepository"/> class.
     /// </summary>
     /// <param name="databaseOptions">Database connection options.</param>
@@ -25,7 +26,7 @@ public sealed class SqlMovieRepository : IMovieRepository
     public SqlMovieRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        _connectionString = databaseOptions.ConnectionString;
+        this.connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -39,7 +40,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<Genre> genres = new List<Genre>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -50,7 +51,7 @@ public sealed class SqlMovieRepository : IMovieRepository
             genres.Add(new Genre
             {
                 Id = sqlDataReader.GetInt32(0),
-                Name = sqlDataReader.GetString(1)
+                Name = sqlDataReader.GetString(1),
             });
         }
 
@@ -68,7 +69,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<Actor> actors = new List<Actor>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -79,7 +80,7 @@ public sealed class SqlMovieRepository : IMovieRepository
             actors.Add(new Actor
             {
                 Id = sqlDataReader.GetInt32(0),
-                Name = sqlDataReader.GetString(1)
+                Name = sqlDataReader.GetString(1),
             });
         }
 
@@ -97,7 +98,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<Director> directors = new List<Director>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -108,7 +109,7 @@ public sealed class SqlMovieRepository : IMovieRepository
             directors.Add(new Director
             {
                 Id = sqlDataReader.GetInt32(0),
-                Name = sqlDataReader.GetString(1)
+                Name = sqlDataReader.GetString(1),
             });
         }
 
@@ -138,7 +139,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<Movie> movies = new List<Movie>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -159,7 +160,7 @@ public sealed class SqlMovieRepository : IMovieRepository
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
                 Genres = [],
                 Actors = [],
-                Directors = []
+                Directors = [],
             });
         }
 
@@ -189,7 +190,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<Movie> movies = new List<Movie>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -210,7 +211,7 @@ public sealed class SqlMovieRepository : IMovieRepository
                 DurationMinutes = sqlDataReader.IsDBNull(4) ? 0 : sqlDataReader.GetInt32(4),
                 Genres = [],
                 Actors = [],
-                Directors = []
+                Directors = [],
             });
         }
 
@@ -234,7 +235,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<int> eventIds = new List<int>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -251,8 +252,7 @@ public sealed class SqlMovieRepository : IMovieRepository
     }
 
     /// <summary>
-    /// Asynchronously retrieves all valid combinations of Genre, Actor, and Director 
-    /// for movies that currently have future screenings scheduled.
+    /// Asynchronously retrieves all valid combinations of Genre, Actor, and Director for movies that currently have future screenings scheduled.
     /// </summary>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
     /// <returns>A read-only list of <see cref="ReelCombination"/> objects.</returns>
@@ -276,7 +276,7 @@ public sealed class SqlMovieRepository : IMovieRepository
 
         List<ReelCombination> combinations = new List<ReelCombination>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(_connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
         await sqlConnection.OpenAsync(cancellationToken);
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -288,7 +288,7 @@ public sealed class SqlMovieRepository : IMovieRepository
             {
                 Genre = new Genre { Id = sqlDataReader.GetInt32(0), Name = sqlDataReader.GetString(1) },
                 Actor = new Actor { Id = sqlDataReader.GetInt32(2), Name = sqlDataReader.GetString(3) },
-                Director = new Director { Id = sqlDataReader.GetInt32(4), Name = sqlDataReader.GetString(5) }
+                Director = new Director { Id = sqlDataReader.GetInt32(4), Name = sqlDataReader.GetString(5) },
             });
         }
 
