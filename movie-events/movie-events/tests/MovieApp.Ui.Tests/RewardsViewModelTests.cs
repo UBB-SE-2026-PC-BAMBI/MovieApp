@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+using MovieApp.Ui.Tests.Fakes;
 using MovieApp.Ui.ViewModels;
 using Xunit;
 
@@ -59,24 +62,75 @@ public sealed class RewardsViewModelTests
         Assert.Empty(repository.MarkAsRedeemedCalls);
     }
 
-    private sealed class StubTriviaRewardRepository(TriviaReward? reward) : ITriviaRewardRepository
+    // ── New Edge Case Tests ───────────────────────────────────────────
+
+    [Fact]
+    public async Task LoadAsync_WhenNoRewardExistsForUser_HasTriviaRewardIsFalse()
     {
-        public List<int> MarkAsRedeemedCalls { get; } = [];
+        var repository = new StubTriviaRewardRepository(null);
+        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
-        public Task AddAsync(TriviaReward newReward, CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
-        }
+        await viewModel.LoadAsync();
 
-        public Task<TriviaReward?> GetUnredeemedByUserAsync(int userId, CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult(reward);
-        }
+        Assert.False(viewModel.HasTriviaReward);
+        Assert.Null(viewModel.TriviaReward);
+    }
 
-        public Task MarkAsRedeemedAsync(int rewardId, CancellationToken cancellationToken = default)
+    [Fact]
+    public async Task LoadAsync_WhenRewardAlreadyRedeemed_TriviaRewardStatusTextIsAlreadyRedeemed()
+    {
+        var reward = new TriviaReward
         {
-            MarkAsRedeemedCalls.Add(rewardId);
-            return Task.CompletedTask;
-        }
+            Id = 1,
+            UserId = 10,
+            IsRedeemed = true
+        };
+        var repository = new StubTriviaRewardRepository(reward);
+        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+
+        await viewModel.LoadAsync();
+
+        Assert.Equal("Already redeemed", viewModel.TriviaRewardStatusText);
+    }
+
+    [Fact]
+    public async Task RedeemTriviaRewardAsync_WhenRewardAlreadyRedeemed_DoesNotCallMarkRedeemed()
+    {
+        var reward = new TriviaReward
+        {
+            Id = 1,
+            UserId = 10,
+            IsRedeemed = true
+        };
+        var repository = new StubTriviaRewardRepository(reward);
+        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        await viewModel.LoadAsync();
+
+        await viewModel.RedeemTriviaRewardAsync();
+
+        Assert.Empty(repository.MarkAsRedeemedCalls);
+    }
+
+    [Fact]
+    public async Task LoadAsync_SetsIsLoadingTrueThenFalse()
+    {
+        var repository = new StubTriviaRewardRepository(null);
+        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+
+        var isLoadingTransitions = new List<bool>();
+
+        viewModel.PropertyChanged += (sender, args) =>
+        {
+            if (args.PropertyName == nameof(viewModel.IsLoading))
+            {
+                isLoadingTransitions.Add(viewModel.IsLoading);
+            }
+        };
+
+        await viewModel.LoadAsync();
+
+        Assert.Equal(2, isLoadingTransitions.Count);
+        Assert.True(isLoadingTransitions[0]);
+        Assert.False(isLoadingTransitions[1]);
     }
 }
