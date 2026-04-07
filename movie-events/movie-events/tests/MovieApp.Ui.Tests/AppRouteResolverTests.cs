@@ -21,7 +21,7 @@ public sealed class AppRouteResolverTests
     [InlineData(AppRouteResolver.Marathons, typeof(MarathonsPage))]
     public void ResolvePageType_KnownRoute_ReturnsExpectedPage(string route, Type expectedPageType)
     {
-        var pageType = AppRouteResolver.ResolvePageType(route);
+        Type pageType = AppRouteResolver.ResolvePageType(route);
 
         Assert.Equal(expectedPageType, pageType);
     }
@@ -29,7 +29,7 @@ public sealed class AppRouteResolverTests
     [Fact]
     public void ResolvePageType_UnknownRoute_FallsBackToHomePage()
     {
-        var pageType = AppRouteResolver.ResolvePageType("UnknownRoute");
+        Type pageType = AppRouteResolver.ResolvePageType("UnknownRoute");
 
         Assert.Equal(typeof(HomePage), pageType);
     }
