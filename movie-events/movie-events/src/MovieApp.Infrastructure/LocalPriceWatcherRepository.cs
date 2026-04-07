@@ -1,4 +1,7 @@
-﻿namespace MovieApp.Infrastructure;
+﻿// <copyright file="LocalPriceWatcherRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+namespace MovieApp.Infrastructure;
 
 using System;
 using System.Collections.Generic;
