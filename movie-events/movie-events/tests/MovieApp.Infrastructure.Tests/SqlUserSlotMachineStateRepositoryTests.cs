@@ -21,9 +21,9 @@ public sealed class SqlUserSlotMachineStateRepositoryTests
 
         Assert.Contains("public SqlUserSlotMachineStateRepository(DatabaseOptions databaseOptions)", repositoryFile);
         Assert.Contains("ArgumentNullException.ThrowIfNull(databaseOptions);", repositoryFile);
-        Assert.Contains("_connectionString = databaseOptions.ConnectionString", repositoryFile);
-        Assert.Contains("await using var connection = new SqlConnection(_connectionString);", repositoryFile);
-        Assert.Contains("await using var command = new SqlCommand(", repositoryFile);
+        Assert.Contains("this.connectionString = databaseOptions.ConnectionString", repositoryFile);
+        Assert.Contains("await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);", repositoryFile);
+        Assert.Contains("await using SqlCommand sqlCommand = new SqlCommand(", repositoryFile);
         Assert.DoesNotContain("public SqlUserSlotMachineStateRepository(string connectionString)", repositoryFile);
     }
 
