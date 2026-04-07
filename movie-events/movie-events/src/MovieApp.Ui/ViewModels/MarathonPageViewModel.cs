@@ -9,7 +9,6 @@ namespace MovieApp.Ui.ViewModels;
 public sealed class MarathonPageViewModel : ViewModelBase
 {
     private readonly IMarathonService? _marathonService;
-    private readonly IMarathonRepository? _marathonRepository;
 
     private int _userId;
     private Marathon? _selectedMarathon;
@@ -26,15 +25,13 @@ public sealed class MarathonPageViewModel : ViewModelBase
     }
 
     public MarathonPageViewModel(
-        IMarathonService marathonService,
-        IMarathonRepository marathonRepository)
+        IMarathonService marathonService)
     {
         _marathonService = marathonService;
-        _marathonRepository = marathonRepository;
     }
 
     // The display items for the top card row
-    public ObservableCollection<MarathonDisplayItem> MarathonDisplayItems { get; } = new();
+    public ObservableCollection<MarathonDisplayItem> MarathonDisplayItems { get; } = new ();
 
     public ObservableCollection<Marathon> Marathons { get; } = new();
 
@@ -104,19 +101,20 @@ public sealed class MarathonPageViewModel : ViewModelBase
     public ObservableCollection<MarathonMovieItem> Movies { get; } = new();
 
     public bool ShowJoinButton => SelectedMarathon is not null && !IsJoined && !IsLocked;
+
     public bool ShowMovieList => SelectedMarathon is not null && IsJoined;
 
     public string ProgressText => CurrentProgress is null
         ? "Not joined yet"
         : CurrentProgress.IsCompleted
-            ? $"✅ Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
+            ? $"Completed — {CurrentProgress.CompletedMoviesCount} movies verified"
             : $"{CurrentProgress.CompletedMoviesCount} of {Movies.Count} movies verified";
 
     public async Task LoadAsync(int userId)
     {
         _userId = userId;
 
-        if (_marathonService is null || _marathonRepository is null)
+        if (_marathonService is null)
         {
             IsDataAvailable = false;
             return;
@@ -133,13 +131,13 @@ public sealed class MarathonPageViewModel : ViewModelBase
         {
             Marathons.Add(marathon);
 
-            var participantCount = await _marathonRepository
+            var participantCount = await _marathonService
                 .GetParticipantCountAsync(marathon.Id);
 
-            var progress = await _marathonRepository
+            var progress = await _marathonService
                 .GetUserProgressAsync(userId, marathon.Id);
 
-            var totalMovies = await _marathonRepository
+            var totalMovies = await _marathonService
                 .GetMarathonMovieCountAsync(marathon.Id);
 
             MarathonDisplayItems.Add(new MarathonDisplayItem
@@ -171,12 +169,12 @@ public sealed class MarathonPageViewModel : ViewModelBase
             IsLocked = false;
             if (marathon.PrerequisiteMarathonId is int prereqId)
             {
-                var prereqDone = await _marathonRepository!
+                var prereqDone = await _marathonService!
                     .IsPrerequisiteCompletedAsync(_userId, prereqId);
                 IsLocked = !prereqDone;
             }
 
-            var leaderboard = await _marathonRepository!
+            var leaderboard = await _marathonService!
                 .GetLeaderboardWithUsernamesAsync(marathon.Id);
             Leaderboard = leaderboard.ToList();
 
@@ -207,7 +205,7 @@ public sealed class MarathonPageViewModel : ViewModelBase
         CurrentProgress = await _marathonService!
             .GetCurrentProgressAsync(marathonId);
 
-        var leaderboard = await _marathonRepository!
+        var leaderboard = await _marathonService!
             .GetLeaderboardWithUsernamesAsync(marathonId);
         Leaderboard = leaderboard.ToList();
 
@@ -216,7 +214,7 @@ public sealed class MarathonPageViewModel : ViewModelBase
 
     private async Task LoadMoviesAsync(int marathonId)
     {
-        var movies = await _marathonRepository!
+        var movies = await _marathonService
             .GetMoviesForMarathonAsync(marathonId);
 
         var verifiedCount = CurrentProgress?.CompletedMoviesCount ?? 0;
@@ -231,7 +229,8 @@ public sealed class MarathonPageViewModel : ViewModelBase
                 IsVerified = i < verifiedCount,
             });
         }
-        OnPropertyChanged(nameof(ProgressText));
+
+        this.OnPropertyChanged(nameof(this.ProgressText));
     }
 
     private static DateTime GetSundayEnd()

@@ -16,7 +16,7 @@ public sealed partial class MarathonsPage : Page
     private MarathonTriviaViewModel? _triviaVm;
     private int _currentMovieId;
     private int _currentUserId;
-
+    
     public MarathonPageViewModel ViewModel { get; }
 
     public MarathonsPage()
@@ -29,7 +29,7 @@ public sealed partial class MarathonsPage : Page
         if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
         var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService);
 
-        ViewModel = new MarathonPageViewModel(marathonService, marathonRepo);
+        ViewModel = new MarathonPageViewModel(marathonService);
         InitializeComponent();
 
         Loaded += async (_, _) =>
