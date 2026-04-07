@@ -65,39 +65,6 @@ public sealed class EventSqlQueriesTests
         return File.ReadAllText(filePath);
     }
 
-    [Fact(Skip = "Bootstrap script has been deleted or renamed")]
-    public void BootstrapScript_IncludesAllCurrentDatabaseScripts()
-    {
-        var bootstrapFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "000-bootstrap.sql");
-        var clearDbFile = ReadRepoFile("src", "MovieApp.Infrastructure", "Database", "Scripts", "000-clear-db.sql");
-
-        Assert.Contains(@":r .\006-user-spins.sql", bootstrapFile);
-        Assert.Contains(@":r .\007-create-movies.sql", bootstrapFile);
-        Assert.Contains(@":r .\008-create-user-movie-discounts.sql", bootstrapFile);
-        Assert.Contains(@":r .\009-create-marathon.sql", bootstrapFile);
-        Assert.Contains(@":r .\012-seed-events.sql", bootstrapFile);
-        Assert.Contains("DROP DATABASE", clearDbFile);
-        Assert.Contains("MovieApp", clearDbFile);
-
-        Assert.Contains(@":r .\000-clear-db.sql", bootstrapFile);
-        Assert.Contains(@":r .\001-create-database.sql", bootstrapFile);
-        Assert.Contains(@":r .\002-create-schema.sql", bootstrapFile);
-        Assert.Contains(@":r .\004-create-event.sql", bootstrapFile);
-        Assert.Contains(@":r .\005-create-participation.sql", bootstrapFile);
-        Assert.Contains(@":r .\006-create-favorite-events.sql", bootstrapFile);
-        Assert.Contains(@":r .\007-create-movies.sql", bootstrapFile);
-        Assert.Contains(@":r .\008-user-spins.sql", bootstrapFile);
-        Assert.Contains(@":r .\009-create-notifications.sql", bootstrapFile);
-        Assert.Contains(@":r .\010-create-user-movie-discounts.sql", bootstrapFile);
-        Assert.Contains(@":r .\011-create-marathon.sql", bootstrapFile);
-        Assert.Contains(@":r .\013-create-trivia-questions.sql", bootstrapFile);
-        Assert.Contains(@":r .\014-create-ambassador-profile.sql", bootstrapFile);
-        Assert.Contains(@":r .\015-create-referral-log.sql", bootstrapFile);
-        Assert.Contains(@":r .\016-create-screenings.sql", bootstrapFile);
-        Assert.Contains(@":r .\019-create-trivia-rewards.sql", bootstrapFile);
-        Assert.DoesNotContain(@":r ..\MockData\", bootstrapFile);
-    }
-
     [Fact]
     public void BaseEventMockData_IsGuardedAgainstDuplicateSeedData()
     {

@@ -6,6 +6,10 @@ using MovieApp.Ui.Services;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MovieApp.Ui.ViewModels;
 
@@ -33,6 +37,10 @@ public sealed class SlotMachineViewModel : ViewModelBase
     private bool _isActorSpinning;
     private bool _isDirectorSpinning;
     private string _statusMessage = "Ready to spin!";
+    private Movie? _jackpotMovie;
+    private bool _jackpotAchieved;
+    private bool _hasMatchingEvents;
+    private bool _hasNoMatchingEvents = true;
 
     public Genre SelectedGenre
     {
@@ -125,17 +133,25 @@ public sealed class SlotMachineViewModel : ViewModelBase
     }
 
     public ObservableCollection<MatchingEventItem> MatchingEvents { get; } = new();
-    public Movie? JackpotMovie { get; private set; }
-    public bool JackpotAchieved { get; private set; }
 
-    private bool _hasMatchingEvents;
+    public Movie? JackpotMovie
+    {
+        get => _jackpotMovie;
+        private set => SetProperty(ref _jackpotMovie, value);
+    }
+
+    public bool JackpotAchieved
+    {
+        get => _jackpotAchieved;
+        private set => SetProperty(ref _jackpotAchieved, value);
+    }
+
     public bool HasMatchingEvents
     {
         get => _hasMatchingEvents;
         private set => SetProperty(ref _hasMatchingEvents, value);
     }
 
-    private bool _hasNoMatchingEvents = true;
     public bool HasNoMatchingEvents
     {
         get => _hasNoMatchingEvents;
@@ -146,7 +162,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
 
     public ICommand SpinCommand => _spinCommand ??= new AsyncRelayCommand(SpinAsync, CanSpin);
 
-    // Creates a database-backed slot-machine view model for the current user.
     public SlotMachineViewModel(
         int userId,
         ISlotMachineService slotMachineService,
@@ -162,12 +177,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
         };
     }
 
-    /// <summary>
-    /// Factory method that creates a <see cref="SlotMachineViewModel"/> in an unavailable state.
-    /// Use this when the slot machine service cannot be reached or is disabled.
-    /// </summary>
-    /// <param name="statusMessage">The message to display when the slot machine is unavailable.</param>
-    /// <returns>A <see cref="SlotMachineViewModel"/> with no spins and the spin button disabled.</returns>
     public static SlotMachineViewModel CreateUnavailable(string statusMessage)
     {
         SlotMachineViewModel viewModel = new SlotMachineViewModel(0, null!, null!);
@@ -195,10 +204,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Lightweight refresh of the spin counter only (SM.30).
-    /// Call after an external action may have changed the user's available spins.
-    /// </summary>
     public async Task RefreshSpinCountAsync()
     {
         var state = await _slotMachineService.GetUserSpinStateAsync(_userId);
@@ -214,7 +219,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
         BonusSpins = state.BonusSpins;
         LoginStreak = state.LoginStreak;
 
-        // Load initial random values for display
         SelectedGenre = await _slotMachineService.GetRandomGenreAsync(cancellationToken);
         SelectedActor = await _slotMachineService.GetRandomActorAsync(cancellationToken);
         SelectedDirector = await _slotMachineService.GetRandomDirectorAsync(cancellationToken);
@@ -237,15 +241,11 @@ public sealed class SlotMachineViewModel : ViewModelBase
 
         try
         {
-            // Perform the spin
             var result = await _slotMachineService.SpinAsync(_userId);
-
-            // Get reel sequences for animation
             var genres = await _slotMachineService.GetGenresAsync();
             var actors = await _slotMachineService.GetActorsAsync();
             var directors = await _slotMachineService.GetDirectorsAsync();
 
-            // Animate the reels with sequential stops: Genre -> Actor -> Director
             await _animationService.AnimateSpinAsync(
                 result.Genre,
                 result.Actor,
@@ -266,19 +266,16 @@ public sealed class SlotMachineViewModel : ViewModelBase
                     }
                 });
 
-            // Update UI with results (reel values already set by animation callbacks)
             JackpotMovie = result.JackpotMovie;
             JackpotAchieved = result.JackpotDiscountApplied;
 
-            // Populate matching events with jackpot highlighting
             MatchingEvents.Clear();
             foreach (var evt in result.MatchingEvents)
             {
-                var isJackpot = result.JackpotEventIds.Contains(evt.Id);
+                var isJackpot = result.JackpotEventIds?.Contains(evt.Id) ?? false;
                 MatchingEvents.Add(new MatchingEventItem(evt, isJackpot));
             }
 
-            // Update status
             if (JackpotAchieved)
             {
                 StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
@@ -293,7 +290,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
                 StatusMessage = "No matching events this time. Try again!";
             }
 
-            // Refresh spin counts (without overwriting reel values)
             var updatedState = await _slotMachineService.GetUserSpinStateAsync(_userId);
             AvailableSpins = updatedState.DailySpinsRemaining;
             BonusSpins = updatedState.BonusSpins;
@@ -314,9 +310,6 @@ public sealed class SlotMachineViewModel : ViewModelBase
     }
 }
 
-/// <summary>
-/// Wraps an Event with a jackpot indicator for display in the matching events list.
-/// </summary>
 public sealed class MatchingEventItem
 {
     public Event Event { get; }
@@ -330,9 +323,6 @@ public sealed class MatchingEventItem
     }
 }
 
-/// <summary>
-/// Simple async relay command implementation for MVVM.
-/// </summary>
 public sealed class AsyncRelayCommand : ICommand
 {
     private readonly Func<Task> _executeAsync;
