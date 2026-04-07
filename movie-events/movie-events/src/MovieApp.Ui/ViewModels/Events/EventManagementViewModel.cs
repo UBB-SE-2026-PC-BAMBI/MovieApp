@@ -1,10 +1,15 @@
+namespace MovieApp.Ui.ViewModels.Events;
+
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
 using MovieApp.Ui.ViewModels;
 
-namespace MovieApp.Ui.ViewModels.Events;
-
+/// <summary>
+/// Manages event creation, editing, and deletion.
+/// Notifies users of price drops and seat availability changes via <see cref="INotificationService"/>
+/// directly, rather than through the Observer pattern, as a simple service call will suffice.
+/// </summary>
 public sealed class EventManagementViewModel : EventListPageViewModel
 {
     private readonly IEventRepository? _eventRepository;
@@ -144,66 +149,72 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     private async Task CreateEventAsync()
     {
-        if (_eventRepository is null) return;
-
-        string error;
-        if (!Validate(out error))
+        if (this._eventRepository is null)
         {
-            ValidationMessage = error;
             return;
         }
 
-        ValidationMessage = string.Empty;
-        DateTime date = FormDate!.Value.Date + FormTime;
+        string error;
+        if (!this.Validate(out error))
+        {
+            this.ValidationMessage = error;
+            return;
+        }
+
+        this.ValidationMessage = string.Empty;
+        DateTime date = this.FormDate!.Value.Date + this.FormTime;
         int currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
 
         Event newEvent = new Event
         {
             Id = 0,
-            Title = FormTitle.Trim(),
-            Description = FormDescription,
-            LocationReference = FormLocation.Trim(),
-            TicketPrice = (decimal)FormPrice,
+            Title = this.FormTitle.Trim(),
+            Description = this.FormDescription,
+            LocationReference = this.FormLocation.Trim(),
+            TicketPrice = (decimal)this.FormPrice,
             EventDateTime = date,
-            EventType = FormEventType != null ? FormEventType.Trim() : string.Empty,
-            MaxCapacity = FormCapacity > 0 ? FormCapacity : 50,
-            PosterUrl = FormPosterUrl,
+            EventType = this.FormEventType != null ? this.FormEventType.Trim() : string.Empty,
+            MaxCapacity = this.FormCapacity > 0 ? this.FormCapacity : 50,
+            PosterUrl = this.FormPosterUrl,
             CreatorUserId = currentUserId,
         };
 
-        await _eventRepository.AddAsync(newEvent);
-        ClearForm();
-        await InitializeAsync();
+        await this._eventRepository.AddAsync(newEvent);
+        this.ClearForm();
+        await this.InitializeAsync();
     }
 
     private async Task EditEventAsync()
     {
-        if (_eventRepository is null || SelectedEvent is null) return;
-
-        string error;
-        if (!Validate(out error))
+        if (this._eventRepository is null || this.SelectedEvent is null)
         {
-            ValidationMessage = error;
             return;
         }
 
-        ValidationMessage = string.Empty;
-        DateTime date = FormDate!.Value.Date + FormTime;
+        string error;
+        if (!this.Validate(out error))
+        {
+            this.ValidationMessage = error;
+            return;
+        }
+
+        this.ValidationMessage = string.Empty;
+        DateTime date = this.FormDate!.Value.Date + this.FormTime;
 
         Event updated = new Event
         {
-            Id = SelectedEvent.Id,
-            Title = FormTitle.Trim(),
-            Description = FormDescription,
-            LocationReference = FormLocation.Trim(),
-            TicketPrice = (decimal)FormPrice,
+            Id = this.SelectedEvent.Id,
+            Title = this.FormTitle.Trim(),
+            Description = this.FormDescription,
+            LocationReference = this.FormLocation.Trim(),
+            TicketPrice = (decimal)this.FormPrice,
             EventDateTime = date,
-            EventType = FormEventType != null ? FormEventType.Trim() : string.Empty,
-            MaxCapacity = FormCapacity > 0 ? FormCapacity : SelectedEvent.MaxCapacity,
-            PosterUrl = FormPosterUrl,
-            CreatorUserId = SelectedEvent.CreatorUserId,
-            CurrentEnrollment = SelectedEvent.CurrentEnrollment,
-            HistoricalRating = SelectedEvent.HistoricalRating,
+            EventType = this.FormEventType != null ? this.FormEventType.Trim() : string.Empty,
+            MaxCapacity = this.FormCapacity > 0 ? this.FormCapacity : this.SelectedEvent.MaxCapacity,
+            PosterUrl = this.FormPosterUrl,
+            CreatorUserId = this.SelectedEvent.CreatorUserId,
+            CurrentEnrollment = this.SelectedEvent.CurrentEnrollment,
+            HistoricalRating = this.SelectedEvent.HistoricalRating,
         };
 
         await this._eventRepository.UpdateEventAsync(updated);
@@ -232,9 +243,13 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     private async Task DeleteEventAsync()
     {
-        if (_eventRepository is null || SelectedEvent is null) return;
-        await _eventRepository.DeleteAsync(SelectedEvent.Id);
-        ClearForm();
-        await InitializeAsync();
+        if (this._eventRepository is null || this.SelectedEvent is null)
+        {
+            return;
+        }
+
+        await this._eventRepository.DeleteAsync(this.SelectedEvent.Id);
+        this.ClearForm();
+        await this.InitializeAsync();
     }
 }
