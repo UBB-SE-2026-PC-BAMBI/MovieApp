@@ -10,7 +10,7 @@ public sealed class CurrentUserServiceTests
     [Fact]
     public void CurrentUser_ThrowsBeforeInitializeAsync()
     {
-        var service = CreateService(returnedUser: null);
+        CurrentUserService service = CreateService(returnedUser: null);
 
         Assert.Throws<InvalidOperationException>(() => _ = service.CurrentUser);
     }
@@ -18,15 +18,15 @@ public sealed class CurrentUserServiceTests
     [Fact]
     public async Task InitializeAsync_LoadsSeededUserOnceAndCachesIt()
     {
-        var expectedUser = new User
+        User expectedUser = new User
         {
             Id = 7,
             AuthProvider = "seed",
             AuthSubject = "dummy",
             Username = "alice",
         };
-        var repository = new StubUserRepository(expectedUser);
-        var service = CreateService(repository);
+        StubUserRepository repository = new StubUserRepository(expectedUser);
+        CurrentUserService service = CreateService(repository);
 
         await service.InitializeAsync();
         await service.InitializeAsync();
@@ -36,11 +36,11 @@ public sealed class CurrentUserServiceTests
     }
 
     [Fact]
-    public async Task InitializeAsync_ThrowsWhenSeededUserDoesNotExist()
+    public async Task InitializeAsync_WhenSeededUserDoesNotExist_ThrowsException()
     {
-        var service = CreateService(returnedUser: null);
+        CurrentUserService service = CreateService(returnedUser: null);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.InitializeAsync());
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.InitializeAsync());
 
         Assert.Contains("seed:dummy", exception.Message);
     }
