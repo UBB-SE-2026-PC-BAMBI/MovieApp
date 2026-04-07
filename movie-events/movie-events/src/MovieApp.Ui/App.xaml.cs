@@ -98,7 +98,8 @@ public partial class App : Application
                 MarathonRepository = marathonRepository,
                 EventUserStateService = new EventUserStateService(),
                 EventJoinService = new EventJoinService(),
-                WatchlistPathProvider = new WatchlistPathProvider()
+                WatchlistPathProvider = new WatchlistPathProvider(),
+                MarathonService = new MarathonService(marathonRepository, _currentUserService),
             };
 
             string localDataFolder = appServices.WatchlistPathProvider.GetWatchlistFolderPath();

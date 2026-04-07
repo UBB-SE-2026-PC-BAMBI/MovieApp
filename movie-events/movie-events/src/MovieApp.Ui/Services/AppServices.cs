@@ -27,4 +27,5 @@ public class AppServices : IAppServices
     public IEventUserStateService? EventUserStateService { get; set; }
     public IEventJoinService? EventJoinService { get; set; }
     public IWatchlistPathProvider? WatchlistPathProvider { get; set; }
+    public IMarathonService? MarathonService { get; set; }
 }
