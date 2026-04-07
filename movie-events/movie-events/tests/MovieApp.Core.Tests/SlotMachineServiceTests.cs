@@ -18,7 +18,7 @@ public sealed class SlotMachineServiceTests
 
         public Task<UserSpinData?> GetByUserIdAsync(int userId, CancellationToken cancellationToken = default)
         {
-            _store.TryGetValue(userId, out var data);
+            _store.TryGetValue(userId, out UserSpinData data);
             return Task.FromResult(data);
         }
 
@@ -71,7 +71,7 @@ public sealed class SlotMachineServiceTests
 
         public Task<IReadOnlyList<ReelCombination>> GetValidReelCombinationsAsync(CancellationToken cancellationToken = default)
         {
-            var combo = new ReelCombination
+            ReelCombination combo = new ReelCombination
             {
                 Genre = new Genre { Id = 1, Name = "Action" },
                 Actor = new Actor { Id = 2, Name = "Actor A" },
@@ -85,7 +85,7 @@ public sealed class SlotMachineServiceTests
     {
         public Task<IEnumerable<Event>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var future = DateTime.UtcNow.AddDays(2);
+            DateTime future = DateTime.UtcNow.AddDays(2);
             return Task.FromResult((IEnumerable<Event>)new List<Event>
             {
                 new Event { Id = 100, Title = "Action Hit Premiere", EventDateTime = future, PosterUrl = "", LocationReference = "Hall 1", TicketPrice = 15m, EventType = "Premiere", HistoricalRating = 4.5, CreatorUserId = 1 }
@@ -113,7 +113,7 @@ public sealed class SlotMachineServiceTests
 
         public Task<List<Reward>> GetDiscountsForUserAsync(int userId, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Rewards.Where(r => r.OwnerUserId == userId).ToList());
+            return Task.FromResult(Rewards.Where(result => result.OwnerUserId == userId).ToList());
         }
 
         public Task MarkRedeemedAsync(int rewardId, CancellationToken cancellationToken = default)
@@ -121,19 +121,19 @@ public sealed class SlotMachineServiceTests
     }
 
     [Fact]
-    public async Task SpinAsync_ConsumesDailySpinAndGrantsRewardForJackpot()
+    public async Task SpinAsync_HasAvailableSpins_ConsumesSpinAndGrantsRewardForJackpot()
     {
-        var stateRepo = new InMemoryStateRepo();
-        var movieRepo = new InMemoryMovieRepo();
-        var eventRepo = new InMemoryEventRepo();
-        var discountRepo = new InMemoryDiscountRepo();
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        InMemoryMovieRepo movieRepo = new InMemoryMovieRepo();
+        InMemoryEventRepo eventRepo = new InMemoryEventRepo();
+        InMemoryDiscountRepo discountRepo = new InMemoryDiscountRepo();
 
-        var initialState = new UserSpinData { UserId = 1, DailySpinsRemaining = 1, BonusSpins = 0, LoginStreak = 3, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        UserSpinData initialState = new UserSpinData { UserId = 1, DailySpinsRemaining = 1, BonusSpins = 0, LoginStreak = 3, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(initialState);
 
-        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+        SlotMachineService service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
 
-        var result = await service.SpinAsync(1);
+        SlotMachineResult result = await service.SpinAsync(1);
 
         Assert.NotNull(result);
         Assert.Equal(0, (await stateRepo.GetByUserIdAsync(1))!.DailySpinsRemaining);
@@ -142,73 +142,73 @@ public sealed class SlotMachineServiceTests
     }
 
     [Fact]
-    public async Task SpinAsync_ThrowsWhenNoSpins()
+    public async Task SpinAsync_NoSpinsRemaining_ThrowsInvalidOperationException()
     {
-        var stateRepo = new InMemoryStateRepo();
-        var movieRepo = new InMemoryMovieRepo();
-        var eventRepo = new InMemoryEventRepo();
-        var discountRepo = new InMemoryDiscountRepo();
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        InMemoryMovieRepo movieRepo = new InMemoryMovieRepo();
+        InMemoryEventRepo eventRepo = new InMemoryEventRepo();
+        InMemoryDiscountRepo discountRepo = new InMemoryDiscountRepo();
 
-        var initialState = new UserSpinData { UserId = 2, DailySpinsRemaining = 0, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        UserSpinData initialState = new UserSpinData { UserId = 2, DailySpinsRemaining = 0, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(initialState);
 
-        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+        SlotMachineService service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SpinAsync(2));
     }
 
     [Fact]
-    public async Task GrantBonusSpinForEventParticipation_GrantsOneSpinAndUpdatesCount()
+    public async Task GrantBonusSpinForEventParticipationAsync_UnderDailyCap_GrantsOneSpin()
     {
         // SM.28 + SM.30: joining an event grants a bonus spin and the count reflects it immediately
-        var stateRepo = new InMemoryStateRepo();
-        var movieRepo = new InMemoryMovieRepo();
-        var eventRepo = new InMemoryEventRepo();
-        var discountRepo = new InMemoryDiscountRepo();
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        InMemoryMovieRepo movieRepo = new InMemoryMovieRepo();
+        InMemoryEventRepo eventRepo = new InMemoryEventRepo();
+        InMemoryDiscountRepo discountRepo = new InMemoryDiscountRepo();
 
-        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 2, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        UserSpinData state = new UserSpinData { UserId = 1, DailySpinsRemaining = 2, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(state);
 
-        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+        SlotMachineService service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
 
-        var granted = await service.GrantBonusSpinForEventParticipationAsync(1);
+        bool granted = await service.GrantBonusSpinForEventParticipationAsync(1);
         Assert.True(granted);
 
-        var spins = await service.GetAvailableSpinsAsync(1);
+        int spins = await service.GetAvailableSpinsAsync(1);
         Assert.Equal(3, spins); // 2 daily + 1 bonus
     }
 
     [Fact]
-    public async Task GrantBonusSpinForEventParticipation_CapsAtTwoPerDay()
+    public async Task GrantBonusSpinForEventParticipationAsync_ExceedsDailyCap_ReturnsFalse()
     {
         // SM.29: max 2 bonus spins from event participation per day
-        var stateRepo = new InMemoryStateRepo();
-        var movieRepo = new InMemoryMovieRepo();
-        var eventRepo = new InMemoryEventRepo();
-        var discountRepo = new InMemoryDiscountRepo();
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        InMemoryMovieRepo movieRepo = new InMemoryMovieRepo();
+        InMemoryEventRepo eventRepo = new InMemoryEventRepo();
+        InMemoryDiscountRepo discountRepo = new InMemoryDiscountRepo();
 
-        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 5, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
+        UserSpinData state = new UserSpinData { UserId = 1, DailySpinsRemaining = 5, BonusSpins = 0, LoginStreak = 0, EventSpinRewardsToday = 0, LastSlotSpinReset = DateTime.UtcNow };
         await stateRepo.CreateAsync(state);
 
-        var service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
+        SlotMachineService service = new SlotMachineService(stateRepo, movieRepo, eventRepo, discountRepo);
 
         Assert.True(await service.GrantBonusSpinForEventParticipationAsync(1));  // 1st
         Assert.True(await service.GrantBonusSpinForEventParticipationAsync(1));  // 2nd
         Assert.False(await service.GrantBonusSpinForEventParticipationAsync(1)); // 3rd denied
 
-        var spins = await service.GetAvailableSpinsAsync(1);
+        int spins = await service.GetAvailableSpinsAsync(1);
         Assert.Equal(7, spins); // 5 daily + 2 bonus (not 3)
     }
 
     [Fact]
-    public async Task RecordLoginAndCheckStreakAsync_IncrementsStreakAndGrantsSpinOnThirdDay()
+    public async Task RecordLoginAndCheckStreakAsync_ThirdConsecutiveLogin_GrantsSpinAndResetsStreak()
     {
         // SM.32: three consecutive logins → bonus spin; SM.33: streak resets to 0
-        var stateRepo = new InMemoryStateRepo();
-        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        SlotMachineService service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
 
         // Simulate day-1 login
-        var state = new UserSpinData
+        UserSpinData state = new UserSpinData
         {
             UserId = 1,
             DailySpinsRemaining = 5,
@@ -238,19 +238,19 @@ public sealed class SlotMachineServiceTests
         // Third login: streak reaches 3 → bonus spin granted, streak reset to 0
         Assert.True(await service.RecordLoginAndCheckStreakAsync(1));
 
-        var finalState = (await stateRepo.GetByUserIdAsync(1))!;
+        UserSpinData finalState = (await stateRepo.GetByUserIdAsync(1))!;
         Assert.Equal(0, finalState.LoginStreak);   // SM.33: streak reset
         Assert.Equal(1, finalState.BonusSpins);    // SM.32: spin awarded
     }
 
     [Fact]
-    public async Task RecordLoginAndCheckStreakAsync_BreaksStreakAfterMissedDay()
+    public async Task RecordLoginAndCheckStreakAsync_MissedPreviousDay_RestartsStreakAtOne()
     {
-        var stateRepo = new InMemoryStateRepo();
-        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        SlotMachineService service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
 
         // User had a streak of 2 but missed yesterday
-        var state = new UserSpinData
+        UserSpinData state = new UserSpinData
         {
             UserId = 1,
             DailySpinsRemaining = 5,
@@ -263,18 +263,18 @@ public sealed class SlotMachineServiceTests
 
         Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
 
-        var finalState = (await stateRepo.GetByUserIdAsync(1))!;
+        UserSpinData finalState = (await stateRepo.GetByUserIdAsync(1))!;
         Assert.Equal(1, finalState.LoginStreak);  // streak restarted
         Assert.Equal(0, finalState.BonusSpins);
     }
 
     [Fact]
-    public async Task RecordLoginAndCheckStreakAsync_IsIdempotentOnSameDay()
+    public async Task RecordLoginAndCheckStreakAsync_SameDayLogin_LeavesStreakUnchanged()
     {
-        var stateRepo = new InMemoryStateRepo();
-        var service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
+        InMemoryStateRepo stateRepo = new InMemoryStateRepo();
+        SlotMachineService service = new SlotMachineService(stateRepo, new InMemoryMovieRepo(), new InMemoryEventRepo(), new InMemoryDiscountRepo());
 
-        var state = new UserSpinData
+        UserSpinData state = new UserSpinData
         {
             UserId = 1,
             DailySpinsRemaining = 5,
