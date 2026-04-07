@@ -91,7 +91,6 @@ public sealed class Event
     /// </summary>
     public int DiscountPercentage { get; set; }
 
-
     /// <summary>
     /// Gets or sets a value indicating whether the current user has already joined this event.
     /// </summary>

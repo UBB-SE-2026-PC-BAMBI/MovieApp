@@ -1,11 +1,10 @@
 namespace MovieApp.Infrastructure;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.Data.SqlClient;
-
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
@@ -257,7 +256,7 @@ public sealed class SqlEventRepository : IEventRepository
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns><c>true</c> if the event was successfully deleted; otherwise, <c>false</c>.</returns>
     /// <remarks>
-    /// This method ensures referential integrity by deleting foreign key dependencies 
+    /// This method ensures referential integrity by deleting foreign key dependencies
     /// (Screenings, Participations, FavoriteEvents, ReferralLogs) before removing the event.
     /// If any deletion fails, the transaction is rolled back.
     /// </remarks>
