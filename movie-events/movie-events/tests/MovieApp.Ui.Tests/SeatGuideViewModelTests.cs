@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using MovieApp.Core.Models;
 using MovieApp.Ui.ViewModels.Events;
 using Xunit;
@@ -8,9 +9,9 @@ namespace MovieApp.Ui.Tests;
 public sealed class SeatGuideViewModelTests
 {
     [Fact]
-    public void Constructor_GivenCapacity_SetsTotalRowsAndColumnsCorrectly()
+    public void Constructor_ValidCapacity_SetsTotalRowsAndColumns()
     {
-        var viewModel = new SeatGuideViewModel(50);
+        SeatGuideViewModel viewModel = new SeatGuideViewModel(50);
 
         Assert.Equal(50, viewModel.Seats.Count);
         Assert.Equal(5, viewModel.TotalRows);
@@ -18,20 +19,20 @@ public sealed class SeatGuideViewModelTests
     }
 
     [Fact]
-    public void Constructor_GivenCapacityNotDivisibleByTen_CreatesExactNumberOfSeats()
+    public void Constructor_CapacityNotDivisibleByTen_CreatesExactNumberOfSeats()
     {
-        var viewModel = new SeatGuideViewModel(54);
+        SeatGuideViewModel viewModel = new SeatGuideViewModel(54);
 
         Assert.Equal(54, viewModel.Seats.Count);
-        Assert.Equal(6, viewModel.TotalRows); 
+        Assert.Equal(6, viewModel.TotalRows);
     }
 
     [Fact]
-    public void Constructor_SetsFirstTwoRowsToPoorQuality()
+    public void Constructor_WhenCalled_SetsFirstTwoRowsToPoorQuality()
     {
-        var viewModel = new SeatGuideViewModel(50);
+        SeatGuideViewModel viewModel = new SeatGuideViewModel(50);
 
-        var frontSeats = viewModel.Seats.Where(s => s.Row <= 2).ToList();
+        List<Seat> frontSeats = viewModel.Seats.Where(s => s.Row <= 2).ToList();
 
         Assert.NotEmpty(frontSeats);
         Assert.All(frontSeats, s => Assert.Equal(SeatQuality.Poor, s.Quality));
@@ -39,26 +40,25 @@ public sealed class SeatGuideViewModelTests
     }
 
     [Fact]
-    public void Constructor_CalculatesSweetSpotAtTheCenter()
+    public void Constructor_WhenCalled_MarksCenterSeatsAsSweetSpots()
     {
-        var viewModel = new SeatGuideViewModel(50);
+        SeatGuideViewModel viewModel = new SeatGuideViewModel(50);
 
-        var sweetSpots = viewModel.Seats.Where(s => s.IsSweetSpot).ToList();
+        List<Seat> sweetSpots = viewModel.Seats.Where(s => s.IsSweetSpot).ToList();
 
         Assert.NotEmpty(sweetSpots);
         Assert.All(sweetSpots, s => Assert.Equal(SeatQuality.Optimal, s.Quality));
-        
+
         Assert.All(sweetSpots, s => Assert.True(s.Row is >= 3 and <= 4));
         Assert.All(sweetSpots, s => Assert.True(s.Column is >= 4 and <= 6));
     }
 
     [Fact]
-    public void Constructor_SetsRandomAvailabilityForSeats()
+    public void Constructor_WhenCalled_SetsRandomAvailabilityForSeats()
     {
+        SeatGuideViewModel viewModel = new SeatGuideViewModel(200);
 
-        var viewModel = new SeatGuideViewModel(200);
-
-        var unavailableSeats = viewModel.Seats.Where(s => !s.IsAvailable).ToList();
+        List<Seat> unavailableSeats = viewModel.Seats.Where(s => !s.IsAvailable).ToList();
 
         Assert.NotEmpty(unavailableSeats);
     }
