@@ -30,7 +30,7 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward(redeemed: true);
 
-        bool result = await service.RedeemAsync(reward, eventId: null);
+        bool result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -46,7 +46,7 @@ public sealed class RewardServiceTests
         Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
         // Trying to redeem against event 99 — wrong event
-        bool result = await service.RedeemAsync(reward, eventId: 99);
+        bool result = await service.RedeemAsync(reward, eventIdentifier: 99);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -59,7 +59,7 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        bool result = await service.RedeemAsync(reward, eventId: null);
+        bool result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -72,7 +72,7 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        bool result = await service.RedeemAsync(reward, eventId: 5);
+        bool result = await service.RedeemAsync(reward, eventIdentifier: 5);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
@@ -88,7 +88,7 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward(scope: "Global");
 
-        bool result = await service.RedeemAsync(reward, eventId: null);
+        bool result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
@@ -115,8 +115,8 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward();
 
-        bool first = await service.RedeemAsync(reward, eventId: null);
-        bool second = await service.RedeemAsync(reward, eventId: null);
+        bool first = await service.RedeemAsync(reward, eventIdentifier: null);
+        bool second = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.True(first);
         Assert.False(second);
@@ -140,8 +140,8 @@ public sealed class RewardServiceTests
             DiscountValue = 10,
         };
 
-        bool first = await service.RedeemAsync(reward1, eventId: null);
-        bool second = await service.RedeemAsync(reward2, eventId: null);
+        bool first = await service.RedeemAsync(reward1, eventIdentifier: null);
+        bool second = await service.RedeemAsync(reward2, eventIdentifier: null);
 
         Assert.True(first);
         Assert.True(second);
@@ -165,8 +165,8 @@ public sealed class RewardServiceTests
             EventId = 5,
         };
 
-        bool globalOk = await service.RedeemAsync(globalReward, eventId: 5);
-        bool eventOk = await service.RedeemAsync(eventReward, eventId: 5);
+        bool globalOk = await service.RedeemAsync(globalReward, eventIdentifier: 5);
+        bool eventOk = await service.RedeemAsync(eventReward, eventIdentifier: 5);
         bool eventFail = await service.RedeemAsync(
             new Reward { RewardId = 3, RewardType = "Discount", OwnerUserId = 10, ApplicabilityScope = "EventSpecific", DiscountValue = 20, EventId = 5 },
             eventIdentifier: 99);

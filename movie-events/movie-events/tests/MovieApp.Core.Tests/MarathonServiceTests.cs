@@ -1,6 +1,7 @@
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
+using MovieApp.Core.Tests.Fakes;
 using Xunit;
 
 namespace MovieApp.Core.Tests;
@@ -10,7 +11,7 @@ public sealed class MarathonServiceTests
     [Fact]
     public async Task GetWeeklyMarathonsAsync_UserHasNoAssignedMarathons_AssignsAndReturnsMarathons()
     {
-        StubMarathonRepository repository = new StubMarathonRepository();
+        FakeMarathonRepository repository = new FakeMarathonRepository();
         MarathonService service = CreateService(repository);
 
         List<Marathon> result = (await service.GetWeeklyMarathonsAsync(userId: 10)).ToList();
@@ -22,7 +23,7 @@ public sealed class MarathonServiceTests
     [Fact]
     public async Task StartMarathonAsync_PrerequisiteIsIncomplete_ReturnsFalse()
     {
-        StubMarathonRepository repository = new StubMarathonRepository
+        FakeMarathonRepository repository = new FakeMarathonRepository
         {
             ActiveMarathons =
             [
@@ -45,6 +46,24 @@ public sealed class MarathonServiceTests
     }
 
     [Fact]
+    public async Task StartMarathonAsync_WhenUserAlreadyJoined_ReturnsTrueWithoutCallingJoin()
+    {
+        FakeMarathonRepository repository = new FakeMarathonRepository
+        {
+            ProgressByMarathonId =
+            {
+                [11] = new MarathonProgress { UserId = 10, MarathonId = 11 }
+            }
+        };
+        MarathonService service = CreateService(repository);
+
+        bool result = await service.StartMarathonAsync(11);
+
+        Assert.True(result);
+        Assert.False(repository.JoinMarathonCalled);
+    }
+
+    [Fact]
     public async Task UpdateQuizResultAsync_ValidQuizResult_UpdatesCompletedMoviesAndAccuracy()
     {
         MarathonProgress progress = new MarathonProgress
@@ -54,7 +73,7 @@ public sealed class MarathonServiceTests
             TriviaAccuracy = 50,
             CompletedMoviesCount = 1,
         };
-        StubMarathonRepository repository = new StubMarathonRepository
+        FakeMarathonRepository repository = new FakeMarathonRepository
         {
             ProgressByMarathonId = { [21] = progress },
         };
@@ -70,7 +89,7 @@ public sealed class MarathonServiceTests
     [Fact]
     public async Task LogMovieAsync_NotAllAnswersCorrect_ReturnsFalse()
     {
-        StubMarathonRepository repository = new StubMarathonRepository
+        FakeMarathonRepository repository = new FakeMarathonRepository
         {
             ProgressByMarathonId =
             {
@@ -93,6 +112,44 @@ public sealed class MarathonServiceTests
     }
 
     [Fact]
+    public async Task LogMovieAsync_WhenProgressNotFound_ReturnsFalse()
+    {
+        FakeMarathonRepository repository = new FakeMarathonRepository();
+        MarathonService service = CreateService(repository);
+
+        bool result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 3);
+
+        Assert.False(result);
+        Assert.Null(repository.UpdatedProgress);
+    }
+
+    [Fact]
+    public async Task LogMovieAsync_WhenFirstMovieVerified_SetsAccuracyToFullScore()
+    {
+        MarathonProgress progress = new MarathonProgress
+        {
+            UserId = 10,
+            MarathonId = 21,
+            CompletedMoviesCount = 0,
+            TriviaAccuracy = 0,
+        };
+        FakeMarathonRepository repository = new FakeMarathonRepository
+        {
+            ProgressByMarathonId = { [21] = progress },
+            MovieCountsByMarathonId = { [21] = 5 },
+        };
+        MarathonService service = CreateService(repository);
+
+        bool result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 3);
+
+        Assert.True(result);
+        Assert.Equal(1, progress.CompletedMoviesCount);
+        Assert.Equal(100, progress.TriviaAccuracy);
+        Assert.Same(progress, repository.UpdatedProgress);
+        Assert.False(progress.IsCompleted);
+    }
+
+    [Fact]
     public async Task LogMovieAsync_FinalMovieVerified_MarksMarathonAsCompleted()
     {
         MarathonProgress progress = new MarathonProgress
@@ -102,7 +159,7 @@ public sealed class MarathonServiceTests
             CompletedMoviesCount = 1,
             TriviaAccuracy = 100,
         };
-        StubMarathonRepository repository = new StubMarathonRepository
+        FakeMarathonRepository repository = new FakeMarathonRepository
         {
             ProgressByMarathonId = { [21] = progress },
             MovieCountsByMarathonId = { [21] = 2 },
@@ -117,7 +174,7 @@ public sealed class MarathonServiceTests
         Assert.NotNull(progress.FinishedAt);
     }
 
-    private static MarathonService CreateService(StubMarathonRepository repository)
+    private static MarathonService CreateService(FakeMarathonRepository repository)
     {
         return new MarathonService(repository, new StubCurrentUserService());
     }
@@ -135,92 +192,6 @@ public sealed class MarathonServiceTests
         public Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
-        }
-    }
-
-    private sealed class StubMarathonRepository : IMarathonRepository
-    {
-        public List<Marathon> ActiveMarathons { get; set; } = [];
-
-        public Dictionary<int, MarathonProgress> ProgressByMarathonId { get; } = [];
-
-        public Dictionary<int, int> MovieCountsByMarathonId { get; } = [];
-
-        public bool AssignWeeklyMarathonsCalled { get; private set; }
-
-        public bool JoinMarathonCalled { get; private set; }
-
-        public bool IsPrerequisiteCompletedResult { get; set; } = true;
-
-        public MarathonProgress? UpdatedProgress { get; private set; }
-
-        public Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
-        {
-            return Task.FromResult<IEnumerable<Marathon>>(ActiveMarathons);
-        }
-
-        public Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
-        {
-            ProgressByMarathonId.TryGetValue(marathonId, out var progress);
-            return Task.FromResult(progress);
-        }
-
-        public Task<bool> JoinMarathonAsync(int userId, int marathonId)
-        {
-            JoinMarathonCalled = true;
-            return Task.FromResult(true);
-        }
-
-        public Task<bool> UpdateProgressAsync(MarathonProgress progress)
-        {
-            UpdatedProgress = progress;
-            ProgressByMarathonId[progress.MarathonId] = progress;
-            return Task.FromResult(true);
-        }
-
-        public Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
-        {
-            return Task.FromResult<IEnumerable<MarathonProgress>>([]);
-        }
-
-        public Task<bool> IsPrerequisiteCompletedAsync(int userId, int prerequisiteMarathonId)
-        {
-            return Task.FromResult(IsPrerequisiteCompletedResult);
-        }
-
-        public Task<int> GetMarathonMovieCountAsync(int marathonId)
-        {
-            return Task.FromResult(MovieCountsByMarathonId[marathonId]);
-        }
-
-        public Task<IEnumerable<Marathon>> GetWeeklyMarathonsForUserAsync(int userId, string weekString)
-        {
-            IEnumerable<Marathon> result = AssignWeeklyMarathonsCalled
-                ? [new Marathon { Id = 1, Title = "Weekly Pick", IsActive = true, WeekScoping = weekString }]
-                : [];
-
-            return Task.FromResult(result);
-        }
-
-        public Task AssignWeeklyMarathonsAsync(int userId, string weekString, int count = 10)
-        {
-            AssignWeeklyMarathonsCalled = true;
-            return Task.CompletedTask;
-        }
-
-        public Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(int marathonId)
-        {
-            return Task.FromResult<IEnumerable<MovieApp.Core.Models.Movie.Movie>>([]);
-        }
-
-        public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId)
-        {
-            return Task.FromResult<IEnumerable<LeaderboardEntry>>([]);
-        }
-
-        public Task<int> GetParticipantCountAsync(int marathonId)
-        {
-            return Task.FromResult(0);
         }
     }
 }
