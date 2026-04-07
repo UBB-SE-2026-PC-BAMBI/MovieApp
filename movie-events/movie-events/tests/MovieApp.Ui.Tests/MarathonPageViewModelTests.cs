@@ -4,15 +4,19 @@ using MovieApp.Core.Services;
 using Microsoft.UI.Xaml;
 using MovieApp.Ui.ViewModels;
 using Xunit;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
 
 namespace MovieApp.Ui.Tests;
 
 public sealed class MarathonPageViewModelTests
 {
     [Fact]
-    public async Task LoadAsync_PopulatesAvailableMarathons()
+    public async Task LoadAsync_ServiceHasWeeklyMarathons_PopulatesAvailableMarathons()
     {
-        var service = new StubMarathonService
+        StubMarathonService service = new StubMarathonService
         {
             WeeklyMarathons =
             [
@@ -20,8 +24,8 @@ public sealed class MarathonPageViewModelTests
                 new Marathon { Id = 2, Title = "Two", IsActive = true },
             ],
         };
-        var repository = new StubMarathonRepository();
-        var viewModel = new MarathonPageViewModel(service, repository);
+        StubMarathonRepository repository = new StubMarathonRepository();
+        MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
 
         await viewModel.LoadAsync(userId: 10);
 
@@ -29,19 +33,19 @@ public sealed class MarathonPageViewModelTests
     }
 
     [Fact]
-    public async Task SelectMarathonAsync_LoadsProgressAndLeaderboard()
+    public async Task SelectMarathonAsync_ValidMarathon_LoadsProgressAndLeaderboard()
     {
-        var marathon = new Marathon { Id = 7, Title = "Elite", IsActive = true };
-        var progress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 1, TriviaAccuracy = 100 };
-        var service = new StubMarathonService { Progress = progress };
-        var repository = new StubMarathonRepository
+        Marathon marathon = new Marathon { Id = 7, Title = "Elite", IsActive = true };
+        MarathonProgress progress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 1, TriviaAccuracy = 100 };
+        StubMarathonService service = new StubMarathonService { Progress = progress };
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             LeaderboardByMarathonId =
             {
                 [7] = [progress],
             },
         };
-        var viewModel = new MarathonPageViewModel(service, repository);
+        MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
 
         await viewModel.SelectMarathonAsync(marathon);
 
@@ -51,20 +55,20 @@ public sealed class MarathonPageViewModelTests
     }
 
     [Fact]
-    public async Task RefreshAfterMovieLoggedAsync_ReloadsProgressAndLeaderboardForSelectedMarathon()
+    public async Task RefreshAfterMovieLoggedAsync_MarathonSelected_ReloadsProgressAndLeaderboard()
     {
-        var marathon = new Marathon { Id = 7, Title = "Elite", IsActive = true };
-        var initialProgress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 1, TriviaAccuracy = 100 };
-        var refreshedProgress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 2, TriviaAccuracy = 100, FinishedAt = DateTime.UtcNow };
-        var service = new StubMarathonService
+        Marathon marathon = new Marathon { Id = 7, Title = "Elite", IsActive = true };
+        MarathonProgress initialProgress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 1, TriviaAccuracy = 100 };
+        MarathonProgress refreshedProgress = new MarathonProgress { UserId = 10, MarathonId = 7, CompletedMoviesCount = 2, TriviaAccuracy = 100, FinishedAt = DateTime.UtcNow };
+        StubMarathonService service = new StubMarathonService
         {
             ProgressSequence = new Queue<MarathonProgress?>([initialProgress, refreshedProgress]),
         };
-        var repository = new StubMarathonRepository
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             LeaderboardSequence = new Queue<IReadOnlyList<MarathonProgress>>([[initialProgress], [refreshedProgress]]),
         };
-        var viewModel = new MarathonPageViewModel(service, repository);
+        MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
         await viewModel.SelectMarathonAsync(marathon);
 
         await viewModel.RefreshAfterMovieLoggedAsync();
@@ -74,21 +78,21 @@ public sealed class MarathonPageViewModelTests
     }
 
     [Fact]
-    public async Task SelectMarathonAsync_LocksEliteMarathonUntilItsPrerequisiteIsCompleted()
+    public async Task SelectMarathonAsync_PrerequisiteNotCompleted_SetsIsLockedToTrue()
     {
-        var marathon = new Marathon
+        Marathon marathon = new Marathon
         {
             Id = 7,
             Title = "Elite",
             IsActive = true,
             PrerequisiteMarathonId = 3,
         };
-        var service = new StubMarathonService { Progress = null };
-        var repository = new StubMarathonRepository
+        StubMarathonService service = new StubMarathonService { Progress = null };
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             IsPrerequisiteCompleted = false,
         };
-        var viewModel = new MarathonPageViewModel(service, repository);
+        MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
 
         await viewModel.SelectMarathonAsync(marathon);
 
@@ -96,9 +100,9 @@ public sealed class MarathonPageViewModelTests
     }
 
     [Fact]
-    public async Task LoadAsync_WithoutServices_ShowsUnavailableStateAndKeepsCollectionsEmpty()
+    public async Task LoadAsync_ServicesNotProvided_SetsUnavailableStateAndEmptyCollections()
     {
-        var viewModel = new MarathonPageViewModel();
+        MarathonPageViewModel viewModel = new MarathonPageViewModel();
 
         await viewModel.LoadAsync(userId: 10);
 
@@ -183,7 +187,7 @@ public sealed class MarathonPageViewModelTests
             }
 
             return Task.FromResult<IEnumerable<MarathonProgress>>(
-                LeaderboardByMarathonId.TryGetValue(marathonId, out var entries)
+                LeaderboardByMarathonId.TryGetValue(marathonId, out IReadOnlyList<MarathonProgress> entries)
                     ? entries
                     : []);
         }
@@ -221,7 +225,7 @@ public sealed class MarathonPageViewModelTests
             {
                 source = LeaderboardSequence.Dequeue();
             }
-            else if (LeaderboardByMarathonId.TryGetValue(marathonId, out var entries))
+            else if (LeaderboardByMarathonId.TryGetValue(marathonId, out IReadOnlyList<MarathonProgress> entries))
             {
                 source = entries;
             }
