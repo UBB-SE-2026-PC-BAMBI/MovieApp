@@ -25,7 +25,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     private const int Minutes = 59;
     private const int Seconds = 59;
 
-    private readonly string connectionString;
+    private readonly string _connectionString;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlMarathonRepository"/> class.
@@ -36,7 +36,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public SqlMarathonRepository(DatabaseOptions databaseOptions)
     {
         ArgumentNullException.ThrowIfNull(databaseOptions);
-        this.connectionString = databaseOptions.ConnectionString;
+        this._connectionString = databaseOptions.ConnectionString;
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
     {
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT Id, Title, Description, PosterUrl, Theme, PrerequisiteMarathonId, WeekScoping " +
             "FROM dbo.Marathons WHERE IsActive = 1", sqlConnection);
@@ -81,7 +81,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     public async Task<IEnumerable<MarathonProgress>> GetLeaderboardAsync(int marathonId)
     {
         List<MarathonProgress> rankings = new List<MarathonProgress>();
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         const string sqlStringCommand = """
             SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt
             FROM dbo.MarathonProgress
@@ -119,7 +119,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns>The <see cref="MarathonProgress"/> if found; otherwise, <c>null</c>.</returns>
     public async Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "SELECT UserId, MarathonId, TriviaAccuracy, CompletedMoviesCount, FinishedAt " +
             "FROM dbo.MarathonProgress WHERE UserId = @UserId AND MarathonId = @MarathonId", sqlConnection);
@@ -152,7 +152,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns><c>true</c> if the user successfully joined; otherwise, <c>false</c>.</returns>
     public async Task<bool> JoinMarathonAsync(int userId, int marathonId)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "INSERT INTO dbo.MarathonProgress (UserId, MarathonId, JoinedAt) " +
             "VALUES (@UserId, @MarathonId, @JoinedAt)", sqlConnection);
@@ -172,7 +172,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
     /// <returns><c>true</c> if the progress was updated successfully; otherwise, <c>false</c>.</returns>
     public async Task<bool> UpdateProgressAsync(MarathonProgress progress)
     {
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(
             "UPDATE dbo.MarathonProgress SET " +
             "TriviaAccuracy = @Accuracy, CompletedMoviesCount = @Count, FinishedAt = @FinishedAt " +
@@ -203,7 +203,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
               AND FinishedAt IS NOT NULL;
         """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -226,7 +226,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         WHERE MarathonId = @marathonId;
         """;
 
-        await using var sqlConnection = new SqlConnection(this.connectionString);
+        await using var sqlConnection = new SqlConnection(this._connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
@@ -265,7 +265,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<Marathon> marathons = new List<Marathon>();
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@week", weekString);
         sqlCommand.Parameters.AddWithValue("@userId", userId);
@@ -313,7 +313,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
 
         List<int> ids = new List<int>();
 
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand selectCmd = new SqlCommand(selectSql, sqlConnection);
@@ -376,7 +376,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<MovieApp.Core.Models.Movie.Movie> movies = new List<MovieApp.Core.Models.Movie.Movie>();
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
@@ -415,7 +415,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         """;
 
         List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
         sqlCommand.Parameters.AddWithValue("@marathonId", marathonId);
 
@@ -448,7 +448,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
             WHERE MarathonId = @marathonId;
         """;
 
-        await using SqlConnection sqlConnection = new SqlConnection(this.connectionString);
+        await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);
         await sqlConnection.OpenAsync();
 
         await using SqlCommand sqlCommand = new SqlCommand(sqlStringCommand, sqlConnection);
