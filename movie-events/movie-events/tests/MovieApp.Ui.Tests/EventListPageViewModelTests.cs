@@ -9,9 +9,9 @@ namespace MovieApp.Ui.Tests;
 public sealed class EventListPageViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_LoadsAllEventsAndRefreshesVisibleEventsUsingCurrentState()
+    public async Task InitializeAsync_WithInitialState_LoadsAndFiltersVisibleEvents()
     {
-        var viewModel = new TestEventListPageViewModel(BuildSampleEvents());
+        TestEventListPageViewModel viewModel = new TestEventListPageViewModel(BuildSampleEvents());
         viewModel.SetSearchText("festival");
         viewModel.SetSortOption(EventSortOption.PriceDescending);
 
@@ -23,9 +23,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSearchText_UpdatesStateAndVisibleEvents()
+    public void SetSearchText_ValidString_UpdatesStateAndVisibleEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.SetSearchText("concert");
 
@@ -34,9 +34,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSearchText_TreatsNullAsEmptyStringAndRestoresVisibleEvents()
+    public void SetSearchText_NullString_TreatsAsEmptyAndRestoresVisibleEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
         viewModel.SetSearchText("concert");
 
         viewModel.SetSearchText(null);
@@ -46,10 +46,10 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSearchText_DoesNotRaiseVisibleEventsChangeWhenEffectiveValueIsUnchanged()
+    public void SetSearchText_UnchangedValue_DoesNotRaisePropertyChanged()
     {
-        var viewModel = CreateInitializedViewModel();
-        var propertyChanges = new List<string?>();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
+        List<string?> propertyChanges = new List<string?>();
         viewModel.PropertyChanged += (_, args) => propertyChanges.Add(args.PropertyName);
 
         viewModel.SetSearchText(string.Empty);
@@ -58,9 +58,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSortOption_UpdatesStateAndVisibleEvents()
+    public void SetSortOption_ValidOption_UpdatesStateAndVisibleEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.SetSortOption(EventSortOption.PriceDescending);
 
@@ -69,9 +69,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSortOption_SupportsHistoricalRatingAndPriceModes()
+    public void SetSortOption_DifferentModes_SortsVisibleEventsCorrectly()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.SetSortOption(EventSortOption.PriceAscending);
         Assert.Equal([3, 2, 1, 4], viewModel.VisibleEvents.Select(e => e.Id));
@@ -81,9 +81,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSortOption_KeepsOnlyOneSortModeActivePerListInstance()
+    public void SetSortOption_MultipleCalls_KeepsOnlyLastSortModeActive()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.SetSortOption(EventSortOption.PriceDescending);
         viewModel.SetSortOption(EventSortOption.HistoricalRatingDescending);
@@ -93,10 +93,10 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSortOption_IsScopedToTheCurrentListInstance()
+    public void SetSortOption_MultipleInstances_ScopesOptionToCurrentInstance()
     {
-        var firstViewModel = CreateInitializedViewModel();
-        var secondViewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel firstViewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel secondViewModel = CreateInitializedViewModel();
 
         firstViewModel.SetSortOption(EventSortOption.PriceDescending);
 
@@ -107,10 +107,10 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void SetSortOption_DoesNotRaiseVisibleEventsChangeWhenValueIsUnchanged()
+    public void SetSortOption_UnchangedValue_DoesNotRaisePropertyChanged()
     {
-        var viewModel = CreateInitializedViewModel();
-        var propertyChanges = new List<string?>();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
+        List<string?> propertyChanges = new List<string?>();
         viewModel.PropertyChanged += (_, args) => propertyChanges.Add(args.PropertyName);
 
         viewModel.SetSortOption(EventSortOption.DateAscending);
@@ -119,9 +119,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void UpdateFilters_AppliesMutationAndRefreshesVisibleEvents()
+    public void UpdateFilters_ValidDelegate_AppliesMutationAndRefreshesEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.UpdateFilters(filters =>
         {
@@ -135,17 +135,17 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void UpdateFilters_ThrowsForNullDelegate()
+    public void UpdateFilters_NullDelegate_ThrowsArgumentNullException()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         Assert.Throws<ArgumentNullException>(() => viewModel.UpdateFilters(null!));
     }
 
     [Fact]
-    public void ResetEventListState_ResetsStateAndRestoresVisibleEvents()
+    public void ResetEventListState_WithActiveState_ResetsStateAndRestoresEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
         viewModel.SetSearchText("festival");
         viewModel.SetSortOption(EventSortOption.PriceDescending);
         viewModel.UpdateFilters(filters => filters.OnlyAvailableEvents = true);
@@ -159,9 +159,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void RefreshVisibleEvents_RaisesPropertyChangedForVisibleEvents()
+    public void RefreshVisibleEvents_StateChanged_RaisesPropertyChangedEvent()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
         string? changedProperty = null;
         viewModel.PropertyChanged += (_, args) => changedProperty = args.PropertyName;
 
@@ -171,9 +171,9 @@ public sealed class EventListPageViewModelTests
     }
 
     [Fact]
-    public void UpdateFilters_FiltersVisibleEventsByEventType()
+    public void UpdateFilters_EventTypeFilter_FiltersVisibleEvents()
     {
-        var viewModel = CreateInitializedViewModel();
+        TestEventListPageViewModel viewModel = CreateInitializedViewModel();
 
         viewModel.UpdateFilters(filters => filters.EventType = "Festival");
 
@@ -182,7 +182,7 @@ public sealed class EventListPageViewModelTests
 
     private static TestEventListPageViewModel CreateInitializedViewModel()
     {
-        var viewModel = new TestEventListPageViewModel(BuildSampleEvents());
+        TestEventListPageViewModel viewModel = new TestEventListPageViewModel(BuildSampleEvents());
         viewModel.SetAllEventsForTest(BuildSampleEvents());
         viewModel.RefreshVisibleEvents();
         return viewModel;
