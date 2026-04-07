@@ -1,4 +1,9 @@
+// <copyright file="ReelCombination.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Core.Models.Movie;
+
+using System;
 
 /// <summary>
 /// Represents a valid (Genre, Actor, Director) reel combination
@@ -6,9 +11,18 @@ namespace MovieApp.Core.Models.Movie;
 /// </summary>
 public sealed class ReelCombination
 {
-    public required Genre Genre { get; init; }
+    /// <summary>
+    /// Gets Genre of the ReelCombination.
+    /// </summary>
+    required public Genre Genre { get; init; }
 
-    public required Actor Actor { get; init; }
+    /// <summary>
+    /// Gets Actor of the ReelCombination.
+    /// </summary>
+    required public Actor Actor { get; init; }
 
-    public required Director Director { get; init; }
+    /// <summary>
+    /// Gets Director of the ReelCombination.
+    /// </summary>
+    required public Director Director { get; init; }
 }

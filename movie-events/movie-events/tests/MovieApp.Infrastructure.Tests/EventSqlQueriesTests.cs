@@ -23,7 +23,7 @@ public sealed class EventSqlQueriesTests
         Assert.Contains("public const string Insert", queryFile);
         Assert.Contains("TicketPrice, EventType, HistoricalRating", queryFile);
         Assert.Contains("@ticketPrice, @eventType, @historicalRating", queryFile);
-        Assert.Contains("command.Parameters.AddWithValue(\"@eventType\", @event.EventType);", repositoryFile);
+        Assert.Contains("sqlCommand.Parameters.AddWithValue(\"@eventType\", @event.EventType);", repositoryFile);
     }
 
     [Fact]
@@ -137,9 +137,9 @@ public sealed class EventSqlQueriesTests
 
         Assert.Contains("public SqlMarathonRepository(DatabaseOptions databaseOptions)", repositoryFile);
         Assert.Contains("ArgumentNullException.ThrowIfNull(databaseOptions);", repositoryFile);
-        Assert.Contains("_connectionString = databaseOptions.ConnectionString;", repositoryFile);
-        Assert.Contains("await using var connection = new SqlConnection(_connectionString);", repositoryFile);
-        Assert.Contains("await using var command = new SqlCommand(", repositoryFile);
+        Assert.Contains("this._connectionString = databaseOptions.ConnectionString;", repositoryFile);
+        Assert.Contains("await using SqlConnection sqlConnection = new SqlConnection(this._connectionString);", repositoryFile);
+        Assert.Contains("await using SqlCommand sqlCommand = new SqlCommand(", repositoryFile);
         Assert.DoesNotContain("public SqlMarathonRepository(string connectionString)", repositoryFile);
     }
 }

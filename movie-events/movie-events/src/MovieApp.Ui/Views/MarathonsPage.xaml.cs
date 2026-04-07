@@ -1,15 +1,14 @@
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using MovieApp.Core.Models;
-using MovieApp.Core.Services;
-using MovieApp.Infrastructure;
+using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
-namespace MovieApp.Ui.Views;
 
 public sealed partial class MarathonsPage : Page
 {
@@ -19,20 +18,25 @@ public sealed partial class MarathonsPage : Page
 
     public MarathonPageViewModel ViewModel { get; }
 
+    private readonly IDialogService dialogService;
+
     public MarathonsPage()
     {
-        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
+        if (App.Services.MarathonService == null)
+        {
+            throw new InvalidOperationException("Marathon service is not configured.");
+        }
 
-        var db = new DatabaseOptions { ConnectionString = connectionString };
-        var marathonRepo = new SqlMarathonRepository(db);
+        if (App.Services.DialogService == null)
+        {
+            throw new InvalidOperationException("Dialog service is not configured.");
+        }
 
-        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
-        var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService);
+        this.ViewModel = new MarathonPageViewModel(App.Services.MarathonService);
+        this.dialogService = App.Services.DialogService;
+        this.InitializeComponent();
 
-        ViewModel = new MarathonPageViewModel(marathonService, marathonRepo);
-        InitializeComponent();
-
-        Loaded += async (_, _) =>
+        this.Loaded += async (_, _) =>
         {
             App.EnsureServicesValid();
 
@@ -41,19 +45,10 @@ public sealed partial class MarathonsPage : Page
                 throw new InvalidOperationException("User session is invalid or has expired.");
             }
 
-            _currentUserId = App.Services.CurrentUserService.CurrentUser.Id;
-            await ViewModel.LoadAsync(_currentUserId);
+            this.dialogService.SetXamlRoot(this.XamlRoot);
+            this._currentUserId = App.Services.CurrentUserService.CurrentUser.Id;
+            await this.ViewModel.LoadAsync(this._currentUserId);
         };
-    }
-
-    private string GetRequiredConfiguration(string key)
-    {
-        var value = App.Configuration?[key];
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new InvalidOperationException($"Missing or invalid required configuration for key: '{key}'.");
-        }
-        return value;
     }
 
     private async void MarathonCard_Tapped(object sender, TappedRoutedEventArgs e)
@@ -67,7 +62,7 @@ public sealed partial class MarathonsPage : Page
         DetailTheme.Text = marathon.Theme ?? string.Empty;
         LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
 
-        RefreshProgressBar();
+        this.RefreshProgressBar();
 
         LockedBanner.Visibility = ViewModel.IsLocked
             ? Visibility.Visible : Visibility.Collapsed;
@@ -127,14 +122,7 @@ public sealed partial class MarathonsPage : Page
         }
         catch (InvalidOperationException ex)
         {
-            var dialog = new ContentDialog
-            {
-                XamlRoot = XamlRoot,
-                Title = "Cannot start quiz",
-                Content = ex.Message,
-                CloseButtonText = "OK"
-            };
-            await dialog.ShowAsync();
+            await this.dialogService.ShowInfoAsync("Cannot start quiz", ex.Message);
         }
     }
 
@@ -172,18 +160,11 @@ public sealed partial class MarathonsPage : Page
 
     private async Task LogPassedMovieAsync(int marathonId, int movieId, int correctCount)
     {
-        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
-        var db = new DatabaseOptions { ConnectionString = connectionString };
-        var repo = new SqlMarathonRepository(db);
+        await this.ViewModel.LogMovieAsync(marathonId, movieId, correctCount);
+        await this.ViewModel.RefreshAfterMovieLoggedAsync();
 
-        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
-        var service = new MarathonService(repo, App.Services.CurrentUserService);
-
-        await service.LogMovieAsync(marathonId, movieId, correctCount);
-        await ViewModel.RefreshAfterMovieLoggedAsync();
-
-        LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
-        RefreshProgressBar();
+        this.LeaderboardSubtitle.Text = $"{this.ViewModel.Leaderboard.Count} participants";
+        this.RefreshProgressBar();
     }
 
     private async void TryAgainButton_Click(object sender, RoutedEventArgs e)

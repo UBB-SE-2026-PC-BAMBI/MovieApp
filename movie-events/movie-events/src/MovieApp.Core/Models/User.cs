@@ -1,3 +1,6 @@
+// <copyright file="User.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Core.Models;
 
 /// <summary>
@@ -8,25 +11,25 @@ public sealed class User
     /// <summary>
     /// Gets the internal user identifier.
     /// </summary>
-    public required int Id { get; init; }
+    required public int Id { get; init; }
 
     /// <summary>
     /// Gets the external authentication provider name.
     /// </summary>
-    public required string AuthProvider { get; init; }
+    required public string AuthProvider { get; init; }
 
     /// <summary>
     /// Gets the external authentication subject identifier.
     /// </summary>
-    public required string AuthSubject { get; init; }
+    required public string AuthSubject { get; init; }
 
     /// <summary>
     /// Gets the username shown in the application.
     /// </summary>
-    public required string Username { get; init; }
+    required public string Username { get; init; }
 
     /// <summary>
     /// Gets the stable composite identifier used for seeded-user lookup.
     /// </summary>
-    public string StableId => $"{AuthProvider}:{AuthSubject}";
+    public string StableId => $"{this.AuthProvider}:{this.AuthSubject}";
 }

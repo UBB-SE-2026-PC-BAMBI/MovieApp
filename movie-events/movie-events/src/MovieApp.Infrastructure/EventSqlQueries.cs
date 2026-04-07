@@ -1,3 +1,6 @@
+// <copyright file="EventSqlQueries.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Infrastructure;
 
 /// <summary>
@@ -13,17 +16,26 @@ public static class EventSqlQueries
         TicketPrice, HistoricalRating, EventType, MaxCapacity, CurrentEnrollment, CreatorUserId
         """;
 
+    /// <summary>
+    /// Gets the SQL query used to retrieve every event record from the database.
+    /// </summary>
     public const string SelectAll = $$"""
         SELECT {{Projection}}
         FROM dbo.Events;
         """;
 
+    /// <summary>
+    /// Gets the SQL query used to retrieve events filtered by their specific type category.
+    /// </summary>
     public const string SelectByType = $$"""
         SELECT {{Projection}}
         FROM dbo.Events
         WHERE EventType = @eventType;
         """;
 
+    /// <summary>
+    /// Gets the SQL query used to retrieve a specific event record by its unique identifier.
+    /// </summary>
     public const string SelectById = $$"""
         SELECT {{Projection}}
         FROM dbo.Events

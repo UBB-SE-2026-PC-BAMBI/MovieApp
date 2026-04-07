@@ -1,3 +1,6 @@
+// <copyright file="DatabaseOptions.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Infrastructure;
 
 /// <summary>
@@ -6,7 +9,7 @@ namespace MovieApp.Infrastructure;
 public sealed class DatabaseOptions
 {
     /// <summary>
-    /// SQL Server connection string for the MovieApp database.
+    /// Gets SQL Server connection string for the MovieApp database.
     /// </summary>
-    public required string ConnectionString { get; init; }
+    required public string ConnectionString { get; init; }
 }

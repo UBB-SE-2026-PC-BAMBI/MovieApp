@@ -1,8 +1,12 @@
+// <copyright file="SqlFavoriteEventRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Infrastructure;
-using Microsoft.Data.SqlClient;
 
+using Microsoft.Data.SqlClient;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
+
 /// <summary>
 /// SQL Server implementation of <see cref="IFavoriteEventRepository"/>.
 /// Provides methods for managing user favorite events in the database.

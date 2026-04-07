@@ -101,7 +101,7 @@ public sealed class RewardServiceTests
         RewardService service = new RewardService(repo);
         Reward reward = MakeReward();
 
-        await service.RedeemAsync(reward, eventId: null);
+        await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.Contains(reward.RewardId, repo.MarkedRedeemedIds);
     }
@@ -169,7 +169,7 @@ public sealed class RewardServiceTests
         bool eventOk = await service.RedeemAsync(eventReward, eventId: 5);
         bool eventFail = await service.RedeemAsync(
             new Reward { RewardId = 3, RewardType = "Discount", OwnerUserId = 10, ApplicabilityScope = "EventSpecific", DiscountValue = 20, EventId = 5 },
-            eventId: 99);
+            eventIdentifier: 99);
 
         Assert.True(globalOk);
         Assert.True(eventOk);

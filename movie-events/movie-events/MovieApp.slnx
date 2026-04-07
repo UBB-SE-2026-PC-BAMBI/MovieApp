@@ -6,6 +6,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/src/">
+    <Project Path="DbSetup/DbSetup.csproj" />
     <Project Path="src/MovieApp.Core/MovieApp.Core.csproj" />
     <Project Path="src/MovieApp.Infrastructure/MovieApp.Infrastructure.csproj" />
     <Project Path="src/MovieApp.Ui/MovieApp.Ui.csproj">

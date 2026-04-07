@@ -1,4 +1,8 @@
-﻿namespace MovieApp.Core.Models;
+﻿// <copyright file="MarathonProgress.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Core.Models;
 
 /// <summary>
 /// Tracks a user's progress within a specific marathon.
@@ -8,11 +12,12 @@ public sealed class MarathonProgress
     /// <summary>
     /// Gets the participant user identifier.
     /// </summary>
-    public required int UserId { get; init; }
+    required public int UserId { get; init; }
+
     /// <summary>
     /// Gets the marathon identifier.
     /// </summary>
-    public required int MarathonId { get; init; }
+    required public int MarathonId { get; init; }
 
     /// <summary>
     /// Gets or sets when the user joined the marathon.
@@ -35,7 +40,7 @@ public sealed class MarathonProgress
     public DateTime? FinishedAt { get; set; }
 
     /// <summary>
-    /// Gets whether the marathon has been completed.
+    /// Gets a value indicating whether the marathon has been completed.
     /// </summary>
-    public bool IsCompleted => FinishedAt.HasValue;
+    public bool IsCompleted => this.FinishedAt.HasValue;
 }

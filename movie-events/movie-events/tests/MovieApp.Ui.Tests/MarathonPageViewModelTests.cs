@@ -1,7 +1,6 @@
-using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
-using MovieApp.Core.Services;
 using Microsoft.UI.Xaml;
+using MovieApp.Core.Models;
+using MovieApp.Core.Services;
 using MovieApp.Ui.ViewModels;
 using Xunit;
 using System.Collections.Generic;
@@ -40,10 +39,8 @@ public sealed class MarathonPageViewModelTests
         StubMarathonService service = new StubMarathonService { Progress = progress };
         StubMarathonRepository repository = new StubMarathonRepository
         {
-            LeaderboardByMarathonId =
-            {
-                [7] = [progress],
-            },
+            Progress = progress,
+            LeaderboardByMarathonId = { [7] = [progress] },
         };
         MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
 
@@ -90,6 +87,7 @@ public sealed class MarathonPageViewModelTests
         StubMarathonService service = new StubMarathonService { Progress = null };
         StubMarathonRepository repository = new StubMarathonRepository
         {
+            Progress = null,
             IsPrerequisiteCompleted = false,
         };
         MarathonPageViewModel viewModel = new MarathonPageViewModel(service, repository);
@@ -115,54 +113,33 @@ public sealed class MarathonPageViewModelTests
     private sealed class StubMarathonService : IMarathonService
     {
         public IReadOnlyList<Marathon> WeeklyMarathons { get; set; } = [];
-
         public MarathonProgress? Progress { get; set; }
-
         public Queue<MarathonProgress?> ProgressSequence { get; set; } = new();
+        public Dictionary<int, IReadOnlyList<MarathonProgress>> LeaderboardByMarathonId { get; } = [];
+        public Queue<IReadOnlyList<MarathonProgress>> LeaderboardSequence { get; set; } = new();
+        public bool IsPrerequisiteCompleted { get; set; } = true;
 
         public Task<IEnumerable<Marathon>> GetWeeklyMarathonsAsync(int userId)
-        {
-            return Task.FromResult<IEnumerable<Marathon>>(WeeklyMarathons);
-        }
+            => Task.FromResult<IEnumerable<Marathon>>(WeeklyMarathons);
 
         public Task<MarathonProgress?> GetCurrentProgressAsync(int marathonId)
         {
             if (ProgressSequence.Count > 0)
-            {
                 return Task.FromResult(ProgressSequence.Dequeue());
-            }
-
             return Task.FromResult(Progress);
         }
 
+        public Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
+            => Task.FromResult<MarathonProgress?>(null);
+
         public Task<bool> StartMarathonAsync(int marathonId)
-        {
-            return Task.FromResult(true);
-        }
+            => Task.FromResult(true);
 
         public Task UpdateQuizResultAsync(int marathonId, int correctAnswers)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
 
         public Task<bool> LogMovieAsync(int marathonId, int movieId, int correctAnswers)
-        {
-            return Task.FromResult(true);
-        }
-    }
-
-    private sealed class StubMarathonRepository : IMarathonRepository
-    {
-        public Dictionary<int, IReadOnlyList<MarathonProgress>> LeaderboardByMarathonId { get; } = [];
-
-        public Queue<IReadOnlyList<MarathonProgress>> LeaderboardSequence { get; set; } = new();
-
-        public bool IsPrerequisiteCompleted { get; set; } = true;
-
-        public Task<IEnumerable<Marathon>> GetActiveMarathonsAsync()
-        {
-            return Task.FromResult<IEnumerable<Marathon>>([]);
-        }
+            => Task.FromResult(true);
 
         public Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
         {
@@ -198,41 +175,29 @@ public sealed class MarathonPageViewModelTests
         }
 
         public Task<int> GetMarathonMovieCountAsync(int marathonId)
-        {
-            return Task.FromResult(0);
-        }
+            => Task.FromResult(0);
 
-        public Task<IEnumerable<Marathon>> GetWeeklyMarathonsForUserAsync(int userId, string weekString)
-        {
-            return Task.FromResult<IEnumerable<Marathon>>([]);
-        }
-
-        public Task AssignWeeklyMarathonsAsync(int userId, string weekString, int count = 10)
-        {
-            return Task.CompletedTask;
-        }
+        public Task<bool> IsPrerequisiteCompletedAsync(int userId, int marathonId)
+            => Task.FromResult(IsPrerequisiteCompleted);
 
         public Task<IEnumerable<MovieApp.Core.Models.Movie.Movie>> GetMoviesForMarathonAsync(int marathonId)
-        {
-            return Task.FromResult<IEnumerable<MovieApp.Core.Models.Movie.Movie>>([]);
-        }
+            => Task.FromResult<IEnumerable<MovieApp.Core.Models.Movie.Movie>>([]);
+
+        public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardAsync(int marathonId)
+            => Task.FromResult<IEnumerable<LeaderboardEntry>>([]);
 
         public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId)
         {
             IEnumerable<MarathonProgress> source;
 
             if (LeaderboardSequence.Count > 0)
-            {
                 source = LeaderboardSequence.Dequeue();
             }
             else if (LeaderboardByMarathonId.TryGetValue(marathonId, out IReadOnlyList<MarathonProgress> entries))
             {
                 source = entries;
-            }
             else
-            {
                 return Task.FromResult<IEnumerable<LeaderboardEntry>>([]);
-            }
 
             return Task.FromResult<IEnumerable<LeaderboardEntry>>(source.Select(p => new LeaderboardEntry
             {
@@ -242,11 +207,6 @@ public sealed class MarathonPageViewModelTests
                 TriviaAccuracy = p.TriviaAccuracy,
                 FinishedAt = p.FinishedAt,
             }).ToList());
-        }
-
-        public Task<int> GetParticipantCountAsync(int marathonId)
-        {
-            return Task.FromResult(0);
         }
     }
 }

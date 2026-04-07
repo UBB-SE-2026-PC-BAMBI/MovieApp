@@ -76,7 +76,7 @@ public sealed class ReferralServicesTests
         };
         ReferralLogService service = new ReferralLogService(repository);
 
-        await service.LogReferralUsageAsync("FRIENDCODE", friendId: 10, eventId: 88);
+        await service.LogReferralUsageAsync("FRIENDCODE", friendIdentifier: 10, eventIdentifier: 88);
 
         (int AmbassadorId, int FriendId, int EventId) loggedUsage = Assert.Single(repository.LogEntries);
         Assert.Equal((42, 10, 88), loggedUsage);
@@ -89,7 +89,7 @@ public sealed class ReferralServicesTests
         StubAmbassadorRepository repository = new StubAmbassadorRepository();
         ReferralLogService service = new ReferralLogService(repository);
 
-        await service.LogReferralUsageAsync("MISSING", friendId: 10, eventId: 88);
+        await service.LogReferralUsageAsync("MISSING", friendIdentifier: 10, eventIdentifier: 88);
 
         Assert.Empty(repository.LogEntries);
         Assert.Empty(repository.TryApplyRewardCalls);

@@ -1,50 +1,57 @@
-using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+// <copyright file="RewardService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Core.Services;
 
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
+
 /// <summary>
-/// Enforces reward redemption integrity:
-/// - Blocks already-redeemed rewards.
-/// - Validates event-linked reward scope before applying.
-/// - Persists the redeemed state after a successful redemption.
+/// Enforces reward redemption integrity rules.
 /// </summary>
 public sealed class RewardService : IRewardService
 {
-    private readonly IUserMovieDiscountRepository _rewardRepository;
+    private readonly IUserMovieDiscountRepository rewardRepository;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RewardService"/> class.
+    /// </summary>
+    /// <param name="rewardRepository">The repository for reward persistence.</param>
     public RewardService(IUserMovieDiscountRepository rewardRepository)
     {
-        _rewardRepository = rewardRepository;
+        this.rewardRepository = rewardRepository;
     }
 
     /// <summary>
     /// Attempts to redeem a reward, optionally scoped to a specific event.
-    /// Returns false if the reward is already redeemed or the event scope does not match.
-    /// On success, marks the reward as redeemed in-memory and persists the state.
     /// </summary>
-    public async Task<bool> RedeemAsync(Reward reward, int? eventId, CancellationToken cancellationToken = default)
+    /// <param name="reward">The reward entity to redeem.</param>
+    /// <param name="eventIdentifier">The optional identifier of the event scope.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>True if the reward was successfully marked as redeemed; otherwise, false.</returns>
+    public async Task<bool> RedeemAsync(Reward reward, int? eventIdentifier, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(reward);
 
-        // Rule 1: Block already redeemed rewards
         if (!reward.IsAvailable)
         {
             return false;
         }
 
-        // Rule 2: Validate event-linked reward scope
         if (reward.ApplicabilityScope == "EventSpecific")
         {
-            if (reward.EventId is null || reward.EventId != eventId)
+            if (reward.EventId is null || reward.EventId != eventIdentifier)
             {
                 return false;
             }
         }
 
-        // Mark redeemed in-memory and persist
         reward.Redeem();
-        await _rewardRepository.MarkRedeemedAsync(reward.RewardId, cancellationToken);
+        await this.rewardRepository.MarkRedeemedAsync(reward.RewardId, cancellationToken);
 
         return true;
     }

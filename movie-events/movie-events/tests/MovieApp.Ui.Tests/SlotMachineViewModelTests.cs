@@ -41,7 +41,12 @@ public sealed class SlotMachineViewModelTests
     [Fact]
     public void CreateUnavailable_WhenCalled_DisablesSpinAndPreservesOfflineMessage()
     {
-        /* Bogdan Please Fix this UWU - Teammate 4 (T4-04) will uncomment this later */
+        var vm = SlotMachineViewModel.CreateUnavailable("Service is offline");
+
+        Assert.Equal(0, vm.AvailableSpins);
+        Assert.False(vm.IsSpinButtonEnabled);
+        Assert.Equal("Service is offline", vm.StatusMessage);
+        Assert.False(vm.SpinCommand.CanExecute(null));
     }
 
     [Fact]
