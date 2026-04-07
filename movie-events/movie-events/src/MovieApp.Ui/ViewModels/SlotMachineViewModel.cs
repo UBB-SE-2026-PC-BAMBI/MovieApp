@@ -11,6 +11,11 @@ using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 using MovieApp.Ui.Controls;
 using MovieApp.Ui.Services;
+using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// ViewModel for the Slot Machine page.
@@ -322,17 +327,17 @@ public sealed class SlotMachineViewModel : ViewModelBase
                     }
                 });
 
-            this.JackpotMovie = result.JackpotMovie;
-            this.JackpotAchieved = result.JackpotDiscountApplied;
+            JackpotMovie = result.JackpotMovie;
+            JackpotAchieved = result.JackpotDiscountApplied;
 
-            this.MatchingEvents.Clear();
-            foreach (Event @event in result.MatchingEvents)
+            MatchingEvents.Clear();
+            foreach (var evt in result.MatchingEvents)
             {
-                bool isJackpot = result.JackpotEventIds.Contains(@event.Id);
-                this.MatchingEvents.Add(new MatchingEventItem(@event, isJackpot));
+                var isJackpot = result.JackpotEventIds?.Contains(evt.Id) ?? false;
+                MatchingEvents.Add(new MatchingEventItem(evt, isJackpot));
             }
 
-            if (this.JackpotAchieved)
+            if (JackpotAchieved)
             {
                 this.StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
                 this.JackpotHit?.Invoke(result.JackpotMovie!, result.DiscountPercentage);
@@ -346,10 +351,13 @@ public sealed class SlotMachineViewModel : ViewModelBase
                 this.StatusMessage = "No matching events this time. Try again!";
             }
 
-            UserSpinData? updatedState =
-                await this.slotMachineService.GetUserSpinStateAsync(this.userId);
-            this.AvailableSpins = updatedState.DailySpinsRemaining;
-            this.BonusSpins = updatedState.BonusSpins;
+            var updatedState = await _slotMachineService.GetUserSpinStateAsync(_userId);
+            AvailableSpins = updatedState.DailySpinsRemaining;
+            BonusSpins = updatedState.BonusSpins;
+        }
+        catch (InvalidOperationException ex)
+        {
+            StatusMessage = ex.Message;
         }
         catch (Exception ex)
         {

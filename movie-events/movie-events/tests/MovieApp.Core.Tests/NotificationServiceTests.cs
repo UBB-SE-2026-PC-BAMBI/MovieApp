@@ -84,4 +84,113 @@ public sealed class NotificationServiceTests
         Notification notification = Assert.Single(await service.GetNotificationsByUserIdAsync(100));
         Assert.Equal("SeatsAvailable", notification.Type);
     }
+    private Event CreateValidEvent(int id = 1, decimal price = 10)
+    {
+        return new Event
+        {
+            Id = id,
+            Title = "Default Title",
+            TicketPrice = price,
+            EventDateTime = DateTime.Now,
+            LocationReference = "Default Location",
+            CreatorUserId = 1,
+            MaxCapacity = 100,
+            CurrentEnrollment = 0
+        };
+    }
+
+    [Fact]
+    public async Task NotifyPriceDropAsync_WhenNewPriceEqualsOldPrice_DoesNotCreateNotification()
+    {
+        var notificationRepo = new FakeNotificationRepository();
+        var favoriteRepo = new FakeFavoriteEventRepository();
+        var eventRepo = new FakeEventRepository();
+        var service = new NotificationService(notificationRepo, favoriteRepo, eventRepo);
+
+        eventRepo.Items.Add(CreateValidEvent(id: 1, price: 20));
+        await favoriteRepo.AddAsync(100, 1);
+
+        // Act - Price stayed at 20
+        await service.NotifyPriceDropAsync(1, oldPrice: 20, newPrice: 20);
+
+        // Assert
+        Assert.Empty(await service.GetNotificationsByUserIdAsync(100));
+    }
+
+    [Fact]
+    public async Task NotifyPriceDropAsync_WhenEventDoesNotExist_DoesNotCreateNotification()
+    {
+        var notificationRepo = new FakeNotificationRepository();
+        var favoriteRepo = new FakeFavoriteEventRepository();
+        var eventRepo = new FakeEventRepository(); // Empty repo
+        var service = new NotificationService(notificationRepo, favoriteRepo, eventRepo);
+
+        await favoriteRepo.AddAsync(100, 999);
+
+        // Act
+        await service.NotifyPriceDropAsync(999, oldPrice: 20, newPrice: 10);
+
+        // Assert
+        Assert.Empty(await service.GetNotificationsByUserIdAsync(100));
+    }
+
+
+    [Fact]
+    public async Task NotifySeatsAvailableAsync_WhenNewCapacityDoesNotExceedCurrentEnrollment_DoesNotNotify()
+    {
+        var notificationRepo = new FakeNotificationRepository();
+        var favoriteRepo = new FakeFavoriteEventRepository();
+        var eventRepo = new FakeEventRepository();
+        var service = new NotificationService(notificationRepo, favoriteRepo, eventRepo);
+
+        var myEvent = CreateValidEvent(id: 1);
+        myEvent.CurrentEnrollment = 50;
+        myEvent.MaxCapacity = 40; // Old capacity
+        eventRepo.Items.Add(myEvent);
+
+        await favoriteRepo.AddAsync(100, 1);
+
+        // Act - New capacity is 50, which is equal to enrollment (no actual "free" seats)
+        await service.NotifySeatsAvailableAsync(1, newCapacity: 50);
+
+        // Assert
+        Assert.Empty(await service.GetNotificationsByUserIdAsync(100));
+    }
+
+    [Fact]
+    public async Task NotifyPriceDropAsync_WhenEventRepositoryIsNull_DoesNotCreateNotification()
+    {
+        var notificationRepo = new FakeNotificationRepository();
+        var favoriteRepo = new FakeFavoriteEventRepository();
+
+        // Pass null for the event repository
+        var service = new NotificationService(notificationRepo, favoriteRepo, null!);
+
+        // Act
+        await service.NotifyPriceDropAsync(1, oldPrice: 20, newPrice: 10);
+
+        // Assert
+        Assert.Empty(notificationRepo.Items);
+    }
+
+    [Fact]
+    public async Task NotifyPriceDropAsync_WhenNewPriceIsHigherThanOldPrice_DoesNotCreateNotification()
+    {
+        var notificationRepo = new FakeNotificationRepository();
+        var favoriteRepo = new FakeFavoriteEventRepository();
+        var eventRepo = new FakeEventRepository();
+        var service = new NotificationService(notificationRepo, favoriteRepo, eventRepo);
+
+        
+        eventRepo.Items.Add(CreateValidEvent(id: 1, price: 10));
+        await favoriteRepo.AddAsync(100, 1);
+
+        await service.NotifyPriceDropAsync(1, oldPrice: 10, newPrice: 15);
+
+        Assert.Empty(await service.GetNotificationsByUserIdAsync(100));
+    }
+
+   
+
+
 }

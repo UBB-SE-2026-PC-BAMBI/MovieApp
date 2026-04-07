@@ -129,7 +129,7 @@ public sealed class SlotMachineViewModelTests
         vm.SpinCommand.Execute(null);
 
         Assert.True(eventRaised);
-        Assert.Equal("🎉 JACKPOT! 70% discount earned on Golden Movie!", vm.StatusMessage);
+        Assert.Equal("JACKPOT! 70% discount earned on Golden Movie!", vm.StatusMessage);
     }
 
     [Fact]
