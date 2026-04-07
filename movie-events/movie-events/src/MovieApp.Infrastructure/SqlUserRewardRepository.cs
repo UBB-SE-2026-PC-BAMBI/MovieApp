@@ -1,4 +1,9 @@
+// <copyright file="SqlUserRewardRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Infrastructure;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -95,6 +100,7 @@ public sealed class SqlUserRewardRepository : IUserMovieDiscountRepository
     /// </summary>
     /// <param name="rewardId">The unique identifier of the reward to mark as redeemed.</param>
     /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns> It will return a task-type of object. </returns>
     public async Task MarkRedeemedAsync(int rewardId, CancellationToken cancellationToken = default)
     {
         const string sqlStringCommand = @"

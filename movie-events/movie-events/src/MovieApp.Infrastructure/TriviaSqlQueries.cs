@@ -1,4 +1,7 @@
-﻿namespace MovieApp.Infrastructure;
+﻿// <copyright file="TriviaSqlQueries.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+namespace MovieApp.Infrastructure;
 
 /// <summary>
 /// Centralizes the trivia-table projections used by <see cref="SqlTriviaRepository"/>.
@@ -12,12 +15,18 @@ public static class TriviaSqlQueries
         Id, QuestionText, Category, OptionA, OptionB, OptionC, OptionD, CorrectOption, MovieId
         """;
 
+    /// <summary>
+    /// Gets the SQL query used to retrieve trivia questions belonging to a specific category name.
+    /// </summary>
     public const string SelectByCategory = $$"""
         SELECT {{Projection}}
         FROM dbo.TriviaQuestions
         WHERE Category = @category;
         """;
 
+    /// <summary>
+    /// Gets the SQL query used to retrieve a randomized set of trivia questions linked to a specific movie.
+    /// </summary>
     public const string SelectRandomByMovieId = """
     SELECT TOP (@count) Id, QuestionText, Category,
            OptionA, OptionB, OptionC, OptionD, CorrectOption, MovieId

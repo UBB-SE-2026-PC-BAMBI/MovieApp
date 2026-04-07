@@ -1,10 +1,14 @@
+// <copyright file="SqlUserEventAttendanceRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Infrastructure;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-
 using MovieApp.Core.Repositories;
 
 /// <summary>
