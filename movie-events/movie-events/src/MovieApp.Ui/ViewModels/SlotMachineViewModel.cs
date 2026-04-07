@@ -162,6 +162,12 @@ public sealed class SlotMachineViewModel : ViewModelBase
         };
     }
 
+    /// <summary>
+    /// Factory method that creates a <see cref="SlotMachineViewModel"/> in an unavailable state.
+    /// Use this when the slot machine service cannot be reached or is disabled.
+    /// </summary>
+    /// <param name="statusMessage">The message to display when the slot machine is unavailable.</param>
+    /// <returns>A <see cref="SlotMachineViewModel"/> with no spins and the spin button disabled.</returns>
     public static SlotMachineViewModel CreateUnavailable(string statusMessage)
     {
         SlotMachineViewModel viewModel = new SlotMachineViewModel(0, null!, null!);
