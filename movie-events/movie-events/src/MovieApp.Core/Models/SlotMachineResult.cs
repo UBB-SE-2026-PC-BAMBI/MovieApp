@@ -43,7 +43,7 @@ public sealed class SlotMachineResult
     public MovieModel? JackpotMovie { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicates whether jackpot discount applied.
+    /// Gets or sets a value indicating whether jackpot discount applied.
     /// </summary>
     public bool JackpotDiscountApplied { get; set; }
 
