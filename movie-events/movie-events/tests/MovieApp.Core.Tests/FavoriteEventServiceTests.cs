@@ -17,19 +17,19 @@ public sealed class FavoriteEventServiceTests
     }
 
     [Fact]
-    public async Task AddFavoriteAsync_AddsPersistedEventToFavorites()
+    public async Task AddFavoriteAsync_ValidEvent_AddsEventToFavorites()
     {
         _eventRepository.Items.Add(new Event { Id = 1, Title = "Test Event", EventDateTime = DateTime.Now, LocationReference = "Loc", TicketPrice = 10, CreatorUserId = 1 });
 
         await _service.AddFavoriteAsync(100, 1);
 
-        var favorites = await _service.GetFavoritesByUserAsync(100);
+        IReadOnlyList<FavoriteEvent> favorites = await _service.GetFavoritesByUserAsync(100);
         Assert.Single(favorites);
         Assert.Equal(1, favorites[0].EventId);
     }
 
     [Fact]
-    public async Task AddFavoriteAsync_ThrowsWhenFavoriteAlreadyExists()
+    public async Task AddFavoriteAsync_FavoriteAlreadyExists_ThrowsInvalidOperationException()
     {
         _eventRepository.Items.Add(new Event { Id = 1, Title = "Test Event", EventDateTime = DateTime.Now, LocationReference = "Loc", TicketPrice = 10, CreatorUserId = 1 });
         await _service.AddFavoriteAsync(100, 1);
@@ -38,26 +38,26 @@ public sealed class FavoriteEventServiceTests
     }
 
     [Fact]
-    public async Task RemoveFavoriteAsync_RemovesFavoriteLink()
+    public async Task RemoveFavoriteAsync_FavoriteExists_RemovesFavoriteLink()
     {
         _eventRepository.Items.Add(new Event { Id = 1, Title = "Test Event", EventDateTime = DateTime.Now, LocationReference = "Loc", TicketPrice = 10, CreatorUserId = 1 });
         await _service.AddFavoriteAsync(100, 1);
 
         await _service.RemoveFavoriteAsync(100, 1);
 
-        var favorites = await _service.GetFavoritesByUserAsync(100);
+        IReadOnlyList<FavoriteEvent> favorites = await _service.GetFavoritesByUserAsync(100);
         Assert.Empty(favorites);
     }
 
     [Fact]
-    public async Task GetFavoriteEventsByUserIdAsync_ReturnsResolvedEvents()
+    public async Task GetFavoriteEventsByUserIdAsync_UserHasFavorites_ReturnsResolvedEvents()
     {
         _eventRepository.Items.Add(new Event { Id = 10, Title = "Test", EventDateTime = DateTime.Now, LocationReference = "Loc", TicketPrice = 10, CreatorUserId = 1 });
         await _favoriteRepository.AddAsync(1, 10);
 
-        var result = await _service.GetFavoriteEventsByUserIdAsync(1);
+        IReadOnlyList<Event> result = await _service.GetFavoriteEventsByUserIdAsync(1);
 
-        var favoriteEvent = Assert.Single(result);
+        Event favoriteEvent = Assert.Single(result);
         Assert.Equal(10, favoriteEvent.Id);
     }
 }
