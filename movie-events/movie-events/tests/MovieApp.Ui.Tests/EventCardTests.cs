@@ -9,7 +9,7 @@ namespace MovieApp.Ui.Tests;
 public sealed class EventCardTests
 {
     [Fact]
-    public void FormattingHelpers_ReturnFallbacksForMissingEvent()
+    public void FormattingHelpers_NullEvent_ReturnsFallbackValues()
     {
         Assert.Equal("Untitled event", EventCard.GetTitleText(null));
         Assert.Equal("A curated movie experience with limited seating.", EventCard.GetDescriptionText(null));
@@ -24,9 +24,9 @@ public sealed class EventCardTests
     }
 
     [Fact]
-    public void FormattingHelpers_FormatEventDetailsForDisplay()
+    public void FormattingHelpers_ValidEvent_ReturnsFormattedDisplayStrings()
     {
-        var @event = BuildEvent(
+        Event @event = BuildEvent(
             eventDateTime: new DateTime(2030, 5, 8, 19, 30, 0),
             ticketPrice: 25,
             historicalRating: 4.7,
@@ -48,10 +48,10 @@ public sealed class EventCardTests
     }
 
     [Fact]
-    public void StatusHelpers_ReturnOpenStateForAvailableEvent()
+    public void GetStatusText_SpotsAvailable_ReturnsRemainingSpotsText()
     {
-        var now = new DateTime(2030, 5, 1, 12, 0, 0);
-        var @event = BuildEvent(
+        DateTime now = new DateTime(2030, 5, 1, 12, 0, 0);
+        Event @event = BuildEvent(
             eventDateTime: now.AddDays(2),
             ticketPrice: 25,
             historicalRating: 4.7,
@@ -63,10 +63,10 @@ public sealed class EventCardTests
     }
 
     [Fact]
-    public void StatusHelpers_ReturnSoldOutStateWhenNoSpotsRemain()
+    public void GetStatusText_NoSpotsRemain_ReturnsSoldOutText()
     {
-        var now = new DateTime(2030, 5, 1, 12, 0, 0);
-        var @event = BuildEvent(
+        DateTime now = new DateTime(2030, 5, 1, 12, 0, 0);
+        Event @event = BuildEvent(
             eventDateTime: now.AddDays(2),
             ticketPrice: 25,
             historicalRating: 4.7,
@@ -78,10 +78,10 @@ public sealed class EventCardTests
     }
 
     [Fact]
-    public void StatusHelpers_ReturnEndedStateForPastEvent()
+    public void GetStatusText_EventInPast_ReturnsEndedText()
     {
-        var now = new DateTime(2030, 5, 10, 12, 0, 0);
-        var @event = BuildEvent(
+        DateTime now = new DateTime(2030, 5, 10, 12, 0, 0);
+        Event @event = BuildEvent(
             eventDateTime: now.AddHours(-2),
             ticketPrice: 25,
             historicalRating: 4.7,
