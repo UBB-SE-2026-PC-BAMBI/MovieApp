@@ -12,52 +12,75 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 
-
 /// <summary>
 /// Exposes the referral-code feature area, including ambassador progress,
 /// usage tracking, and reward-threshold handoff points.
 /// </summary>
 public sealed partial class ReferralAreaPage : Page, INotifyPropertyChanged
 {
+    private string referralCode = string.Empty;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ReferralAreaPage"/> class.
+    /// </summary>
+    public ReferralAreaPage()
+    {
+        this.InitializeComponent();
+        this.ReferralHistory.CollectionChanged += (_, _) =>
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.IsHistoryEmpty)));
+    }
+
+    /// <summary>
+    /// Occurs when a property value changes.
+    /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private string _referralCode = string.Empty;
+    /// <summary>
+    /// Gets or sets the referral code associated with the current user.
+    /// </summary>
     public string ReferralCode
     {
-        get => _referralCode;
+        get => this.referralCode;
         set
         {
-            if (_referralCode != value)
+            if (this.referralCode != value)
             {
-                _referralCode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ReferralCode)));
+                this.referralCode = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ReferralCode)));
             }
         }
     }
 
-    public ObservableCollection<ReferralHistoryItem> ReferralHistory { get; } = new();
+    /// <summary>
+    /// Gets the collection of referral history items.
+    /// </summary>
+    public ObservableCollection<ReferralHistoryItem> ReferralHistory { get; } = new ();
 
-    public Visibility IsHistoryEmpty => ReferralHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    /// <summary>
+    /// Gets a value indicating whether the referral history is empty.
+    /// </summary>
+    public Visibility IsHistoryEmpty =>
+        this.ReferralHistory.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    public ReferralAreaPage()
-    {
-        InitializeComponent();
-        ReferralHistory.CollectionChanged += (_, _) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsHistoryEmpty)));
-    }
-
+    /// <summary>
+    /// Called when the page is navigated to and loads referral data for the current user.
+    /// </summary>
+    /// <param name="e">The navigation event data.</param>
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         if (App.Services.AmbassadorRepository is not null && App.Services.CurrentUserService?.CurrentUser is { } currentUser)
         {
-            var code = await App.Services.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
-            ReferralCode = code ?? "No code generated";
+            string? code = await App.Services.AmbassadorRepository.GetReferralCodeAsync(currentUser.Id);
+            this.ReferralCode = code ?? "No code generated";
 
-            var history = await App.Services.AmbassadorRepository.GetReferralHistoryAsync(currentUser.Id);
-            ReferralHistory.Clear();
-            foreach (var item in history)
+            IEnumerable<ReferralHistoryItem> history =
+                await App.Services.AmbassadorRepository.GetReferralHistoryAsync(currentUser.Id);
+
+            this.ReferralHistory.Clear();
+            foreach (ReferralHistoryItem item in history)
             {
-                ReferralHistory.Add(item);
+                this.ReferralHistory.Add(item);
             }
         }
     }
