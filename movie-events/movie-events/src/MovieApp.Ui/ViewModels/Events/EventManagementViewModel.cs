@@ -11,137 +11,224 @@ using MovieApp.Ui.ViewModels;
 
 /// <summary>
 /// Manages event creation, editing, and deletion.
-/// Notifies users of price drops and seat availability changes via <see cref="INotificationService"/>
-/// directly, rather than through the Observer pattern, as a simple service call will suffice.
+/// Notifies users of price drops and seat availability changes via <see cref="INotificationService"/>.
 /// </summary>
 public sealed class EventManagementViewModel : EventListPageViewModel
 {
-    private readonly IEventRepository? _eventRepository;
-    private readonly INotificationService? _notificationService;
+    /// <summary>
+    /// Repository used for managing events.
+    /// </summary>
+    private readonly IEventRepository? eventRepository;
 
+    /// <summary>
+    /// Service used for sending notifications.
+    /// </summary>
+    private readonly INotificationService? notificationService;
+
+    private Event? selectedEvent;
+    private string formTitle = string.Empty;
+    private string formLocation = string.Empty;
+    private string formEventType = string.Empty;
+    private string formDescription = string.Empty;
+    private DateTimeOffset? formDate;
+    private TimeSpan formTime;
+    private double formPrice;
+    private int formCapacity;
+    private string formPosterUrl = string.Empty;
+    private string validationMessage = string.Empty;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventManagementViewModel"/> class.
+    /// </summary>
     public EventManagementViewModel()
     {
-        _eventRepository = App.Services.EventRepository;
-        _notificationService = App.Services.NotificationService;
-        CreateEventCommand = new AsyncRelayCommand(CreateEventAsync);
-        EditEventCommand = new AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
-        DeleteEventCommand = new AsyncRelayCommand(DeleteEventAsync, () => SelectedEvent is not null);
+        this.eventRepository = App.Services.EventRepository;
+        this.notificationService = App.Services.NotificationService;
+        this.CreateEventCommand = new AsyncRelayCommand(this.CreateEventAsync);
+        this.EditEventCommand = new AsyncRelayCommand(this.EditEventAsync, () => this.SelectedEvent is not null);
+        this.DeleteEventCommand = new AsyncRelayCommand(this.DeleteEventAsync, () => this.SelectedEvent is not null);
     }
 
+    /// <summary>
+    /// Gets the page title.
+    /// </summary>
     public override string PageTitle => "Event Management";
 
-    public System.Windows.Input.ICommand SimulateUpdateCommand { get; }
-
+    /// <summary>
+    /// Gets the command for creating events.
+    /// </summary>
     public System.Windows.Input.ICommand CreateEventCommand { get; }
 
+    /// <summary>
+    /// Gets the command for editing events.
+    /// </summary>
     public System.Windows.Input.ICommand EditEventCommand { get; }
 
+    /// <summary>
+    /// Gets the command for deleting events.
+    /// </summary>
     public System.Windows.Input.ICommand DeleteEventCommand { get; }
 
-    private Event? _selectedEvent;
-
+    /// <summary>
+    /// Gets or sets the selected event.
+    /// </summary>
     public Event? SelectedEvent
     {
-        get => _selectedEvent;
+        get => this.selectedEvent;
         set
         {
-            SetProperty(ref _selectedEvent, value);
-            ((AsyncRelayCommand)EditEventCommand).NotifyCanExecuteChanged();
-            ((AsyncRelayCommand)DeleteEventCommand).NotifyCanExecuteChanged();
+            this.SetProperty(ref this.selectedEvent, value);
+            ((AsyncRelayCommand)this.EditEventCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)this.DeleteEventCommand).NotifyCanExecuteChanged();
         }
     }
 
-    private string _formTitle = string.Empty;
+    /// <summary>
+    /// Gets or sets the event title input.
+    /// </summary>
+    public string FormTitle
+    {
+        get => this.formTitle;
+        set => this.SetProperty(ref this.formTitle, value);
+    }
 
-    public string FormTitle { get => _formTitle; set => SetProperty(ref _formTitle, value); }
+    /// <summary>
+    /// Gets or sets the event location input.
+    /// </summary>
+    public string FormLocation
+    {
+        get => this.formLocation;
+        set => this.SetProperty(ref this.formLocation, value);
+    }
 
-    private string _formLocation = string.Empty;
+    /// <summary>
+    /// Gets or sets the event type input.
+    /// </summary>
+    public string FormEventType
+    {
+        get => this.formEventType;
+        set => this.SetProperty(ref this.formEventType, value);
+    }
 
-    public string FormLocation { get => _formLocation; set => SetProperty(ref _formLocation, value); }
+    /// <summary>
+    /// Gets or sets the event description input.
+    /// </summary>
+    public string FormDescription
+    {
+        get => this.formDescription;
+        set => this.SetProperty(ref this.formDescription, value);
+    }
 
-    private string _formEventType = string.Empty;
+    /// <summary>
+    /// Gets or sets the event date input.
+    /// </summary>
+    public DateTimeOffset? FormDate
+    {
+        get => this.formDate;
+        set => this.SetProperty(ref this.formDate, value);
+    }
 
-    public string FormEventType { get => _formEventType; set => SetProperty(ref _formEventType, value); }
+    /// <summary>
+    /// Gets or sets the event time input.
+    /// </summary>
+    public TimeSpan FormTime
+    {
+        get => this.formTime;
+        set => this.SetProperty(ref this.formTime, value);
+    }
 
-    private string _formDescription = string.Empty;
+    /// <summary>
+    /// Gets or sets the event price input.
+    /// </summary>
+    public double FormPrice
+    {
+        get => this.formPrice;
+        set => this.SetProperty(ref this.formPrice, value);
+    }
 
-    public string FormDescription { get => _formDescription; set => SetProperty(ref _formDescription, value); }
+    /// <summary>
+    /// Gets or sets the event capacity input.
+    /// </summary>
+    public int FormCapacity
+    {
+        get => this.formCapacity;
+        set => this.SetProperty(ref this.formCapacity, value);
+    }
 
-    private DateTimeOffset? _formDate;
+    /// <summary>
+    /// Gets or sets the event poster URL input.
+    /// </summary>
+    public string FormPosterUrl
+    {
+        get => this.formPosterUrl;
+        set => this.SetProperty(ref this.formPosterUrl, value);
+    }
 
-    public DateTimeOffset? FormDate { get => _formDate; set => SetProperty(ref _formDate, value); }
-
-    private TimeSpan _formTime;
-
-    public TimeSpan FormTime { get => _formTime; set => SetProperty(ref _formTime, value); }
-
-    private double _formPrice;
-
-    public double FormPrice { get => _formPrice; set => SetProperty(ref _formPrice, value); }
-
-    private int _formCapacity;
-
-    public int FormCapacity { get => _formCapacity; set => SetProperty(ref _formCapacity, value); }
-
-    private string _formPosterUrl = string.Empty;
-
-    public string FormPosterUrl { get => _formPosterUrl; set => SetProperty(ref _formPosterUrl, value); }
-
-    private string _validationMessage = string.Empty;
-
+    /// <summary>
+    /// Gets the validation message.
+    /// </summary>
     public string ValidationMessage
     {
-        get => _validationMessage;
-        private set => SetProperty(ref _validationMessage, value);
+        get => this.validationMessage;
+        private set => this.SetProperty(ref this.validationMessage, value);
     }
 
+    /// <inheritdoc/>
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        if (this._eventRepository is null)
+        if (this.eventRepository is null)
         {
-            return [];
+            return new List<Event>();
         }
 
-        IEnumerable<Event> events = await this._eventRepository.GetAllAsync();
+        IEnumerable<Event> events = await this.eventRepository.GetAllAsync();
         return events.ToList();
     }
 
+    /// <summary>
+    /// Clears the input form.
+    /// </summary>
     private void ClearForm()
     {
-        FormTitle = string.Empty;
-        FormLocation = string.Empty;
-        FormEventType = string.Empty;
-        FormDescription = string.Empty;
-        FormDate = null;
-        FormTime = TimeSpan.Zero;
-        FormPrice = 0;
-        FormCapacity = 0;
-        FormPosterUrl = string.Empty;
-        ValidationMessage = string.Empty;
-        SelectedEvent = null;
+        this.FormTitle = string.Empty;
+        this.FormLocation = string.Empty;
+        this.FormEventType = string.Empty;
+        this.FormDescription = string.Empty;
+        this.FormDate = null;
+        this.FormTime = TimeSpan.Zero;
+        this.FormPrice = 0;
+        this.FormCapacity = 0;
+        this.FormPosterUrl = string.Empty;
+        this.ValidationMessage = string.Empty;
+        this.SelectedEvent = null;
     }
 
+    /// <summary>
+    /// Validates the form inputs.
+    /// </summary>
+    /// <param name="error">The validation error message.</param>
+    /// <returns><c>true</c> if valid; otherwise, <c>false</c>.</returns>
     private bool Validate(out string error)
     {
-        if (string.IsNullOrWhiteSpace(FormTitle))
+        if (string.IsNullOrWhiteSpace(this.FormTitle))
         {
             error = "Title cannot be empty.";
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(FormLocation))
+        if (string.IsNullOrWhiteSpace(this.FormLocation))
         {
             error = "Location cannot be empty.";
             return false;
         }
 
-        if (FormPrice < 0)
+        if (this.FormPrice < 0)
         {
             error = "Ticket price cannot be negative.";
             return false;
         }
 
-        if (FormDate is null)
+        if (this.FormDate is null)
         {
             error = "Date is required.";
             return false;
@@ -151,15 +238,18 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         return true;
     }
 
+    /// <summary>
+    /// Creates a new event.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task CreateEventAsync()
     {
-        if (this._eventRepository is null)
+        if (this.eventRepository is null)
         {
             return;
         }
 
-        string error;
-        if (!this.Validate(out error))
+        if (!this.Validate(out string error))
         {
             this.ValidationMessage = error;
             return;
@@ -169,7 +259,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         DateTime date = this.FormDate!.Value.Date + this.FormTime;
         int currentUserId = App.Services.CurrentUserService?.CurrentUser.Id ?? 0;
 
-        Event newEvent = new Event
+        Event newEvent = new ()
         {
             Id = 0,
             Title = this.FormTitle.Trim(),
@@ -177,26 +267,29 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             LocationReference = this.FormLocation.Trim(),
             TicketPrice = (decimal)this.FormPrice,
             EventDateTime = date,
-            EventType = this.FormEventType != null ? this.FormEventType.Trim() : string.Empty,
+            EventType = this.FormEventType?.Trim() ?? string.Empty,
             MaxCapacity = this.FormCapacity > 0 ? this.FormCapacity : 50,
             PosterUrl = this.FormPosterUrl,
             CreatorUserId = currentUserId,
         };
 
-        await this._eventRepository.AddAsync(newEvent);
+        await this.eventRepository.AddAsync(newEvent);
         this.ClearForm();
         await this.InitializeAsync();
     }
 
+    /// <summary>
+    /// Edits the selected event.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task EditEventAsync()
     {
-        if (this._eventRepository is null || this.SelectedEvent is null)
+        if (this.eventRepository is null || this.SelectedEvent is null)
         {
             return;
         }
 
-        string error;
-        if (!this.Validate(out error))
+        if (!this.Validate(out string error))
         {
             this.ValidationMessage = error;
             return;
@@ -205,7 +298,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         this.ValidationMessage = string.Empty;
         DateTime date = this.FormDate!.Value.Date + this.FormTime;
 
-        Event updated = new Event
+        Event updated = new ()
         {
             Id = this.SelectedEvent.Id,
             Title = this.FormTitle.Trim(),
@@ -213,7 +306,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             LocationReference = this.FormLocation.Trim(),
             TicketPrice = (decimal)this.FormPrice,
             EventDateTime = date,
-            EventType = this.FormEventType != null ? this.FormEventType.Trim() : string.Empty,
+            EventType = this.FormEventType?.Trim() ?? string.Empty,
             MaxCapacity = this.FormCapacity > 0 ? this.FormCapacity : this.SelectedEvent.MaxCapacity,
             PosterUrl = this.FormPosterUrl,
             CreatorUserId = this.SelectedEvent.CreatorUserId,
@@ -221,13 +314,13 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             HistoricalRating = this.SelectedEvent.HistoricalRating,
         };
 
-        await this._eventRepository.UpdateEventAsync(updated);
+        await this.eventRepository.UpdateEventAsync(updated);
 
-        if (this._notificationService is not null)
+        if (this.notificationService is not null)
         {
             if (updated.TicketPrice < this.SelectedEvent.TicketPrice)
             {
-                await this._notificationService.NotifyPriceDropAsync(
+                await this.notificationService.NotifyPriceDropAsync(
                     updated.Id,
                     this.SelectedEvent.TicketPrice,
                     updated.TicketPrice);
@@ -235,7 +328,7 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
             if (updated.MaxCapacity > this.SelectedEvent.MaxCapacity)
             {
-                await this._notificationService.NotifySeatsAvailableAsync(
+                await this.notificationService.NotifySeatsAvailableAsync(
                     updated.Id,
                     updated.MaxCapacity);
             }
@@ -245,14 +338,18 @@ public sealed class EventManagementViewModel : EventListPageViewModel
         await this.InitializeAsync();
     }
 
+    /// <summary>
+    /// Deletes the selected event.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task DeleteEventAsync()
     {
-        if (this._eventRepository is null || this.SelectedEvent is null)
+        if (this.eventRepository is null || this.SelectedEvent is null)
         {
             return;
         }
 
-        await this._eventRepository.DeleteAsync(this.SelectedEvent.Id);
+        await this.eventRepository.DeleteAsync(this.SelectedEvent.Id);
         this.ClearForm();
         await this.InitializeAsync();
     }

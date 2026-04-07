@@ -63,7 +63,7 @@ public sealed class FavoritesViewModel : EventListPageViewModel
         IReadOnlyList<FavoriteEvent> favorites = await this.favoriteEventService
             .GetFavoritesByUserAsync(currentUser.Id);
 
-        IEventRepository eventRepository = App.Services.EventRepository 
+        IEventRepository eventRepository = App.Services.EventRepository
             ?? throw new InvalidOperationException("EventRepository is not initialized.");
 
         List<Event> events = new List<Event>();

@@ -327,17 +327,17 @@ public sealed class SlotMachineViewModel : ViewModelBase
                     }
                 });
 
-            JackpotMovie = result.JackpotMovie;
-            JackpotAchieved = result.JackpotDiscountApplied;
+            this.JackpotMovie = result.JackpotMovie;
+            this.JackpotAchieved = result.JackpotDiscountApplied;
 
-            MatchingEvents.Clear();
-            foreach (var evt in result.MatchingEvents)
+            this.MatchingEvents.Clear();
+            foreach (Event @event in result.MatchingEvents)
             {
-                var isJackpot = result.JackpotEventIds?.Contains(evt.Id) ?? false;
-                MatchingEvents.Add(new MatchingEventItem(evt, isJackpot));
+                bool isJackpot = result.JackpotEventIds?.Contains(@event.Id) ?? false;
+                this.MatchingEvents.Add(new MatchingEventItem(@event, isJackpot));
             }
 
-            if (JackpotAchieved)
+            if (this.JackpotAchieved)
             {
                 this.StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
                 this.JackpotHit?.Invoke(result.JackpotMovie!, result.DiscountPercentage);
@@ -351,13 +351,13 @@ public sealed class SlotMachineViewModel : ViewModelBase
                 this.StatusMessage = "No matching events this time. Try again!";
             }
 
-            var updatedState = await _slotMachineService.GetUserSpinStateAsync(_userId);
-            AvailableSpins = updatedState.DailySpinsRemaining;
-            BonusSpins = updatedState.BonusSpins;
+            UserSpinData updatedState = await this.slotMachineService.GetUserSpinStateAsync(this.userId);
+            this.AvailableSpins = updatedState.DailySpinsRemaining;
+            this.BonusSpins = updatedState.BonusSpins;
         }
         catch (InvalidOperationException ex)
         {
-            StatusMessage = ex.Message;
+            this.StatusMessage = ex.Message;
         }
         catch (Exception ex)
         {
