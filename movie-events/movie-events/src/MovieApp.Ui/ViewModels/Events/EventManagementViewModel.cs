@@ -14,58 +14,72 @@ public sealed class EventManagementViewModel : EventListPageViewModel
     {
         _eventRepository = App.Services.EventRepository;
         _notificationService = App.Services.NotificationService;
-        CreateEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(CreateEventAsync);
-        EditEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
-        DeleteEventCommand = new MovieApp.Ui.ViewModels.AsyncRelayCommand(DeleteEventAsync, () => SelectedEvent is not null);
+        CreateEventCommand = new AsyncRelayCommand(CreateEventAsync);
+        EditEventCommand = new AsyncRelayCommand(EditEventAsync, () => SelectedEvent is not null);
+        DeleteEventCommand = new AsyncRelayCommand(DeleteEventAsync, () => SelectedEvent is not null);
     }
 
     public override string PageTitle => "Event Management";
 
     public System.Windows.Input.ICommand SimulateUpdateCommand { get; }
+
     public System.Windows.Input.ICommand CreateEventCommand { get; }
+
     public System.Windows.Input.ICommand EditEventCommand { get; }
+
     public System.Windows.Input.ICommand DeleteEventCommand { get; }
 
     private Event? _selectedEvent;
+
     public Event? SelectedEvent
     {
         get => _selectedEvent;
         set
         {
             SetProperty(ref _selectedEvent, value);
-            ((MovieApp.Ui.ViewModels.AsyncRelayCommand)EditEventCommand).NotifyCanExecuteChanged();
-            ((MovieApp.Ui.ViewModels.AsyncRelayCommand)DeleteEventCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)EditEventCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)DeleteEventCommand).NotifyCanExecuteChanged();
         }
     }
 
     private string _formTitle = string.Empty;
+
     public string FormTitle { get => _formTitle; set => SetProperty(ref _formTitle, value); }
 
     private string _formLocation = string.Empty;
+
     public string FormLocation { get => _formLocation; set => SetProperty(ref _formLocation, value); }
 
     private string _formEventType = string.Empty;
+
     public string FormEventType { get => _formEventType; set => SetProperty(ref _formEventType, value); }
 
     private string _formDescription = string.Empty;
+
     public string FormDescription { get => _formDescription; set => SetProperty(ref _formDescription, value); }
 
     private DateTimeOffset? _formDate;
+
     public DateTimeOffset? FormDate { get => _formDate; set => SetProperty(ref _formDate, value); }
 
     private TimeSpan _formTime;
+
     public TimeSpan FormTime { get => _formTime; set => SetProperty(ref _formTime, value); }
 
     private double _formPrice;
+
     public double FormPrice { get => _formPrice; set => SetProperty(ref _formPrice, value); }
 
     private int _formCapacity;
+
     public int FormCapacity { get => _formCapacity; set => SetProperty(ref _formCapacity, value); }
 
     private string _formPosterUrl = string.Empty;
+
     public string FormPosterUrl { get => _formPosterUrl; set => SetProperty(ref _formPosterUrl, value); }
 
     private string _validationMessage = string.Empty;
+
     public string ValidationMessage
     {
         get => _validationMessage;
@@ -74,12 +88,12 @@ public sealed class EventManagementViewModel : EventListPageViewModel
 
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        if (_eventRepository is null)
+        if (this._eventRepository is null)
         {
             return [];
         }
 
-        IEnumerable<Event> events = await _eventRepository.GetAllAsync();
+        IEnumerable<Event> events = await this._eventRepository.GetAllAsync();
         return events.ToList();
     }
 
@@ -105,16 +119,19 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             error = "Title cannot be empty.";
             return false;
         }
+
         if (string.IsNullOrWhiteSpace(FormLocation))
         {
             error = "Location cannot be empty.";
             return false;
         }
+
         if (FormPrice < 0)
         {
             error = "Ticket price cannot be negative.";
             return false;
         }
+
         if (FormDate is null)
         {
             error = "Date is required.";
@@ -189,9 +206,28 @@ public sealed class EventManagementViewModel : EventListPageViewModel
             HistoricalRating = SelectedEvent.HistoricalRating,
         };
 
-        await _eventRepository.UpdateEventAsync(updated);
-        ClearForm();
-        await InitializeAsync();
+        await this._eventRepository.UpdateEventAsync(updated);
+
+        if (this._notificationService is not null)
+        {
+            if (updated.TicketPrice < this.SelectedEvent.TicketPrice)
+            {
+                await this._notificationService.NotifyPriceDropAsync(
+                    updated.Id,
+                    this.SelectedEvent.TicketPrice,
+                    updated.TicketPrice);
+            }
+
+            if (updated.MaxCapacity > this.SelectedEvent.MaxCapacity)
+            {
+                await this._notificationService.NotifySeatsAvailableAsync(
+                    updated.Id,
+                    updated.MaxCapacity);
+            }
+        }
+
+        this.ClearForm();
+        await this.InitializeAsync();
     }
 
     private async Task DeleteEventAsync()
