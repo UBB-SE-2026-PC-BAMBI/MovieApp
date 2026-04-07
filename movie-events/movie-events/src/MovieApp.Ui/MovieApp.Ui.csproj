@@ -64,7 +64,6 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="C:\Users\sarma\.nuget\packages\microsoft.windowsappsdk.runtime\1.8.260209005\buildTransitive\..\include\WindowsAppSDK-VersionInfo.cs" />
   </ItemGroup>
 
   <ItemGroup>
