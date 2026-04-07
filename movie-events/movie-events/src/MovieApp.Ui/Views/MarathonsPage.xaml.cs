@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using MovieApp.Core.Models;
+using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using System;
 using System.Linq;
@@ -17,6 +18,8 @@ public sealed partial class MarathonsPage : Page
 
     public MarathonPageViewModel ViewModel { get; }
 
+    private readonly IDialogService dialogService;
+
     public MarathonsPage()
     {
         if (App.Services.MarathonService == null)
@@ -24,7 +27,13 @@ public sealed partial class MarathonsPage : Page
             throw new InvalidOperationException("Marathon service is not configured.");
         }
 
+        if (App.Services.DialogService == null)
+        {
+            throw new InvalidOperationException("Dialog service is not configured.");
+        }
+
         this.ViewModel = new MarathonPageViewModel(App.Services.MarathonService);
+        this.dialogService = App.Services.DialogService;
         this.InitializeComponent();
 
         this.Loaded += async (_, _) =>
@@ -36,8 +45,9 @@ public sealed partial class MarathonsPage : Page
                 throw new InvalidOperationException("User session is invalid or has expired.");
             }
 
-            _currentUserId = App.Services.CurrentUserService.CurrentUser.Id;
-            await ViewModel.LoadAsync(_currentUserId);
+            this.dialogService.SetXamlRoot(this.XamlRoot);
+            this._currentUserId = App.Services.CurrentUserService.CurrentUser.Id;
+            await this.ViewModel.LoadAsync(this._currentUserId);
         };
     }
 
@@ -112,14 +122,7 @@ public sealed partial class MarathonsPage : Page
         }
         catch (InvalidOperationException ex)
         {
-            var dialog = new ContentDialog
-            {
-                XamlRoot = XamlRoot,
-                Title = "Cannot start quiz",
-                Content = ex.Message,
-                CloseButtonText = "OK"
-            };
-            await dialog.ShowAsync();
+            await this.dialogService.ShowInfoAsync("Cannot start quiz", ex.Message);
         }
     }
 
