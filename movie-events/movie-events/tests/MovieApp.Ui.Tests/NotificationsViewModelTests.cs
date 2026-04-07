@@ -7,9 +7,9 @@ namespace MovieApp.Ui.Tests;
 public sealed class NotificationsViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_WithoutNotificationService_ShowsUnavailableStateAndLoadsNoNotifications()
+    public async Task InitializeAsync_NotificationServiceNotProvided_SetsUnavailableStateAndEmptyNotifications()
     {
-        var viewModel = new NotificationsViewModel();
+        NotificationsViewModel viewModel = new NotificationsViewModel();
 
         await viewModel.InitializeAsync();
 

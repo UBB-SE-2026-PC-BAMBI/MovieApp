@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using Microsoft.UI.Xaml;
@@ -9,16 +14,16 @@ namespace MovieApp.Ui.Tests;
 public sealed class SectionEventsViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_LoadsOnlyEventsMatchingSelectedSection()
+    public async Task InitializeAsync_ValidSection_LoadsEventsMatchingSection()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var context = new SectionNavigationContext
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = "Premiere",
         };
 
-        var viewModel = new SectionEventsViewModel(repository, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
 
@@ -28,16 +33,16 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_MatchesSectionCaseInsensitiveAndTrimmed()
+    public async Task InitializeAsync_UntrimmedCaseInsensitiveSection_LoadsMatchingEvents()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var context = new SectionNavigationContext
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = " premiere ",
         };
 
-        var viewModel = new SectionEventsViewModel(repository, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
 
@@ -45,16 +50,16 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_IgnoresEventsWithoutValidType()
+    public async Task InitializeAsync_EventsWithInvalidTypes_FiltersOutInvalidEvents()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var context = new SectionNavigationContext
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = "Premiere",
         };
 
-        var viewModel = new SectionEventsViewModel(repository, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
 
@@ -62,16 +67,16 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task SetSearchText_KeepsFilteringInsideSelectedSection()
+    public async Task SetSearchText_ValidSearch_FiltersVisibleEventsInsideSection()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var context = new SectionNavigationContext
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = "Premiere",
         };
 
-        var viewModel = new SectionEventsViewModel(repository, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
         viewModel.SetSearchText("beta");
@@ -80,16 +85,16 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task SetSearchText_MatchesEventTypeOnlyInsideSelectedSection()
+    public async Task SetSearchText_EventTypeSearch_MatchesOnlyInsideSelectedSection()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var context = new SectionNavigationContext
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = "Premiere",
         };
 
-        var viewModel = new SectionEventsViewModel(repository, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(repository, context);
 
         await viewModel.InitializeAsync();
         viewModel.SetSearchText("premiere");
@@ -98,14 +103,14 @@ public sealed class SectionEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_WithoutRepository_ShowsUnavailableStateAndNoEvents()
+    public async Task InitializeAsync_RepositoryIsNull_SetsUnavailableStateAndEmptyEvents()
     {
-        var context = new SectionNavigationContext
+        SectionNavigationContext context = new SectionNavigationContext
         {
             Title = "Premiere",
             GroupingValue = "Premiere",
         };
-        var viewModel = new SectionEventsViewModel(null, context);
+        SectionEventsViewModel viewModel = new SectionEventsViewModel(null, context);
 
         await viewModel.InitializeAsync();
 

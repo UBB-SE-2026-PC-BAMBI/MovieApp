@@ -9,10 +9,10 @@ namespace MovieApp.Ui.Tests;
 public sealed class HomeEventsViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_SetsIsLoadingTrueWhileLoadingAndFalseAfter()
+    public async Task InitializeAsync_WhenCalled_SetsIsLoadingToFalseUponCompletion()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         Assert.False(viewModel.IsLoading);
 
@@ -22,11 +22,11 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_PopulatesAllEventsAndVisibleEvents()
+    public async Task InitializeAsync_RepositoryHasEvents_PopulatesAllAndVisibleEvents()
     {
-        var sampleEvents = BuildSampleEvents();
-        var repository = new StubEventRepository(sampleEvents);
-        var viewModel = new HomeEventsViewModel(repository);
+        IReadOnlyList<Event> sampleEvents = BuildSampleEvents();
+        StubEventRepository repository = new StubEventRepository(sampleEvents);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
 
@@ -35,10 +35,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_SetsHasNoEventsTrue_WhenRepositoryReturnsEmpty()
+    public async Task InitializeAsync_RepositoryReturnsEmpty_SetsHasNoEventsToTrue()
     {
-        var repository = new StubEventRepository([]);
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository([]);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
 
@@ -47,10 +47,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_SetsHasNoEventsFalse_WhenRepositoryReturnsEvents()
+    public async Task InitializeAsync_RepositoryReturnsEvents_SetsHasNoEventsToFalse()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
 
@@ -59,10 +59,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task RefreshVisibleEvents_UpdatesListAfterInitialization()
+    public async Task SetSearchText_ValidQuery_UpdatesVisibleEvents()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
         viewModel.SetSearchText("Festival");
@@ -72,20 +72,20 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public void PageTitle_ReturnsHomeEvents()
+    public void PageTitle_Get_ReturnsHome()
     {
-        var repository = new StubEventRepository([]);
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository([]);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         Assert.Equal("Home", viewModel.PageTitle);
     }
 
     [Fact]
-    public async Task InitializeAsync_RaisesPropertyChangedForIsLoadingAndShowEventList()
+    public async Task InitializeAsync_WhenCalled_RaisesPropertyChangedForIsLoadingAndShowEventList()
     {
-        var repository = new StubEventRepository(BuildSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
-        var changedProperties = new List<string?>();
+        StubEventRepository repository = new StubEventRepository(BuildSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
+        List<string?> changedProperties = new List<string?>();
         viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
 
         await viewModel.InitializeAsync();
@@ -95,11 +95,11 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_RaisesPropertyChangedForHasNoEvents_WhenRepositoryReturnsEmpty()
+    public async Task InitializeAsync_RepositoryReturnsEmpty_RaisesPropertyChangedForHasNoEvents()
     {
-        var repository = new StubEventRepository([]);
-        var viewModel = new HomeEventsViewModel(repository);
-        var changedProperties = new List<string?>();
+        StubEventRepository repository = new StubEventRepository([]);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
+        List<string?> changedProperties = new List<string?>();
         viewModel.PropertyChanged += (_, args) => changedProperties.Add(args.PropertyName);
 
         await viewModel.InitializeAsync();
@@ -108,10 +108,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_BuildsSectionsGroupedByEventType()
+    public async Task InitializeAsync_RepositoryHasEvents_BuildsSectionsGroupedByEventType()
     {
-        var repository = new StubEventRepository(BuildSectionSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSectionSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
 
@@ -121,10 +121,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task SetSearchText_RebuildsSectionsFromVisibleEvents()
+    public async Task SetSearchText_MatchingQueryProvided_RebuildsSectionsFromVisibleEvents()
     {
-        var repository = new StubEventRepository(BuildSectionSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSectionSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
         viewModel.SetSearchText("premiere");
@@ -134,24 +134,24 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task SetSearchText_MatchesSectionsByEventType()
+    public async Task SetSearchText_QueryMatchesEventType_ReturnsSectionMatchingEventType()
     {
-        var repository = new StubEventRepository(BuildSectionSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSectionSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
         viewModel.SetSearchText("festival");
 
-        var section = Assert.Single(viewModel.Sections);
+        EventSection section = Assert.Single(viewModel.Sections);
         Assert.Equal("Festival", section.Title);
         Assert.Equal([3], section.Events.Select(e => e.Id));
     }
 
     [Fact]
-    public async Task SetSortOption_PreservesSharedSortOrderInsideHomeSections()
+    public async Task SetSortOption_OptionChanged_PreservesSharedSortOrderInsideHomeSections()
     {
-        var repository = new StubEventRepository(BuildSectionSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSectionSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
         viewModel.SetSortOption(MovieApp.Core.EventLists.EventSortOption.HistoricalRatingDescending);
@@ -162,24 +162,24 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public async Task CreateNavigationContext_ReturnsSelectedGroupingInformation()
+    public async Task CreateNavigationContext_ValidSectionProvided_ReturnsSelectedGroupingInformation()
     {
-        var repository = new StubEventRepository(BuildSectionSampleEvents());
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository(BuildSectionSampleEvents());
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         await viewModel.InitializeAsync();
 
-        var section = Assert.Single(viewModel.Sections, s => s.Title == "Premiere");
-        var context = viewModel.CreateNavigationContext(section);
+        EventSection section = Assert.Single(viewModel.Sections, s => s.Title == "Premiere");
+        SectionNavigationContext context = viewModel.CreateNavigationContext(section);
 
         Assert.Equal("Premiere", context.Title);
         Assert.Equal("Premiere", context.GroupingValue);
     }
 
     [Fact]
-    public async Task InitializeAsync_WithoutRepository_ShowsUnavailableStateAndNoEvents()
+    public async Task InitializeAsync_RepositoryIsNull_ShowsUnavailableStateAndEmptyEvents()
     {
-        var viewModel = new HomeEventsViewModel(null);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(null);
 
         await viewModel.InitializeAsync();
 
@@ -190,10 +190,10 @@ public sealed class HomeEventsViewModelTests
     }
 
     [Fact]
-    public void NavigationShortcuts_ExposeHomeLinksToMyEventsAndEventManagement()
+    public void NavigationShortcuts_Get_ReturnsLinksToMyEventsAndEventManagement()
     {
-        var repository = new StubEventRepository([]);
-        var viewModel = new HomeEventsViewModel(repository);
+        StubEventRepository repository = new StubEventRepository([]);
+        HomeEventsViewModel viewModel = new HomeEventsViewModel(repository);
 
         Assert.Equal(["My Events", "Event Management"], viewModel.NavigationShortcuts.Select(s => s.Title));
         Assert.Equal(["MyEvents", "EventManagement"], viewModel.NavigationShortcuts.Select(s => s.RouteTag));

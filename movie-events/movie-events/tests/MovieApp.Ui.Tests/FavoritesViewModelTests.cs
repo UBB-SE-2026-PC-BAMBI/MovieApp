@@ -7,9 +7,9 @@ namespace MovieApp.Ui.Tests;
 public sealed class FavoritesViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_WithoutFavoriteService_ShowsUnavailableStateAndLoadsNoFavorites()
+    public async Task InitializeAsync_FavoriteServiceNotProvided_SetsUnavailableStateAndEmptyFavorites()
     {
-        var viewModel = new FavoritesViewModel();
+        FavoritesViewModel viewModel = new FavoritesViewModel();
 
         await viewModel.InitializeAsync();
 

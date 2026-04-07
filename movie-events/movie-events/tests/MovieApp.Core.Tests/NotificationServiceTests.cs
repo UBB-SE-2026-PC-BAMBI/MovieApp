@@ -8,11 +8,11 @@ namespace MovieApp.Core.Tests;
 public sealed class NotificationServiceTests
 {
     [Fact]
-    public async Task GeneratePriceDropNotificationAsync_NotifiesFavoritedUsers()
+    public async Task GeneratePriceDropNotificationAsync_EventHasFavoritedUsers_CreatesNotificationsForFavoritedUsers()
     {
-        var notificationRepository = new FakeNotificationRepository();
-        var favoriteRepository = new FakeFavoriteEventRepository();
-        var service = new NotificationService(notificationRepository, favoriteRepository);
+        FakeNotificationRepository notificationRepository = new FakeNotificationRepository();
+        FakeFavoriteEventRepository favoriteRepository = new FakeFavoriteEventRepository();
+        NotificationService service = new NotificationService(notificationRepository, favoriteRepository);
 
         await favoriteRepository.AddAsync(100, 1);
         await favoriteRepository.AddAsync(101, 1);
@@ -26,11 +26,11 @@ public sealed class NotificationServiceTests
     }
 
     [Fact]
-    public async Task GenerateSeatsAvailableNotificationAsync_AvoidsDuplicateUnreadNotifications()
+    public async Task GenerateSeatsAvailableNotificationAsync_UnreadNotificationExists_DoesNotCreateDuplicateNotification()
     {
-        var notificationRepository = new FakeNotificationRepository();
-        var favoriteRepository = new FakeFavoriteEventRepository();
-        var service = new NotificationService(notificationRepository, favoriteRepository);
+        FakeNotificationRepository notificationRepository = new FakeNotificationRepository();
+        FakeFavoriteEventRepository favoriteRepository = new FakeFavoriteEventRepository();
+        NotificationService service = new NotificationService(notificationRepository, favoriteRepository);
 
         await favoriteRepository.AddAsync(100, 1);
 
@@ -41,29 +41,29 @@ public sealed class NotificationServiceTests
     }
 
     [Fact]
-    public async Task NotifyPriceDropAsync_AddsTypedNotificationWhenPriceFalls()
+    public async Task NotifyPriceDropAsync_PriceFalls_AddsPriceDropTypeNotification()
     {
-        var notificationRepository = new FakeNotificationRepository();
-        var favoriteRepository = new FakeFavoriteEventRepository();
-        var eventRepository = new FakeEventRepository();
-        var service = new NotificationService(notificationRepository, favoriteRepository, eventRepository);
+        FakeNotificationRepository notificationRepository = new FakeNotificationRepository();
+        FakeFavoriteEventRepository favoriteRepository = new FakeFavoriteEventRepository();
+        FakeEventRepository eventRepository = new FakeEventRepository();
+        NotificationService service = new NotificationService(notificationRepository, favoriteRepository, eventRepository);
 
         eventRepository.Items.Add(new Event { Id = 10, Title = "Event", EventDateTime = DateTime.Now, LocationReference = "Loc", TicketPrice = 10, CreatorUserId = 1 });
         await favoriteRepository.AddAsync(100, 10);
 
         await service.NotifyPriceDropAsync(10, oldPrice: 20, newPrice: 10);
 
-        var notification = Assert.Single(await service.GetNotificationsByUserIdAsync(100));
+        Notification notification = Assert.Single(await service.GetNotificationsByUserIdAsync(100));
         Assert.Equal("PriceDrop", notification.Type);
     }
 
     [Fact]
-    public async Task NotifySeatsAvailableAsync_AvoidsDuplicateUnreadNotifications()
+    public async Task NotifySeatsAvailableAsync_UnreadNotificationExists_DoesNotCreateDuplicateNotification()
     {
-        var notificationRepository = new FakeNotificationRepository();
-        var favoriteRepository = new FakeFavoriteEventRepository();
-        var eventRepository = new FakeEventRepository();
-        var service = new NotificationService(notificationRepository, favoriteRepository, eventRepository);
+        FakeNotificationRepository notificationRepository = new FakeNotificationRepository();
+        FakeFavoriteEventRepository favoriteRepository = new FakeFavoriteEventRepository();
+        FakeEventRepository eventRepository = new FakeEventRepository();
+        NotificationService service = new NotificationService(notificationRepository, favoriteRepository, eventRepository);
 
         eventRepository.Items.Add(new Event
         {
@@ -81,7 +81,7 @@ public sealed class NotificationServiceTests
         await service.NotifySeatsAvailableAsync(10, 50);
         await service.NotifySeatsAvailableAsync(10, 50);
 
-        var notification = Assert.Single(await service.GetNotificationsByUserIdAsync(100));
+        Notification notification = Assert.Single(await service.GetNotificationsByUserIdAsync(100));
         Assert.Equal("SeatsAvailable", notification.Type);
     }
 }

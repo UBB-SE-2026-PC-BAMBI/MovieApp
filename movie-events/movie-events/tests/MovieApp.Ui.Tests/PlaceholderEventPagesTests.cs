@@ -27,7 +27,7 @@ public sealed class PlaceholderEventPagesTests
             appServices.EventRepository = _mockEventRepo.Object;
             appServices.NotificationService = _mockNotification.Object;
 
-            var mockUser = new Mock<ICurrentUserService>();
+            Mock<ICurrentUserService> mockUser = new Mock<ICurrentUserService>();
             mockUser.Setup(u => u.CurrentUser).Returns(new User
             {
                 Id = 1,
@@ -40,9 +40,9 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public async Task EventManagementViewModel_InitializesToAnEmptySafeState()
+    public async Task InitializeAsync_EventManagementViewModelDefaultState_SetsEmptySafeState()
     {
-        var viewModel = new EventManagementViewModel();
+        EventManagementViewModel viewModel = new EventManagementViewModel();
 
         await viewModel.InitializeAsync();
 
@@ -53,9 +53,9 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public async Task MyEventsViewModel_InitializesToAnEmptySafeState()
+    public async Task InitializeAsync_MyEventsViewModelDefaultState_SetsEmptySafeState()
     {
-        var viewModel = new MyEventsViewModel();
+        MyEventsViewModel viewModel = new MyEventsViewModel();
 
         await viewModel.InitializeAsync();
 
@@ -66,12 +66,12 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void CreateEventCommand_WhenFormIsValid_CallsRepositoryAddAndRefreshesEvents()
+    public void CreateEventCommandExecute_ValidForm_CallsRepositoryAddAndRefreshesEvents()
     {
         _mockEventRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Event>());
 
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             FormTitle = "Movie Night",
             FormLocation = "Main Hall",
@@ -87,9 +87,9 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void CreateEventCommand_WhenTitleIsEmpty_SetsValidationMessageAndDoesNotCallRepository()
+    public void CreateEventCommandExecute_EmptyTitle_SetsValidationMessageAndDoesNotCallRepository()
     {
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             FormTitle = " ",
             FormLocation = "Main Hall",
@@ -104,9 +104,9 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void CreateEventCommand_WhenPriceIsNegative_SetsValidationMessageAndDoesNotCallRepository()
+    public void CreateEventCommandExecute_NegativePrice_SetsValidationMessageAndDoesNotCallRepository()
     {
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             FormTitle = "Movie Night",
             FormLocation = "Main Hall",
@@ -121,9 +121,9 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void EditEventCommand_WhenNoEventSelected_CannotExecute()
+    public void EditEventCommandCanExecute_NoEventSelected_ReturnsFalse()
     {
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             SelectedEvent = null
         };
@@ -132,12 +132,12 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void EditEventCommand_WhenEventSelected_CallsRepositoryUpdate()
+    public void EditEventCommandExecute_EventSelected_CallsRepositoryUpdate()
     {
         _mockEventRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Event>());
 
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             SelectedEvent = new Event
             {
@@ -164,12 +164,12 @@ public sealed class PlaceholderEventPagesTests
     }
 
     [Fact]
-    public void DeleteEventCommand_WhenEventSelected_CallsRepositoryDeleteAndClearsSelection()
+    public void DeleteEventCommandExecute_EventSelected_CallsRepositoryDeleteAndClearsSelection()
     {
         _mockEventRepo.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Event>());
 
-        var vm = new EventManagementViewModel
+        EventManagementViewModel vm = new EventManagementViewModel
         {
             SelectedEvent = new Event
             {

@@ -24,13 +24,13 @@ public sealed class RewardServiceTests
     // ── Block already redeemed rewards ────────────────────────────────────────
 
     [Fact]
-    public async Task RedeemAsync_ReturnsFalse_WhenAlreadyRedeemed()
+    public async Task RedeemAsync_RewardIsAlreadyRedeemed_ReturnsFalse()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward(redeemed: true);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward(redeemed: true);
 
-        var result = await service.RedeemAsync(reward, eventIdentifier: null);
+        bool result = await service.RedeemAsync(reward, eventId: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -39,40 +39,40 @@ public sealed class RewardServiceTests
     // ── Event-scope validation ────────────────────────────────────────────────
 
     [Fact]
-    public async Task RedeemAsync_ReturnsFalse_WhenEventScopeMismatch()
+    public async Task RedeemAsync_EventScopeMismatch_ReturnsFalse()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward(scope: "EventSpecific", eventId: 5);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
         // Trying to redeem against event 99 — wrong event
-        var result = await service.RedeemAsync(reward, eventIdentifier: 99);
+        bool result = await service.RedeemAsync(reward, eventId: 99);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
     }
 
     [Fact]
-    public async Task RedeemAsync_ReturnsFalse_WhenEventScopeButNoEventProvided()
+    public async Task RedeemAsync_EventScopeWithoutEventId_ReturnsFalse()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward(scope: "EventSpecific", eventId: 5);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        var result = await service.RedeemAsync(reward, eventIdentifier: null);
+        bool result = await service.RedeemAsync(reward, eventId: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
     }
 
     [Fact]
-    public async Task RedeemAsync_ReturnsTrue_WhenEventScopeMatches()
+    public async Task RedeemAsync_EventScopeMatches_ReturnsTrue()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward(scope: "EventSpecific", eventId: 5);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        var result = await service.RedeemAsync(reward, eventIdentifier: 5);
+        bool result = await service.RedeemAsync(reward, eventId: 5);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
@@ -82,24 +82,24 @@ public sealed class RewardServiceTests
     // ── Global rewards ────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task RedeemAsync_ReturnsTrue_WhenGlobalScope_NoEventRequired()
+    public async Task RedeemAsync_GlobalScope_ReturnsTrue()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward(scope: "Global");
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward(scope: "Global");
 
-        var result = await service.RedeemAsync(reward, eventIdentifier: null);
+        bool result = await service.RedeemAsync(reward, eventId: null);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
     }
 
     [Fact]
-    public async Task RedeemAsync_CallsMarkRedeemed_OnSuccess()
+    public async Task RedeemAsync_ValidReward_MarksRewardAsRedeemed()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward();
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward();
 
         await service.RedeemAsync(reward, eventIdentifier: null);
 
@@ -109,14 +109,14 @@ public sealed class RewardServiceTests
     // ── Stacked reward scenarios ──────────────────────────────────────────────
 
     [Fact]
-    public async Task RedeemAsync_Stacked_SecondCallFails_AfterFirstSucceeds()
+    public async Task RedeemAsync_CalledTwiceOnSameReward_SecondCallReturnsFalse()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
-        var reward = MakeReward();
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
+        Reward reward = MakeReward();
 
-        var first = await service.RedeemAsync(reward, eventIdentifier: null);
-        var second = await service.RedeemAsync(reward, eventIdentifier: null);
+        bool first = await service.RedeemAsync(reward, eventId: null);
+        bool second = await service.RedeemAsync(reward, eventId: null);
 
         Assert.True(first);
         Assert.False(second);
@@ -125,13 +125,13 @@ public sealed class RewardServiceTests
     }
 
     [Fact]
-    public async Task RedeemAsync_Stacked_TwoDistinctRewards_BothSucceed()
+    public async Task RedeemAsync_TwoDistinctValidRewards_BothCallsReturnTrue()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
 
-        var reward1 = MakeReward();
-        var reward2 = new Reward
+        Reward reward1 = MakeReward();
+        Reward reward2 = new Reward
         {
             RewardId = 2,
             RewardType = "Discount",
@@ -140,8 +140,8 @@ public sealed class RewardServiceTests
             DiscountValue = 10,
         };
 
-        var first = await service.RedeemAsync(reward1, eventIdentifier: null);
-        var second = await service.RedeemAsync(reward2, eventIdentifier: null);
+        bool first = await service.RedeemAsync(reward1, eventId: null);
+        bool second = await service.RedeemAsync(reward2, eventId: null);
 
         Assert.True(first);
         Assert.True(second);
@@ -149,13 +149,13 @@ public sealed class RewardServiceTests
     }
 
     [Fact]
-    public async Task RedeemAsync_Stacked_MixedScope_OnlyMatchingEventSucceeds()
+    public async Task RedeemAsync_MixedScopeRewards_OnlyValidRewardsSucceed()
     {
-        var repo = new StubRewardRepository();
-        var service = new RewardService(repo);
+        StubRewardRepository repo = new StubRewardRepository();
+        RewardService service = new RewardService(repo);
 
-        var globalReward = MakeReward(scope: "Global");
-        var eventReward = new Reward
+        Reward globalReward = MakeReward(scope: "Global");
+        Reward eventReward = new Reward
         {
             RewardId = 2,
             RewardType = "Discount",
@@ -165,9 +165,9 @@ public sealed class RewardServiceTests
             EventId = 5,
         };
 
-        var globalOk = await service.RedeemAsync(globalReward, eventIdentifier: 5);
-        var eventOk = await service.RedeemAsync(eventReward, eventIdentifier: 5);
-        var eventFail = await service.RedeemAsync(
+        bool globalOk = await service.RedeemAsync(globalReward, eventId: 5);
+        bool eventOk = await service.RedeemAsync(eventReward, eventId: 5);
+        bool eventFail = await service.RedeemAsync(
             new Reward { RewardId = 3, RewardType = "Discount", OwnerUserId = 10, ApplicabilityScope = "EventSpecific", DiscountValue = 20, EventId = 5 },
             eventIdentifier: 99);
 
