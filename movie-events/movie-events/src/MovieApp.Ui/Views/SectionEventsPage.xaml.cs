@@ -11,25 +11,42 @@ using MovieApp.Core.Models;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
 
-
+/// <summary>
+/// Represents a page that displays events for a specific section,
+/// providing filtering, sorting, and interaction capabilities.
+/// </summary>
 public sealed partial class SectionEventsPage : Page
 {
-    private bool _initialized;
-    private readonly EventDialogContentBuilder _dialogBuilder;
+    private readonly EventDialogContentBuilder dialogBuilder;
 
-    public SectionEventsViewModel? ViewModel { get; private set; }
+    private bool initialized;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SectionEventsPage"/> class.
+    /// </summary>
     public SectionEventsPage()
     {
-        _dialogBuilder = new EventDialogContentBuilder(App.Services.ReferralValidator, App.Services.CurrentUserService);
-        InitializeComponent();
+        this.dialogBuilder = new EventDialogContentBuilder(
+            App.Services.ReferralValidator,
+            App.Services.CurrentUserService);
+
+        this.InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets the view model associated with this page.
+    /// </summary>
+    public SectionEventsViewModel? ViewModel { get; private set; }
+
+    /// <summary>
+    /// Called when the page is navigated to and initializes the view model for the selected section.
+    /// </summary>
+    /// <param name="e">The navigation event data.</param>
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
-        if (_initialized)
+        if (this.initialized)
         {
             return;
         }
@@ -39,29 +56,29 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        ViewModel = new SectionEventsViewModel(App.Services.EventRepository, context);
-        DataContext = ViewModel;
+        this.ViewModel = new SectionEventsViewModel(App.Services.EventRepository, context);
+        this.DataContext = this.ViewModel;
 
-        _initialized = true;
-        await ViewModel.InitializeAsync();
+        this.initialized = true;
+        await this.ViewModel.InitializeAsync();
     }
 
     private void BackButton_Click(object sender, RoutedEventArgs e)
     {
-        if (Frame.CanGoBack)
+        if (this.Frame.CanGoBack)
         {
-            Frame.GoBack();
+            this.Frame.GoBack();
         }
     }
 
     private void SearchBox_SearchTextChanged(object? sender, string searchText)
     {
-        ViewModel?.SetSearchText(searchText);
+        this.ViewModel?.SetSearchText(searchText);
     }
 
     private void SortSelector_SortOptionChanged(object? sender, MovieApp.Core.EventLists.EventSortOption sortOption)
     {
-        ViewModel?.SetSortOption(sortOption);
+        this.ViewModel?.SetSortOption(sortOption);
     }
 
     private async void EventCardButton_Click(object sender, RoutedEventArgs e)
@@ -71,9 +88,9 @@ public sealed partial class SectionEventsPage : Page
             return;
         }
 
-        ContentDialog dialog = await _dialogBuilder.BuildDialogAsync(
+        ContentDialog dialog = await this.dialogBuilder.BuildDialogAsync(
             selectedEvent,
-            XamlRoot,
+            this.XamlRoot,
             isJackpotEvent: false,
             discountPercentage: null);
 

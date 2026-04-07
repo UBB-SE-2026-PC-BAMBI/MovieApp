@@ -11,33 +11,46 @@ using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Ui.ViewModels;
 
-
+/// <summary>
+/// Represents the rewards page, displaying trivia rewards, slot rewards,
+/// and allowing users to redeem available rewards.
+/// </summary>
 public sealed partial class RewardsPage : Page
 {
-    private RewardsViewModel? _viewModel;
+    private RewardsViewModel? viewModel;
 
-    private int _rewardBalance;
-    private List<SlotRewardItem>? _loadedSlotRewards;
-    private bool _slotsListPopulated;
+    private int rewardBalance;
+    private List<SlotRewardItem>? loadedSlotRewards;
+    private bool slotsListPopulated;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RewardsPage"/> class.
+    /// </summary>
+    public RewardsPage()
+    {
+        this.InitializeComponent();
+    }
+
+    /// <summary>
+    /// Gets the reward balance of the current user.
+    /// </summary>
     public int RewardBalance
     {
-        get => _rewardBalance;
+        get => this.rewardBalance;
         private set
         {
-            if (_rewardBalance != value)
+            if (this.rewardBalance != value)
             {
-                _rewardBalance = value;
-                Bindings.Update();
+                this.rewardBalance = value;
+                this.Bindings.Update();
             }
         }
     }
 
-    public RewardsPage()
-    {
-        InitializeComponent();
-    }
-
+    /// <summary>
+    /// Called when the page is navigated to and loads reward data for the current user.
+    /// </summary>
+    /// <param name="e">The navigation event data.</param>
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
@@ -48,53 +61,61 @@ public sealed partial class RewardsPage : Page
         {
             if (App.Services.AmbassadorRepository is not null)
             {
-                RewardBalance = await App.Services.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
+                this.RewardBalance =
+                    await App.Services.AmbassadorRepository.GetRewardBalanceAsync(currentUser.Id);
             }
 
-            await LoadSlotRewardsAsync(currentUser.Id);
+            await this.LoadSlotRewardsAsync(currentUser.Id);
         }
 
         if (App.Services.TriviaRewardRepository is not null)
         {
-            _viewModel = new RewardsViewModel(App.Services.TriviaRewardRepository, App.CurrentUserId);
-            await _viewModel.LoadAsync();
-            UpdateTriviaRewardUI();
+            this.viewModel = new RewardsViewModel(App.Services.TriviaRewardRepository, App.CurrentUserId);
+            await this.viewModel.LoadAsync();
+            this.UpdateTriviaRewardUI();
         }
     }
 
     private void UpdateTriviaRewardUI()
     {
-        if (_viewModel is null) return;
-
-        if (_viewModel.TriviaReward is null)
+        if (this.viewModel is null)
         {
-            NoRewardBanner.Visibility = Visibility.Visible;
-            RewardAvailableBanner.Visibility = Visibility.Collapsed;
-            RedeemedBanner.Visibility = Visibility.Collapsed;
+            return;
         }
-        else if (_viewModel.TriviaReward.IsRedeemed)
+
+        if (this.viewModel.TriviaReward is null)
         {
-            NoRewardBanner.Visibility = Visibility.Collapsed;
-            RewardAvailableBanner.Visibility = Visibility.Collapsed;
-            RedeemedBanner.Visibility = Visibility.Visible;
+            this.NoRewardBanner.Visibility = Visibility.Visible;
+            this.RewardAvailableBanner.Visibility = Visibility.Collapsed;
+            this.RedeemedBanner.Visibility = Visibility.Collapsed;
+        }
+        else if (this.viewModel.TriviaReward.IsRedeemed)
+        {
+            this.NoRewardBanner.Visibility = Visibility.Collapsed;
+            this.RewardAvailableBanner.Visibility = Visibility.Collapsed;
+            this.RedeemedBanner.Visibility = Visibility.Visible;
         }
         else
         {
-            NoRewardBanner.Visibility = Visibility.Collapsed;
-            RewardAvailableBanner.Visibility = Visibility.Visible;
-            RedeemedBanner.Visibility = Visibility.Collapsed;
-            RewardEarnedDateText.Text = $"Earned on {_viewModel.TriviaReward.CreatedAt:dd MMM yyyy}";
+            this.NoRewardBanner.Visibility = Visibility.Collapsed;
+            this.RewardAvailableBanner.Visibility = Visibility.Visible;
+            this.RedeemedBanner.Visibility = Visibility.Collapsed;
+            this.RewardEarnedDateText.Text =
+                $"Earned on {this.viewModel.TriviaReward.CreatedAt:dd MMM yyyy}";
         }
     }
 
     private async Task LoadSlotRewardsAsync(int userId)
     {
         if (App.Services.UserMovieDiscountRepository is null)
+        {
             return;
+        }
 
-        IEnumerable<Reward> rewards = await App.Services.UserMovieDiscountRepository.GetDiscountsForUserAsync(userId);
+        IEnumerable<Reward> rewards =
+            await App.Services.UserMovieDiscountRepository.GetDiscountsForUserAsync(userId);
 
-        _loadedSlotRewards = rewards
+        this.loadedSlotRewards = rewards
             .Select(r => new SlotRewardItem
             {
                 RewardId = r.RewardId,
@@ -104,86 +125,123 @@ public sealed partial class RewardsPage : Page
             })
             .ToList();
 
-        ApplySlotRewardsToListView();
+        this.ApplySlotRewardsToListView();
     }
 
     private void ApplySlotRewardsToListView()
     {
-        if (_loadedSlotRewards is null || SlotsListView is null)
+        if (this.loadedSlotRewards is null || this.SlotsListView is null)
+        {
             return;
+        }
 
-        SlotsListView.ItemsSource = _loadedSlotRewards;
-        _slotsListPopulated = true;
+        this.SlotsListView.ItemsSource = this.loadedSlotRewards;
+        this.slotsListPopulated = true;
     }
 
     private void RewardsTabView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (!_slotsListPopulated && _loadedSlotRewards is not null && RewardsTabView.SelectedItem == SlotsTab)
+        if (!this.slotsListPopulated && this.loadedSlotRewards is not null
+            && (TabViewItem)this.RewardsTabView.SelectedItem == this.SlotsTab)
         {
-            ApplySlotRewardsToListView();
+            this.ApplySlotRewardsToListView();
         }
     }
 
     private void SlotsListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (SlotsListView.SelectedItem is not SlotRewardItem item)
+        if (this.SlotsListView.SelectedItem is not SlotRewardItem item)
         {
-            ClearDetailPanel();
+            this.ClearDetailPanel();
             return;
         }
 
-        DetailTypeBox.Text = "Jackpot Discount";
-        DetailScopeBox.Text = item.MovieTitle;
-        DetailDiscountBox.Text = item.DiscountText;
-        DetailStatusBox.Text = item.IsRedeemed ? "Redeemed" : "Available";
-        RedeemButton.IsEnabled = !item.IsRedeemed;
+        this.DetailTypeBox.Text = "Jackpot Discount";
+        this.DetailScopeBox.Text = item.MovieTitle;
+        this.DetailDiscountBox.Text = item.DiscountText;
+        this.DetailStatusBox.Text = item.IsRedeemed ? "Redeemed" : "Available";
+        this.RedeemButton.IsEnabled = !item.IsRedeemed;
     }
 
     private void ClearDetailPanel()
     {
-        DetailTypeBox.Text = "";
-        DetailScopeBox.Text = "";
-        DetailDiscountBox.Text = "";
-        DetailStatusBox.Text = "";
-        RedeemButton.IsEnabled = false;
+        this.DetailTypeBox.Text = string.Empty;
+        this.DetailScopeBox.Text = string.Empty;
+        this.DetailDiscountBox.Text = string.Empty;
+        this.DetailStatusBox.Text = string.Empty;
+        this.RedeemButton.IsEnabled = false;
     }
 
     private async void RedeemButton_Click(object sender, RoutedEventArgs e)
     {
-        if (SlotsListView.SelectedItem is not SlotRewardItem item || item.IsRedeemed)
+        if (this.SlotsListView.SelectedItem is not SlotRewardItem item || item.IsRedeemed)
+        {
             return;
+        }
 
-        if (App.Services.UserMovieDiscountRepository is null || App.Services.CurrentUserService?.CurrentUser is null)
+        if (App.Services.UserMovieDiscountRepository is null
+            || App.Services.CurrentUserService?.CurrentUser is null)
+        {
             return;
+        }
 
         await App.Services.UserMovieDiscountRepository.MarkRedeemedAsync(item.RewardId);
 
         item.IsRedeemed = true;
-        DetailStatusBox.Text = "Redeemed";
-        RedeemButton.IsEnabled = false;
+        this.DetailStatusBox.Text = "Redeemed";
+        this.RedeemButton.IsEnabled = false;
 
-        await LoadSlotRewardsAsync(App.Services.CurrentUserService.CurrentUser.Id);
+        await this.LoadSlotRewardsAsync(App.Services.CurrentUserService.CurrentUser.Id);
     }
 
     private async void TriviaRedeemButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null) return;
+        if (this.viewModel is null)
+        {
+            return;
+        }
 
-        TriviaRedeemButton.IsEnabled = false;
-        await _viewModel.RedeemTriviaRewardAsync();
-        UpdateTriviaRewardUI();
+        this.TriviaRedeemButton.IsEnabled = false;
+        await this.viewModel.RedeemTriviaRewardAsync();
+        this.UpdateTriviaRewardUI();
     }
 }
 
+/// <summary>
+/// Represents a slot reward item displayed in the rewards list.
+/// </summary>
 public sealed class SlotRewardItem
 {
+    /// <summary>
+    /// Gets or sets the reward identifier.
+    /// </summary>
     public int RewardId { get; set; }
-    public string MovieTitle { get; set; } = "";
-    public string DiscountText { get; set; } = "";
+
+    /// <summary>
+    /// Gets or sets the movie title associated with the reward.
+    /// </summary>
+    public string MovieTitle { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the discount text for the reward.
+    /// </summary>
+    public string DiscountText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the reward has been redeemed.
+    /// </summary>
     public bool IsRedeemed { get; set; }
-    public string StatusLabel => IsRedeemed ? "Redeemed" : DiscountText;
+
+    /// <summary>
+    /// Gets the status label for the reward.
+    /// </summary>
+    public string StatusLabel => this.IsRedeemed ? "Redeemed" : this.DiscountText;
+
+    /// <summary>
+    /// Gets the brush representing the reward status.
+    /// </summary>
     public SolidColorBrush StatusBrush => new SolidColorBrush(
-        IsRedeemed
+        this.IsRedeemed
             ? Windows.UI.Color.FromArgb(0x33, 0x94, 0x94, 0x94)
             : Windows.UI.Color.FromArgb(0x33, 0x16, 0xA3, 0x4A));
 }

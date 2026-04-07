@@ -12,51 +12,21 @@ using Microsoft.UI.Xaml;
 using MovieApp.Ui.ViewModels;
 using Path = Microsoft.UI.Xaml.Shapes.Path;
 using Windows.UI;
+using Windows.Foundation;
+using MovieApp.Core.Models;
 
-
+/// <summary>
+/// Represents the trivia wheel page, allowing users to spin a wheel,
+/// answer trivia questions, and earn rewards.
+/// </summary>
 public sealed partial class TriviaWheelPage : Page
 {
-    private TriviaWheelViewModel? _viewModel;
-    private DispatcherTimer? _countdownTimer;
-    private DateTime _nextSpinTime;
-
-    private void StartCountdown()
+    private readonly string[] categories = new[]
     {
-        
-        _nextSpinTime = DateTime.Today.AddDays(1);
-        CountdownBanner.Visibility = Visibility.Visible;
-
-        _countdownTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromSeconds(1)
-        };
-
-        _countdownTimer.Tick += (s, e) =>
-        {
-            var remaining = _nextSpinTime - DateTime.Now;
-            if (remaining <= TimeSpan.Zero)
-            {
-                _countdownTimer.Stop();
-                CountdownBanner.Visibility = Visibility.Collapsed;
-                SpinButton.IsEnabled = true;
-                RemainingSpinsText.Text = "1 spin available today";
-            }
-            else
-            {
-                CountdownText.Text = remaining.ToString(@"hh\:mm\:ss");
-            }
-        };
-
-        _countdownTimer.Start();
-    }
-
-    private readonly string[] _categories = new[]
-    {
-        "Actors", "Directors", "Movie Quotes", "Oscars and Awards", "General Movie Trivia"
+        "Actors", "Directors", "Movie Quotes", "Oscars and Awards", "General Movie Trivia",
     };
 
-    // Warm, vibrant, complementary palette
-    private readonly Color[] _segmentColors = new[]
+    private readonly Color[] segmentColors = new[]
     {
         Color.FromArgb(255, 229,  57,  53),  // vivid red
         Color.FromArgb(255, 255, 160,   0),  // warm amber
@@ -65,10 +35,84 @@ public sealed partial class TriviaWheelPage : Page
         Color.FromArgb(255, 142,  36, 170),  // bold purple
     };
 
+    private TriviaWheelViewModel? viewModel;
+    private DispatcherTimer? countdownTimer;
+    private DateTime nextSpinTime;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TriviaWheelPage"/> class.
+    /// </summary>
     public TriviaWheelPage()
     {
-        InitializeComponent();
-        Loaded += OnPageLoaded;
+        this.InitializeComponent();
+        this.Loaded += this.OnPageLoaded;
+    }
+
+    private static PathGeometry CreateSegmentGeometry(
+        double cx,
+        double cy,
+        double radius,
+        double startDeg,
+        double endDeg)
+    {
+        double startRad = startDeg * Math.PI / 180.0;
+        double endRad = endDeg * Math.PI / 180.0;
+
+        Point startPoint = new Point(
+            cx + (radius * Math.Cos(startRad)),
+            cy + (radius * Math.Sin(startRad)));
+
+        Point endPoint = new Point(
+            cx + (radius * Math.Cos(endRad)),
+            cy + (radius * Math.Sin(endRad)));
+
+        PathFigure figure = new PathFigure
+        {
+            StartPoint = new Point(cx, cy),
+            IsClosed = true,
+        };
+
+        figure.Segments.Add(new LineSegment { Point = startPoint });
+        figure.Segments.Add(new ArcSegment
+        {
+            Point = endPoint,
+            Size = new Windows.Foundation.Size(radius, radius),
+            IsLargeArc = (endDeg - startDeg) > 180,
+            SweepDirection = SweepDirection.Clockwise,
+        });
+
+        PathGeometry geometry = new PathGeometry();
+        geometry.Figures.Add(figure);
+        return geometry;
+    }
+
+    private void StartCountdown()
+    {
+        this.nextSpinTime = DateTime.Today.AddDays(1);
+        this.CountdownBanner.Visibility = Visibility.Visible;
+
+        this.countdownTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1),
+        };
+
+        this.countdownTimer.Tick += (s, e) =>
+        {
+            TimeSpan remaining = this.nextSpinTime - DateTime.Now;
+            if (remaining <= TimeSpan.Zero)
+            {
+                this.countdownTimer.Stop();
+                this.CountdownBanner.Visibility = Visibility.Collapsed;
+                this.SpinButton.IsEnabled = true;
+                this.RemainingSpinsText.Text = "1 spin available today";
+            }
+            else
+            {
+                this.CountdownText.Text = remaining.ToString(@"hh\:mm\:ss");
+            }
+        };
+
+        this.countdownTimer.Start();
     }
 
     private async void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -77,81 +121,79 @@ public sealed partial class TriviaWheelPage : Page
             && App.Services.TriviaRewardRepository is not null
             && App.Services.SlotMachineStateRepository is not null)
         {
-            _viewModel = new TriviaWheelViewModel(
+            this.viewModel = new TriviaWheelViewModel(
                 App.Services.TriviaRepository,
                 App.Services.TriviaRewardRepository,
                 App.Services.SlotMachineStateRepository,
                 App.CurrentUserId);
 
-            await _viewModel.InitializeAsync();
+            await this.viewModel.InitializeAsync();
         }
         else
         {
-            TriviaAvailabilityText.Text = "Trivia unavailable: no database connection.";
-            TriviaAvailabilityText.Visibility = Visibility.Visible;
+            this.TriviaAvailabilityText.Text = "Trivia unavailable: no database connection.";
+            this.TriviaAvailabilityText.Visibility = Visibility.Visible;
         }
 
-        if (_viewModel?.CanSpin == false)
+        if (this.viewModel?.CanSpin == false)
         {
-            if (_viewModel.IsTriviaAvailable)
+            if (this.viewModel.IsTriviaAvailable)
             {
-                RemainingSpinsText.Visibility = Visibility.Collapsed;
-                StartCountdown();
+                this.RemainingSpinsText.Visibility = Visibility.Collapsed;
+                this.StartCountdown();
             }
             else
             {
-                TriviaAvailabilityText.Text = _viewModel.AvailabilityMessage;
-                TriviaAvailabilityText.Visibility = Visibility.Visible;
+                this.TriviaAvailabilityText.Text = this.viewModel.AvailabilityMessage;
+                this.TriviaAvailabilityText.Visibility = Visibility.Visible;
             }
         }
         else
         {
-            RemainingSpinsText.Text = _viewModel?.RemainingSpinsText ?? "Loading...";
-            TriviaAvailabilityText.Visibility = Visibility.Collapsed;
+            this.RemainingSpinsText.Text = this.viewModel?.RemainingSpinsText ?? "Loading...";
+            this.TriviaAvailabilityText.Visibility = Visibility.Collapsed;
         }
 
-        SpinButton.IsEnabled = _viewModel is not null
-            && _viewModel.CanSpin
-            && _viewModel.IsTriviaAvailable;
-        DrawWheel();
+        this.SpinButton.IsEnabled = this.viewModel is not null
+            && this.viewModel.CanSpin
+            && this.viewModel.IsTriviaAvailable;
+        this.DrawWheel();
     }
 
     private void DrawWheel()
     {
-        WheelCanvas.Children.Clear();
+        this.WheelCanvas.Children.Clear();
         double cx = 140, cy = 140, radius = 130;
-        double angleStep = 360.0 / _categories.Length;
+        double angleStep = 360.0 / this.categories.Length;
 
-        for (int i = 0; i < _categories.Length; i++)
+        for (int i = 0; i < this.categories.Length; i++)
         {
             double startAngle = i * angleStep;
             double endAngle = startAngle + angleStep;
 
-            var path = new Path
+            Path path = new Path
             {
-                Fill = new SolidColorBrush(_segmentColors[i]),
+                Fill = new SolidColorBrush(this.segmentColors[i]),
                 Stroke = new SolidColorBrush(Color.FromArgb(255, 20, 20, 20)),
                 StrokeThickness = 2,
-                Data = CreateSegmentGeometry(cx, cy, radius, startAngle, endAngle)
+                Data = CreateSegmentGeometry(cx, cy, radius, startAngle, endAngle),
             };
-            WheelCanvas.Children.Add(path);
+            this.WheelCanvas.Children.Add(path);
 
-            
-            double midAngleRad = (startAngle + angleStep / 2.0) * Math.PI / 180.0;
+            double midAngleRad = (startAngle + (angleStep / 2.0)) * Math.PI / 180.0;
             double labelRadius = radius * 0.60;
-            double lx = cx + labelRadius * Math.Cos(midAngleRad) - 44;
-            double ly = cy + labelRadius * Math.Sin(midAngleRad) - 14;
+            double lx = cx + (labelRadius * Math.Cos(midAngleRad)) - 44;
+            double ly = cy + (labelRadius * Math.Sin(midAngleRad)) - 14;
 
-            
-            string shortName = _categories[i] switch
+            string shortName = this.categories[i] switch
             {
                 "Oscars and Awards" => "Oscars &\nAwards",
                 "General Movie Trivia" => "General\nTrivia",
                 "Movie Quotes" => "Movie\nQuotes",
-                _ => _categories[i]
+                _ => this.categories[i]
             };
 
-            var label = new TextBlock
+            TextBlock label = new TextBlock
             {
                 Text = shortName,
                 FontSize = 11,
@@ -164,81 +206,48 @@ public sealed partial class TriviaWheelPage : Page
 
             Canvas.SetLeft(label, lx);
             Canvas.SetTop(label, ly);
-            WheelCanvas.Children.Add(label);
+            this.WheelCanvas.Children.Add(label);
         }
-    }
-
-    private static PathGeometry CreateSegmentGeometry(
-        double cx, double cy, double radius,
-        double startDeg, double endDeg)
-    {
-        double startRad = startDeg * Math.PI / 180.0;
-        double endRad = endDeg * Math.PI / 180.0;
-
-        var startPoint = new Windows.Foundation.Point(
-            cx + radius * Math.Cos(startRad),
-            cy + radius * Math.Sin(startRad));
-
-        var endPoint = new Windows.Foundation.Point(
-            cx + radius * Math.Cos(endRad),
-            cy + radius * Math.Sin(endRad));
-
-        var figure = new PathFigure
-        {
-            StartPoint = new Windows.Foundation.Point(cx, cy),
-            IsClosed = true
-        };
-
-        figure.Segments.Add(new LineSegment { Point = startPoint });
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = endPoint,
-            Size = new Windows.Foundation.Size(radius, radius),
-            IsLargeArc = (endDeg - startDeg) > 180,
-            SweepDirection = SweepDirection.Clockwise
-        });
-
-        var geometry = new PathGeometry();
-        geometry.Figures.Add(figure);
-        return geometry;
     }
 
     private void SpinButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null || !_viewModel.CanSpin) return;
+        if (this.viewModel is null || !this.viewModel.CanSpin)
+        {
+            return;
+        }
 
-        SpinButton.IsEnabled = false;
+        this.SpinButton.IsEnabled = false;
 
-        
-        _ = _viewModel.RecordSpinAsync();
+        _ = this.viewModel.RecordSpinAsync();
 
-        var random = new Random();
+        Random random = new Random();
         double extraAngle = random.NextDouble() * 360.0;
-        double totalRotation = 360.0 * 3 + extraAngle;
+        double totalRotation = (360.0 * 3) + extraAngle;
 
         double finalAngle = totalRotation % 360.0;
         double arrowPointsAt = (270.0 - finalAngle + 360.0) % 360.0;
-        double segmentAngle = 360.0 / _categories.Length;
-        int categoryIndex = (int)(arrowPointsAt / segmentAngle) % _categories.Length;
+        double segmentAngle = 360.0 / this.categories.Length;
+        int categoryIndex = (int)(arrowPointsAt / segmentAngle) % this.categories.Length;
 
-        var animation = new DoubleAnimation
+        DoubleAnimation animation = new DoubleAnimation
         {
             From = 0,
             To = totalRotation,
             Duration = new Duration(TimeSpan.FromSeconds(3)),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
         };
 
-        var storyboard = new Storyboard();
+        Storyboard storyboard = new Storyboard();
         storyboard.Children.Add(animation);
-        Storyboard.SetTarget(animation, WheelRotation);
+        Storyboard.SetTarget(animation, this.WheelRotation);
         Storyboard.SetTargetProperty(animation, "Angle");
 
         storyboard.Completed += (s, ev) =>
         {
-            SelectedCategoryText.Text = _categories[categoryIndex];
-            ShowPlayingPanel();
-            _ = LoadQuestionsAsync(_categories[categoryIndex]);
+            this.SelectedCategoryText.Text = this.categories[categoryIndex];
+            this.ShowPlayingPanel();
+            _ = this.LoadQuestionsAsync(this.categories[categoryIndex]);
         };
 
         storyboard.Begin();
@@ -246,89 +255,121 @@ public sealed partial class TriviaWheelPage : Page
 
     private async Task LoadQuestionsAsync(string category)
     {
-        if (_viewModel is null) return;
-        await _viewModel.LoadQuestionsAsync(category);
-
-        if (_viewModel.NoQuestionsAvailable)
+        if (this.viewModel is null)
         {
-            ShowNoQuestionsState();
             return;
         }
 
-        ShowCurrentQuestion();
+        await this.viewModel.LoadQuestionsAsync(category);
+
+        if (this.viewModel.NoQuestionsAvailable)
+        {
+            this.ShowNoQuestionsState();
+            return;
+        }
+
+        this.ShowCurrentQuestion();
     }
 
     private void ShowCurrentQuestion()
     {
-        if (_viewModel?.CurrentQuestion is null) return;
+        if (this.viewModel?.CurrentQuestion is null)
+        {
+            return;
+        }
 
-        var q = _viewModel.CurrentQuestion;
-        QuestionText.Text = q.QuestionText;
-        OptionA.Content = q.OptionA;
-        OptionB.Content = q.OptionB;
-        OptionC.Content = q.OptionC;
-        OptionD.Content = q.OptionD;
+        TriviaQuestion question = this.viewModel.CurrentQuestion;
+        this.QuestionText.Text = question.QuestionText;
+        this.OptionA.Content = question.OptionA;
+        this.OptionB.Content = question.OptionB;
+        this.OptionC.Content = question.OptionC;
+        this.OptionD.Content = question.OptionD;
 
-        OptionA.IsChecked = false;
-        OptionB.IsChecked = false;
-        OptionC.IsChecked = false;
-        OptionD.IsChecked = false;
+        this.OptionA.IsChecked = false;
+        this.OptionB.IsChecked = false;
+        this.OptionC.IsChecked = false;
+        this.OptionD.IsChecked = false;
 
-        OptionA.Visibility = Visibility.Visible;
-        OptionB.Visibility = Visibility.Visible;
-        OptionC.Visibility = Visibility.Visible;
-        OptionD.Visibility = Visibility.Visible;
+        this.OptionA.Visibility = Visibility.Visible;
+        this.OptionB.Visibility = Visibility.Visible;
+        this.OptionC.Visibility = Visibility.Visible;
+        this.OptionD.Visibility = Visibility.Visible;
 
-        ProgressText.Text = _viewModel.ProgressText;
-        ProgressBar.Value = _viewModel.ProgressValue;
-        HintButton.IsEnabled = _viewModel.IsHintAvailable;
+        this.ProgressText.Text = this.viewModel.ProgressText;
+        this.ProgressBar.Value = this.viewModel.ProgressValue;
+        this.HintButton.IsEnabled = this.viewModel.IsHintAvailable;
     }
 
     private void HintButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null) return;
+        if (this.viewModel is null)
+        {
+            return;
+        }
 
-        _viewModel.UseHint();
-        HintButton.IsEnabled = false;
+        this.viewModel.UseHint();
+        this.HintButton.IsEnabled = false;
 
-        var toHide = _viewModel.GetHintOptionsToHide();
-        foreach (var option in toHide)
+        IReadOnlyList<char> toHide = this.viewModel.GetHintOptionsToHide();
+        foreach (char option in toHide)
         {
             switch (option)
             {
-                case 'A': OptionA.Visibility = Visibility.Collapsed; break;
-                case 'B': OptionB.Visibility = Visibility.Collapsed; break;
-                case 'C': OptionC.Visibility = Visibility.Collapsed; break;
-                case 'D': OptionD.Visibility = Visibility.Collapsed; break;
+                case 'A': this.OptionA.Visibility = Visibility.Collapsed; break;
+                case 'B': this.OptionB.Visibility = Visibility.Collapsed; break;
+                case 'C': this.OptionC.Visibility = Visibility.Collapsed; break;
+                case 'D': this.OptionD.Visibility = Visibility.Collapsed; break;
             }
         }
     }
 
     private void SubmitAnswer_Click(object sender, RoutedEventArgs e)
     {
-        if (_viewModel is null) return;
+        if (this.viewModel is null)
+        {
+            return;
+        }
 
         char? selected = null;
-        if (OptionA.IsChecked == true) selected = 'A';
-        else if (OptionB.IsChecked == true) selected = 'B';
-        else if (OptionC.IsChecked == true) selected = 'C';
-        else if (OptionD.IsChecked == true) selected = 'D';
+        if (this.OptionA.IsChecked == true)
+        {
+            selected = 'A';
+        }
+        else if (this.OptionB.IsChecked == true)
+        {
+            selected = 'B';
+        }
+        else if (this.OptionC.IsChecked == true)
+        {
+            selected = 'C';
+        }
+        else if (this.OptionD.IsChecked == true)
+        {
+            selected = 'D';
+        }
 
-        if (selected is null) return;
+        if (selected is null)
+        {
+            return;
+        }
 
-        _viewModel.SubmitAnswer(selected.Value);
+        this.viewModel.SubmitAnswer(selected.Value);
 
-        if (_viewModel.IsSessionComplete)
-            ShowResults();
+        if (this.viewModel.IsSessionComplete)
+        {
+            this.ShowResults();
+        }
         else
-            ShowCurrentQuestion();
+        {
+            this.ShowCurrentQuestion();
+        }
     }
 
     private void ShowPlayingPanel()
     {
-        IdlePanel.Visibility = Visibility.Collapsed;
-        ResultsPanel.Visibility = Visibility.Collapsed;
-        PlayingPanel.Visibility = Visibility.Visible;
+        this.IdlePanel.Visibility = Visibility.Collapsed;
+        this.ResultsPanel.Visibility = Visibility.Collapsed;
+        this.PlayingPanel.Visibility = Visibility.Visible;
     }
 
     /// <summary>
@@ -336,35 +377,35 @@ public sealed partial class TriviaWheelPage : Page
     /// </summary>
     private void ShowNoQuestionsState()
     {
-        IdlePanel.Visibility = Visibility.Visible;
-        ResultsPanel.Visibility = Visibility.Collapsed;
-        PlayingPanel.Visibility = Visibility.Collapsed;
+        this.IdlePanel.Visibility = Visibility.Visible;
+        this.ResultsPanel.Visibility = Visibility.Collapsed;
+        this.PlayingPanel.Visibility = Visibility.Collapsed;
 
-        IdleTitleText.Text = "No trivia available";
-        IdleDescriptionText.Text = _viewModel?.EmptyStateMessage
+        this.IdleTitleText.Text = "No trivia available";
+        this.IdleDescriptionText.Text = this.viewModel?.EmptyStateMessage
             ?? "No trivia questions are available for this category yet.";
     }
 
     private void ShowResults()
     {
-        PlayingPanel.Visibility = Visibility.Collapsed;
-        ResultsPanel.Visibility = Visibility.Visible;
+        this.PlayingPanel.Visibility = Visibility.Collapsed;
+        this.ResultsPanel.Visibility = Visibility.Visible;
 
-        if (_viewModel!.HasEarnedReward)
+        if (this.viewModel!.HasEarnedReward)
         {
-            ResultsTitleText.Text = "🎉 Perfect Score!";
-            ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
-            ResultsScoreText.Text = $"{_viewModel.Score}";
-            ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
-            ResultsRewardText.Text = "A free movie ticket reward has been added to your account!";
+            this.ResultsTitleText.Text = "🎉 Perfect Score!";
+            this.ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
+            this.ResultsScoreText.Text = $"{this.viewModel.Score}";
+            this.ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 255, 200, 0)); // gold
+            this.ResultsRewardText.Text = "A free movie ticket reward has been added to your account!";
         }
         else
         {
-            ResultsTitleText.Text = "Session Complete";
-            ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
-            ResultsScoreText.Text = $"{_viewModel.Score}";
-            ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
-            ResultsRewardText.Text = "Answer all 20 correctly next time to earn a reward.";
+            this.ResultsTitleText.Text = "Session Complete";
+            this.ResultsTitleText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
+            this.ResultsScoreText.Text = $"{this.viewModel.Score}";
+            this.ResultsScoreText.Foreground = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200)); // neutral
+            this.ResultsRewardText.Text = "Answer all 20 correctly next time to earn a reward.";
         }
     }
 }
