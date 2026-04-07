@@ -34,7 +34,7 @@ public sealed class ReferralServicesTests
         StubAmbassadorRepository repository = new StubAmbassadorRepository();
         ReferralValidator validator = new ReferralValidator(repository);
 
-        bool result = await validator.IsValidReferralAsync("MISSING", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("MISSING", currentUserIdentifier: 10);
 
         Assert.False(result);
     }
@@ -48,7 +48,7 @@ public sealed class ReferralServicesTests
         };
         ReferralValidator validator = new ReferralValidator(repository);
 
-        bool result = await validator.IsValidReferralAsync("OWNCODE", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("OWNCODE", currentUserIdentifier: 10);
 
         Assert.False(result);
     }
@@ -62,7 +62,7 @@ public sealed class ReferralServicesTests
         };
         ReferralValidator validator = new ReferralValidator(repository);
 
-        bool result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserIdentifier: 10);
 
         Assert.True(result);
     }
@@ -107,7 +107,7 @@ public sealed class ReferralServicesTests
         };
         ReferralValidator validator = new ReferralValidator(repository);
 
-        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 88);
+        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserIdentifier: 10, eventIdentifier: 88);
 
         Assert.False(result);
     }
@@ -123,7 +123,7 @@ public sealed class ReferralServicesTests
         ReferralValidator validator = new ReferralValidator(repository);
 
         // event 99 has never been used → should be valid
-        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 99);
+        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserIdentifier: 10, eventIdentifier: 99);
 
         Assert.True(result);
     }
@@ -134,7 +134,7 @@ public sealed class ReferralServicesTests
         StubAmbassadorRepository repository = new StubAmbassadorRepository();
         ReferralValidator validator = new ReferralValidator(repository);
 
-        bool result = await validator.IsValidReferralForEventAsync("MISSING", currentUserId: 10, eventId: 88);
+        bool result = await validator.IsValidReferralForEventAsync("MISSING", currentUserIdentifier: 10, eventIdentifier: 88);
 
         Assert.False(result);
     }
