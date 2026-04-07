@@ -9,9 +9,9 @@ public sealed class SqlUserSlotMachineStateRepositoryTests
     {
         var file = ReadRepoFile("src", "MovieApp.Core", "Repositories", "IUserSlotMachineStateRepository.cs");
 
-        Assert.Contains("Task<UserSpinData?> GetByUserIdAsync(int userId", file);
-        Assert.Contains("Task CreateAsync(UserSpinData state", file);
-        Assert.Contains("Task UpdateAsync(UserSpinData state", file);
+        Assert.Contains("Task<UserSpinData?> GetByUserIdAsync(int userIdentifier", file);
+        Assert.Contains("Task CreateAsync(UserSpinData userSpinData", file);
+        Assert.Contains("Task UpdateAsync(UserSpinData userSpinData", file);
     }
 
     [Fact]
