@@ -38,14 +38,14 @@ public class EventUserStateService : IEventUserStateService
             .ToDictionary(g => g.Key, g => (int)g.Max(r => r.DiscountValue));
 
         int bestDiscount = 0;
-        foreach (KeyValuePair<int, int> kvp in bestDiscountByMovie)
+        foreach (KeyValuePair<int, int> movieDiscountPair in bestDiscountByMovie)
         {
-            IEnumerable<Screening> screenings = await App.Services.ScreeningRepository.GetByMovieIdAsync(kvp.Key);
+            IEnumerable<Screening> screenings = await App.Services.ScreeningRepository.GetByMovieIdAsync(movieDiscountPair.Key);
             foreach (Screening screening in screenings)
             {
-                if (screening.EventId == eventId && kvp.Value > bestDiscount)
+                if (screening.EventId == eventId && movieDiscountPair.Value > bestDiscount)
                 {
-                    bestDiscount = kvp.Value;
+                    bestDiscount = movieDiscountPair.Value;
                 }
             }
         }

@@ -118,10 +118,12 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
 
         if (App.Services.EventUserStateService is not null)
         {
-            foreach (Event evt in eventsList)
+            foreach (Event @event in eventsList)
             {
-                evt.DiscountPercentage = await App.Services.EventUserStateService.GetDiscountForEventAsync(evt.Id);
-                evt.IsJoined = await App.Services.EventUserStateService.IsEventJoinedByUserAsync(evt.Id);
+                @event.DiscountPercentage =
+                    await App.Services.EventUserStateService.GetDiscountForEventAsync(@event.Id);
+                @event.IsJoined =
+                    await App.Services.EventUserStateService.IsEventJoinedByUserAsync(@event.Id);
             }
         }
 

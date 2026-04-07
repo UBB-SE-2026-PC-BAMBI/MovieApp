@@ -73,9 +73,9 @@ public sealed class MyEventsViewModel : EventListPageViewModel
     /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task LoadWatchlistAsync()
     {
-        LocalPriceWatcherRepository repo = new Infrastructure
+        LocalPriceWatcherRepository priceWatcherRepository = new Infrastructure
             .LocalPriceWatcherRepository(this.GetWatchlistFolderPath());
-        List<WatchedEvent> items = await repo.GetAllWatchedEventsAsync();
+        List<WatchedEvent> items = await priceWatcherRepository.GetAllWatchedEventsAsync();
 
         this.WatchedEvents.Clear();
         foreach (WatchedEvent item in items)
@@ -93,10 +93,10 @@ public sealed class MyEventsViewModel : EventListPageViewModel
         if (this.SelectedWatchedEvent != null)
         {
             this.SelectedWatchedEvent.TargetPrice = (decimal)this.SelectedTargetPrice;
-            var repo = new LocalPriceWatcherRepository(this.GetWatchlistFolderPath());
+            LocalPriceWatcherRepository priceWatcherRepository = new LocalPriceWatcherRepository(this.GetWatchlistFolderPath());
 
-            await repo.RemoveWatchAsync(this.SelectedWatchedEvent.EventId);
-            await repo.AddWatchAsync(this.SelectedWatchedEvent);
+            await priceWatcherRepository.RemoveWatchAsync(this.SelectedWatchedEvent.EventId);
+            await priceWatcherRepository.AddWatchAsync(this.SelectedWatchedEvent);
 
             await this.LoadWatchlistAsync();
         }
@@ -115,8 +115,11 @@ public sealed class MyEventsViewModel : EventListPageViewModel
     /// <returns>The absolute path to the watchlist folder.</returns>
     private string GetWatchlistFolderPath()
     {
-        var folderPath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), "MovieApp");
-        System.IO.Directory.CreateDirectory(folderPath);
+        string folderPath =
+            Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "MovieApp");
+        Directory.CreateDirectory(folderPath);
         return folderPath;
     }
 }
