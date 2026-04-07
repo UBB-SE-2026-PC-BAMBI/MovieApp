@@ -23,7 +23,7 @@ public sealed class EventSqlQueriesTests
         Assert.Contains("public const string Insert", queryFile);
         Assert.Contains("TicketPrice, EventType, HistoricalRating", queryFile);
         Assert.Contains("@ticketPrice, @eventType, @historicalRating", queryFile);
-        Assert.Contains("command.Parameters.AddWithValue(\"@eventType\", @event.EventType);", repositoryFile);
+        Assert.Contains("sqlCommand.Parameters.AddWithValue(\"@eventType\", @event.EventType);", repositoryFile);
     }
 
     [Fact]
