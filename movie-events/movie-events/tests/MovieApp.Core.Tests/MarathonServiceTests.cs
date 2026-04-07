@@ -1,4 +1,6 @@
+using Moq;
 using MovieApp.Core.Models;
+using MovieApp.Core.Models.Movie;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
 using MovieApp.Core.Tests.Fakes;
@@ -193,5 +195,105 @@ public sealed class MarathonServiceTests
         {
             return Task.CompletedTask;
         }
+    }
+
+    [Fact]
+    public async Task GetWeeklyMarathonsAsync_WhenMarathonsAlreadyAssigned_ReturnsThemDirectly()
+    {
+        var mockRepo = new Moq.Mock<IMarathonRepository>();
+        var mockUserSvc = new Moq.Mock<ICurrentUserService>();
+
+        var existingMarathons = new List<Marathon> { new Marathon { Id = 1, Title = "Existing" } };
+
+        mockRepo.Setup(r => r.GetWeeklyMarathonsForUserAsync(1, Moq.It.IsAny<string>()))
+                .ReturnsAsync(existingMarathons);
+
+        var service = new MarathonService(mockRepo.Object, mockUserSvc.Object);
+
+        var result = await service.GetWeeklyMarathonsAsync(1);
+
+        Assert.Single(result);
+        mockRepo.Verify(r => r.AssignWeeklyMarathonsAsync(Moq.It.IsAny<int>(), Moq.It.IsAny<string>(), Moq.It.IsAny<int>()), Moq.Times.Never);
+    }
+
+    [Fact]
+    public async Task GetCurrentProgressAsync_ReturnsProgress()
+    {
+        var mockRepo = new Moq.Mock<IMarathonRepository>();
+        var mockUserSvc = new Moq.Mock<ICurrentUserService>();
+
+        mockUserSvc.Setup(u => u.CurrentUser).Returns(new User { Id = 1, AuthProvider = "", AuthSubject = "", Username = "TestUser" });
+
+        var progress = new MarathonProgress { UserId = 1, MarathonId = 5 };
+
+        mockRepo.Setup(r => r.GetUserProgressAsync(1, 5)).ReturnsAsync(progress);
+
+        var service = new MarathonService(mockRepo.Object, mockUserSvc.Object);
+
+        var result = await service.GetCurrentProgressAsync(5);
+
+        Assert.NotNull(result);
+        Assert.Equal(5, result.MarathonId);
+    }
+
+    [Fact]
+    public async Task StartMarathonAsync_NoPrerequisite_JoinsSuccessfully()
+    {
+        var mockRepo = new Moq.Mock<IMarathonRepository>();
+        var mockUserSvc = new Moq.Mock<ICurrentUserService>();
+
+        mockUserSvc.Setup(u => u.CurrentUser).Returns(new User { Id = 1, AuthProvider = "", AuthSubject = "", Username = "TestUser" });
+
+        mockRepo.Setup(r => r.GetUserProgressAsync(1, 10)).ReturnsAsync((MarathonProgress?)null);
+        mockRepo.Setup(r => r.GetActiveMarathonsAsync()).ReturnsAsync(new List<Marathon> { new Marathon { Id = 10, Title = "Normal" } });
+        mockRepo.Setup(r => r.JoinMarathonAsync(1, 10)).ReturnsAsync(true);
+
+        var service = new MarathonService(mockRepo.Object, mockUserSvc.Object);
+
+        var result = await service.StartMarathonAsync(10);
+
+        Assert.True(result);
+        mockRepo.Verify(r => r.JoinMarathonAsync(1, 10), Moq.Times.Once);
+    }
+
+    [Fact]
+    public async Task StartMarathonAsync_PrerequisiteMet_JoinsSuccessfully()
+    {
+        var mockRepo = new Moq.Mock<IMarathonRepository>();
+        var mockUserSvc = new Moq.Mock<ICurrentUserService>();
+
+        mockUserSvc.Setup(u => u.CurrentUser).Returns(new User { Id = 1, AuthProvider = "", AuthSubject = "", Username = "TestUser" });
+
+        mockRepo.Setup(r => r.GetUserProgressAsync(1, 10)).ReturnsAsync((MarathonProgress?)null);
+        mockRepo.Setup(r => r.GetActiveMarathonsAsync()).ReturnsAsync(new List<Marathon> { new Marathon { Id = 10, Title = "Elite", PrerequisiteMarathonId = 5 } });
+        mockRepo.Setup(r => r.IsPrerequisiteCompletedAsync(1, 5)).ReturnsAsync(true); // Prerequisite MET
+        mockRepo.Setup(r => r.JoinMarathonAsync(1, 10)).ReturnsAsync(true);
+
+        var service = new MarathonService(mockRepo.Object, mockUserSvc.Object);
+
+        var result = await service.StartMarathonAsync(10);
+
+        Assert.True(result);
+        mockRepo.Verify(r => r.JoinMarathonAsync(1, 10), Moq.Times.Once);
+    }
+
+    [Fact]
+    public async Task RepositoryPassThroughMethods_ReturnExpectedValues()
+    {
+        var mockRepo = new Moq.Mock<IMarathonRepository>();
+        var mockUserSvc = new Moq.Mock<ICurrentUserService>();
+
+        mockRepo.Setup(r => r.GetParticipantCountAsync(1)).ReturnsAsync(50);
+        mockRepo.Setup(r => r.GetMarathonMovieCountAsync(1)).ReturnsAsync(10);
+        mockRepo.Setup(r => r.GetMoviesForMarathonAsync(1)).ReturnsAsync(new List<Movie>());
+        mockRepo.Setup(r => r.GetLeaderboardWithUsernamesAsync(1)).ReturnsAsync(new List<LeaderboardEntry>());
+
+        var service = new MarathonService(mockRepo.Object, mockUserSvc.Object);
+
+        Assert.Equal(50, await service.GetParticipantCountAsync(1));
+        Assert.Equal(10, await service.GetMarathonMovieCountAsync(1));
+        Assert.Empty(await service.GetMoviesForMarathonAsync(1));
+        Assert.Empty(await service.GetLeaderboardAsync(1));
+        Assert.Empty(await service.GetLeaderboardWithUsernamesAsync(1));
     }
 }
