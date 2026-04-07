@@ -76,10 +76,10 @@ public sealed partial class MainWindow : Window
         }
 
         if (this.ContentFrame.Content is SlotMachinePage slotPage &&
-            slotPage.DataContext is SlotMachineViewModel vm &&
-            vm.SpinCommand.CanExecute(null))
+            slotPage.DataContext is SlotMachineViewModel slotMachineViewModel &&
+            slotMachineViewModel.SpinCommand.CanExecute(null))
         {
-            vm.SpinCommand.Execute(null);
+            slotMachineViewModel.SpinCommand.Execute(null);
             e.Handled = true;
         }
     }

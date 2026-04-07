@@ -201,11 +201,11 @@ public sealed class MarathonPageViewModel : ViewModelBase
             this.IsJoined = this.CurrentProgress is not null;
             this.IsLocked = false;
 
-            if (marathon.PrerequisiteMarathonId is int prereqId)
+            if (marathon.PrerequisiteMarathonId is int prerequisiteMarathonId)
             {
                 bool prereqDone = await this.marathonService!.IsPrerequisiteCompletedAsync(
                     this.userId,
-                    prereqId);
+                    prerequisiteMarathonId);
                 this.IsLocked = !prereqDone;
             }
 

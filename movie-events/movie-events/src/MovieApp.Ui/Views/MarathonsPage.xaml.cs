@@ -22,7 +22,7 @@ public sealed partial class MarathonsPage : Page
 {
     private readonly IDialogService dialogService;
 
-    private MarathonTriviaViewModel? triviaVm;
+    private MarathonTriviaViewModel? triviaViewModel;
     private int currentMovieId;
     private int currentUserId;
 
@@ -155,11 +155,11 @@ public sealed partial class MarathonsPage : Page
         MarathonMovieItem? movie = this.ViewModel.Movies.FirstOrDefault(m => m.MovieId == movieId);
         this.QuizMovieTitle.Text = movie?.Title ?? "Movie";
 
-        this.triviaVm = new MarathonTriviaViewModel(App.Services.TriviaRepository);
+        this.triviaViewModel = new MarathonTriviaViewModel(App.Services.TriviaRepository);
 
         try
         {
-            await this.triviaVm.StartAsync(movieId);
+            await this.triviaViewModel.StartAsync(movieId);
             this.ShowPlaying();
             this.RefreshQuizUi();
         }
@@ -171,7 +171,7 @@ public sealed partial class MarathonsPage : Page
 
     private void SubmitButton_Click(object sender, RoutedEventArgs e)
     {
-        if (this.triviaVm is null)
+        if (this.triviaViewModel is null)
         {
             return;
         }
@@ -184,7 +184,7 @@ public sealed partial class MarathonsPage : Page
             return;
         }
 
-        this.triviaVm.SubmitAnswer(option);
+        this.triviaViewModel.SubmitAnswer(option);
 
         foreach (RadioButton radioButton in new[] { this.OptionA, this.OptionB, this.OptionC, this.OptionD })
         {
@@ -193,16 +193,16 @@ public sealed partial class MarathonsPage : Page
 
         this.SubmitButton.IsEnabled = false;
 
-        if (this.triviaVm.IsComplete)
+        if (this.triviaViewModel.IsComplete)
         {
             this.ShowResult();
 
-            if (this.triviaVm.IsPassed && this.ViewModel.SelectedMarathon is not null)
+            if (this.triviaViewModel.IsPassed && this.ViewModel.SelectedMarathon is not null)
             {
                 _ = this.LogPassedMovieAsync(
                     this.ViewModel.SelectedMarathon.Id,
                     this.currentMovieId,
-                    this.triviaVm.CorrectCount);
+                    this.triviaViewModel.CorrectCount);
             }
         }
         else
@@ -222,13 +222,13 @@ public sealed partial class MarathonsPage : Page
 
     private async void TryAgainButton_Click(object sender, RoutedEventArgs e)
     {
-        if (this.triviaVm is null || App.Services.TriviaRepository is null)
+        if (this.triviaViewModel is null || App.Services.TriviaRepository is null)
         {
             return;
         }
 
-        this.triviaVm.Reset();
-        await this.triviaVm.StartAsync(this.currentMovieId);
+        this.triviaViewModel.Reset();
+        await this.triviaViewModel.StartAsync(this.currentMovieId);
         this.ShowPlaying();
         this.RefreshQuizUi();
     }
@@ -240,20 +240,20 @@ public sealed partial class MarathonsPage : Page
 
     private void RefreshQuizUi()
     {
-        if (this.triviaVm?.CurrentQuestion is not TriviaQuestion q)
+        if (this.triviaViewModel?.CurrentQuestion is not TriviaQuestion question)
         {
             return;
         }
 
-        this.QuizProgress.Text = this.triviaVm.ProgressText;
-        this.QuizQuestion.Text = q.QuestionText;
-        this.OptionA.Content = q.OptionA;
+        this.QuizProgress.Text = this.triviaViewModel.ProgressText;
+        this.QuizQuestion.Text = question.QuestionText;
+        this.OptionA.Content = question.OptionA;
         this.OptionA.Tag = 'A';
-        this.OptionB.Content = q.OptionB;
+        this.OptionB.Content = question.OptionB;
         this.OptionB.Tag = 'B';
-        this.OptionC.Content = q.OptionC;
+        this.OptionC.Content = question.OptionC;
         this.OptionC.Tag = 'C';
-        this.OptionD.Content = q.OptionD;
+        this.OptionD.Content = question.OptionD;
         this.OptionD.Tag = 'D';
         this.SubmitButton.IsEnabled = false;
 
@@ -308,8 +308,8 @@ public sealed partial class MarathonsPage : Page
         this.MovieListPanel.Visibility = Visibility.Collapsed;
         this.PlayingPanel.Visibility = Visibility.Collapsed;
         this.ResultPanel.Visibility = Visibility.Visible;
-        this.ResultText.Text = this.triviaVm?.ResultText ?? string.Empty;
-        this.TryAgainButton.Visibility = this.triviaVm?.IsPassed == false
+        this.ResultText.Text = this.triviaViewModel?.ResultText ?? string.Empty;
+        this.TryAgainButton.Visibility = this.triviaViewModel?.IsPassed == false
             ? Visibility.Visible : Visibility.Collapsed;
     }
 }
