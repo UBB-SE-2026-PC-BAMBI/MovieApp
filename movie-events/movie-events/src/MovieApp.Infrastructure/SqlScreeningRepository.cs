@@ -1,3 +1,7 @@
+// <copyright file="SqlScreeningRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Infrastructure;
 
 using System;

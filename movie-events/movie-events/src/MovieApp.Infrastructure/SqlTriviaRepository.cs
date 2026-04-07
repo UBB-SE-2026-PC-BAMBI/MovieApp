@@ -1,10 +1,13 @@
-﻿namespace MovieApp.Infrastructure;
+﻿// <copyright file="SqlTriviaRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Infrastructure;
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Microsoft.Data.SqlClient;
-
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
@@ -16,11 +19,10 @@ public sealed class SqlTriviaRepository : ITriviaRepository
 {
     private readonly string connectionString;
 
-
     /// <summary>
     /// Initializes a new instance of the <see cref="SqlTriviaRepository"/> class.
     /// </summary>
-    /// <param name="databaseOptions">DataBase options</param>
+    /// <param name="databaseOptions">DataBase options.</param>
     public SqlTriviaRepository(DatabaseOptions databaseOptions)
     {
         this.connectionString = databaseOptions.ConnectionString;

@@ -1,3 +1,6 @@
+// <copyright file="ReferralSqlQueries.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Infrastructure;
 
 /// <summary>

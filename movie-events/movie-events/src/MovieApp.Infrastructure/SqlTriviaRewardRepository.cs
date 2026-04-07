@@ -1,8 +1,12 @@
-﻿namespace MovieApp.Infrastructure;
+﻿// <copyright file="SqlTriviaRewardRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Infrastructure;
+
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
@@ -10,7 +14,8 @@ using MovieApp.Core.Repositories;
 /// A SQL Server-backed repository for managing user trivia rewards via ADO.NET.
 /// </summary>
 /// <param name="databaseOptions">The database options containing the SQL connection string.</param>
-public sealed class SqlTriviaRewardRepository(DatabaseOptions databaseOptions) : ITriviaRewardRepository
+public sealed class SqlTriviaRewardRepository(DatabaseOptions databaseOptions)
+    : ITriviaRewardRepository
 {
     private readonly string connectionString = databaseOptions.ConnectionString;
 

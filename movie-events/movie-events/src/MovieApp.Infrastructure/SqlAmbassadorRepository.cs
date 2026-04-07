@@ -1,4 +1,9 @@
+// <copyright file="SqlAmbassadorRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Infrastructure;
+
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
