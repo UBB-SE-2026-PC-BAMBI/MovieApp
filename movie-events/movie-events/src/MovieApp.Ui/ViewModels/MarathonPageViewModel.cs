@@ -212,6 +212,16 @@ public sealed class MarathonPageViewModel : ViewModelBase
         await LoadMoviesAsync(marathonId);
     }
 
+    public async Task LogMovieAsync(int marathonId, int movieId, int correctAnswers)
+    {
+        if (this._marathonService is null)
+        {
+            throw new InvalidOperationException("Marathon service is not available.");
+        }
+
+        await this._marathonService.LogMovieAsync(marathonId, movieId, correctAnswers);
+    }
+
     private async Task LoadMoviesAsync(int marathonId)
     {
         var movies = await _marathonService

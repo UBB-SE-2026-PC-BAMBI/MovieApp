@@ -1,38 +1,33 @@
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using MovieApp.Core.Models;
-using MovieApp.Core.Services;
-using MovieApp.Infrastructure;
 using MovieApp.Ui.ViewModels;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-
-namespace MovieApp.Ui.Views;
 
 public sealed partial class MarathonsPage : Page
 {
     private MarathonTriviaViewModel? _triviaVm;
     private int _currentMovieId;
     private int _currentUserId;
-    
+
     public MarathonPageViewModel ViewModel { get; }
 
     public MarathonsPage()
     {
-        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
+        if (App.Services.MarathonService == null)
+        {
+            throw new InvalidOperationException("Marathon service is not configured.");
+        }
 
-        var db = new DatabaseOptions { ConnectionString = connectionString };
-        var marathonRepo = new SqlMarathonRepository(db);
+        this.ViewModel = new MarathonPageViewModel(App.Services.MarathonService);
+        this.InitializeComponent();
 
-        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
-        var marathonService = new MarathonService(marathonRepo, App.Services.CurrentUserService);
-
-        ViewModel = new MarathonPageViewModel(marathonService);
-        InitializeComponent();
-
-        Loaded += async (_, _) =>
+        this.Loaded += async (_, _) =>
         {
             App.EnsureServicesValid();
 
@@ -46,16 +41,6 @@ public sealed partial class MarathonsPage : Page
         };
     }
 
-    private string GetRequiredConfiguration(string key)
-    {
-        var value = App.Configuration?[key];
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new InvalidOperationException($"Missing or invalid required configuration for key: '{key}'.");
-        }
-        return value;
-    }
-
     private async void MarathonCard_Tapped(object sender, TappedRoutedEventArgs e)
     {
         if (sender is not FrameworkElement fe) return;
@@ -67,7 +52,7 @@ public sealed partial class MarathonsPage : Page
         DetailTheme.Text = marathon.Theme ?? string.Empty;
         LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
 
-        RefreshProgressBar();
+        this.RefreshProgressBar();
 
         LockedBanner.Visibility = ViewModel.IsLocked
             ? Visibility.Visible : Visibility.Collapsed;
@@ -172,18 +157,11 @@ public sealed partial class MarathonsPage : Page
 
     private async Task LogPassedMovieAsync(int marathonId, int movieId, int correctCount)
     {
-        var connectionString = GetRequiredConfiguration("Database:ConnectionString");
-        var db = new DatabaseOptions { ConnectionString = connectionString };
-        var repo = new SqlMarathonRepository(db);
+        await this.ViewModel.LogMovieAsync(marathonId, movieId, correctCount);
+        await this.ViewModel.RefreshAfterMovieLoggedAsync();
 
-        if (App.Services.CurrentUserService == null) throw new InvalidOperationException("Current user service is null.");
-        var service = new MarathonService(repo, App.Services.CurrentUserService);
-
-        await service.LogMovieAsync(marathonId, movieId, correctCount);
-        await ViewModel.RefreshAfterMovieLoggedAsync();
-
-        LeaderboardSubtitle.Text = $"{ViewModel.Leaderboard.Count} participants";
-        RefreshProgressBar();
+        this.LeaderboardSubtitle.Text = $"{this.ViewModel.Leaderboard.Count} participants";
+        this.RefreshProgressBar();
     }
 
     private async void TryAgainButton_Click(object sender, RoutedEventArgs e)
