@@ -39,18 +39,18 @@ public sealed class SlotMachineViewModelTests
     }
 
     [Fact]
-    public void CreateUnavailable_DisablesSpinAndPreservesOfflineMessage()
+    public void CreateUnavailable_WhenCalled_DisablesSpinAndPreservesOfflineMessage()
     {
         /* Bogdan Please Fix this UWU - Teammate 4 (T4-04) will uncomment this later */
     }
 
     [Fact]
-    public async Task InitializeAsync_WhenServiceReturnsSpinData_SetsAvailableSpinsAndBonusSpins()
+    public async Task InitializeAsync_ServiceReturnsSpinData_SetsAvailableSpinsAndBonusSpins()
     {
         _mockService.Setup(s => s.GetUserSpinStateAsync(1))
             .ReturnsAsync(new UserSpinData { UserId = 1, DailySpinsRemaining = 3, BonusSpins = 2 });
 
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
 
         await vm.InitializeAsync();
 
@@ -59,24 +59,24 @@ public sealed class SlotMachineViewModelTests
     }
 
     [Fact]
-    public async Task SpinCommand_WhenNoSpinsAvailable_CannotExecute()
+    public async Task SpinCommandCanExecute_NoSpinsAvailable_ReturnsFalse()
     {
         _mockService.Setup(s => s.GetUserSpinStateAsync(1))
             .ReturnsAsync(new UserSpinData { UserId = 1, DailySpinsRemaining = 0, BonusSpins = 0 });
 
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
         await vm.InitializeAsync();
 
         Assert.False(vm.SpinCommand.CanExecute(null));
     }
 
     [Fact]
-    public async Task SpinCommand_WhenSpinning_DisablesButtonDuringExecution()
+    public async Task SpinCommandExecute_WhileSpinning_DisablesButton()
     {
-        var tcs = new TaskCompletionSource<SlotMachineResult>();
+        TaskCompletionSource<SlotMachineResult> tcs = new TaskCompletionSource<SlotMachineResult>();
         _mockService.Setup(s => s.SpinAsync(1)).Returns(tcs.Task);
 
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
         await vm.InitializeAsync();
 
         Assert.True(vm.SpinCommand.CanExecute(null));
@@ -90,10 +90,10 @@ public sealed class SlotMachineViewModelTests
     }
 
     [Fact]
-    public async Task SpinAsync_WhenJackpotHit_RaisesJackpotHitEventWithCorrectMovie()
+    public async Task SpinCommandExecute_JackpotHit_RaisesJackpotHitEventAndSetsStatusMessage()
     {
-        var jackpotMovie = new Movie { Id = 99, Title = "Golden Movie" };
-        var result = new SlotMachineResult
+        Movie jackpotMovie = new Movie { Id = 99, Title = "Golden Movie" };
+        SlotMachineResult result = new SlotMachineResult
         {
             MatchingEvents = new List<Event>(),
             JackpotEventIds = new HashSet<int>(),
@@ -110,11 +110,11 @@ public sealed class SlotMachineViewModelTests
             It.IsAny<Action<int>>(),
             It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
         await vm.InitializeAsync();
 
         bool eventRaised = false;
-        vm.JackpotHit += (movie, discount) =>
+        vm.JackpotHit += (Movie movie, int discount) =>
         {
             eventRaised = true;
             Assert.Equal(jackpotMovie, movie);
@@ -128,9 +128,9 @@ public sealed class SlotMachineViewModelTests
     }
 
     [Fact]
-    public async Task SpinAsync_WhenNoMatchingEvents_SetsCorrectStatusMessage()
+    public async Task SpinCommandExecute_NoMatchingEvents_SetsCorrectStatusMessage()
     {
-        var result = new SlotMachineResult
+        SlotMachineResult result = new SlotMachineResult
         {
             MatchingEvents = new List<Event>(),
             JackpotDiscountApplied = false
@@ -144,7 +144,7 @@ public sealed class SlotMachineViewModelTests
             It.IsAny<Action<int>>(),
             It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
 
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
         await vm.InitializeAsync();
 
         vm.SpinCommand.Execute(null);
@@ -153,9 +153,9 @@ public sealed class SlotMachineViewModelTests
     }
 
     [Fact]
-    public async Task RefreshSpinCountAsync_UpdatesAvailableSpinsFromService()
+    public async Task RefreshSpinCountAsync_WhenCalled_UpdatesAvailableSpinsFromService()
     {
-        var vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
+        SlotMachineViewModel vm = new SlotMachineViewModel(1, _mockService.Object, _mockAnimation.Object);
 
         _mockService.Setup(s => s.GetUserSpinStateAsync(1))
             .ReturnsAsync(new UserSpinData { UserId = 1, DailySpinsRemaining = 10, BonusSpins = 4 });
