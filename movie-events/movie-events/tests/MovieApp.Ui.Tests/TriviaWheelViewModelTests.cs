@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Ui.ViewModels;
@@ -8,12 +13,12 @@ namespace MovieApp.Ui.Tests;
 public sealed class TriviaWheelViewModelTests
 {
     [Fact]
-    public async Task LoadQuestionsAsync_SetsEmptyState_WhenCategoryHasNoQuestions()
+    public async Task LoadQuestionsAsync_CategoryHasNoQuestions_SetsEmptyState()
     {
-        var triviaRepository = new StubTriviaRepository([]);
-        var rewardRepository = new StubTriviaRewardRepository();
-        var spinRepository = new StubUserSpinRepository();
-        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+        StubTriviaRepository triviaRepository = new StubTriviaRepository([]);
+        StubTriviaRewardRepository rewardRepository = new StubTriviaRewardRepository();
+        StubUserSpinRepository spinRepository = new StubUserSpinRepository();
+        TriviaWheelViewModel viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
 
         await viewModel.LoadQuestionsAsync("Actors");
 
@@ -24,9 +29,9 @@ public sealed class TriviaWheelViewModelTests
     }
 
     [Fact]
-    public async Task LoadQuestionsAsync_StartsSession_WhenCategoryHasQuestions()
+    public async Task LoadQuestionsAsync_CategoryHasSufficientQuestions_StartsTriviaSession()
     {
-        var triviaRepository = new StubTriviaRepository(
+        StubTriviaRepository triviaRepository = new StubTriviaRepository(
             Enumerable.Range(1, 20)
                 .Select(index => new TriviaQuestion
                 {
@@ -41,9 +46,9 @@ public sealed class TriviaWheelViewModelTests
                     MovieId = null,
                 })
                 .ToList());
-        var rewardRepository = new StubTriviaRewardRepository();
-        var spinRepository = new StubUserSpinRepository();
-        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+        StubTriviaRewardRepository rewardRepository = new StubTriviaRewardRepository();
+        StubUserSpinRepository spinRepository = new StubUserSpinRepository();
+        TriviaWheelViewModel viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
 
         await viewModel.LoadQuestionsAsync("Directors");
 
@@ -55,9 +60,9 @@ public sealed class TriviaWheelViewModelTests
     }
 
     [Fact]
-    public async Task LoadQuestionsAsync_DoesNotStartSessionWhenCategoryHasFewerThanTwentyQuestions()
+    public async Task LoadQuestionsAsync_CategoryHasInsufficientQuestions_DoesNotStartSession()
     {
-        var triviaRepository = new StubTriviaRepository(
+        StubTriviaRepository triviaRepository = new StubTriviaRepository(
         [
             new TriviaQuestion
             {
@@ -96,9 +101,9 @@ public sealed class TriviaWheelViewModelTests
                 MovieId = null,
             },
         ]);
-        var rewardRepository = new StubTriviaRewardRepository();
-        var spinRepository = new StubUserSpinRepository();
-        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+        StubTriviaRewardRepository rewardRepository = new StubTriviaRewardRepository();
+        StubUserSpinRepository spinRepository = new StubUserSpinRepository();
+        TriviaWheelViewModel viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
 
         await viewModel.LoadQuestionsAsync("Actors");
 
@@ -107,12 +112,12 @@ public sealed class TriviaWheelViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_DisablesTrivia_WhenDatabaseHasNoQuestionData()
+    public async Task InitializeAsync_DatabaseHasNoQuestionData_DisablesTriviaAndSetsAvailabilityMessage()
     {
-        var triviaRepository = new StubTriviaRepository([]);
-        var rewardRepository = new StubTriviaRewardRepository();
-        var spinRepository = new StubUserSpinRepository();
-        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+        StubTriviaRepository triviaRepository = new StubTriviaRepository([]);
+        StubTriviaRewardRepository rewardRepository = new StubTriviaRewardRepository();
+        StubUserSpinRepository spinRepository = new StubUserSpinRepository();
+        TriviaWheelViewModel viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
 
         await viewModel.InitializeAsync();
 
@@ -122,12 +127,12 @@ public sealed class TriviaWheelViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_DisablesTrivia_WhenRepositoriesCannotReachDatabase()
+    public async Task InitializeAsync_DatabaseConnectionFails_DisablesTriviaAndSetsAvailabilityMessage()
     {
-        var triviaRepository = new ThrowingTriviaRepository();
-        var rewardRepository = new StubTriviaRewardRepository();
-        var spinRepository = new ThrowingUserSpinRepository();
-        var viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
+        ThrowingTriviaRepository triviaRepository = new ThrowingTriviaRepository();
+        StubTriviaRewardRepository rewardRepository = new StubTriviaRewardRepository();
+        ThrowingUserSpinRepository spinRepository = new ThrowingUserSpinRepository();
+        TriviaWheelViewModel viewModel = new TriviaWheelViewModel(triviaRepository, rewardRepository, spinRepository, 1);
 
         await viewModel.InitializeAsync();
 
