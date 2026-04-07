@@ -1,4 +1,8 @@
+// <copyright file="SqlUserSlotMachineStateRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 namespace MovieApp.Infrastructure;
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +11,7 @@ using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
 /// <summary>
-/// A SQL Server-backed repository for managing user slot-machine state. 
+/// A SQL Server-backed repository for managing user slot-machine state.
 /// Handles data access to the dbo.UserSpins table and maps records to <see cref="UserSpinData"/>.
 /// </summary>
 public sealed class SqlUserSlotMachineStateRepository : IUserSlotMachineStateRepository

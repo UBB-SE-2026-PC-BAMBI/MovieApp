@@ -1,8 +1,12 @@
+// <copyright file="SqlUserRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Infrastructure;
+
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 

@@ -1,4 +1,9 @@
-﻿namespace MovieApp.Infrastructure;
+﻿// <copyright file="SqlMarathonRepository.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Infrastructure;
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -325,7 +330,7 @@ public sealed class SqlMarathonRepository : IMarathonRepository
         await sqlDataReader.CloseAsync();
 
         if (ids.Count == 0)
-        { 
+        {
             return;
         }
 
