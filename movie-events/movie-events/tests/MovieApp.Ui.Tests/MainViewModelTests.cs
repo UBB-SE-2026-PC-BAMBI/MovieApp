@@ -7,9 +7,9 @@ namespace MovieApp.Ui.Tests;
 public sealed class MainViewModelTests
 {
     [Fact]
-    public void CreateStartupError_KeepsShellUsableWhileShowingDatabaseMessage()
+    public void CreateStartupError_WithErrorMessage_SetsDatabaseUnavailableState()
     {
-        var viewModel = MainViewModel.CreateStartupError("Database connection failed.");
+        MainViewModel viewModel = MainViewModel.CreateStartupError("Database connection failed.");
 
         Assert.Null(viewModel.CurrentUser);
         Assert.Equal("Database unavailable", viewModel.UserLabel);
@@ -20,17 +20,17 @@ public sealed class MainViewModelTests
     }
 
     [Fact]
-    public void Constructor_WithCurrentUser_UsesResolvedUserIdentity()
+    public void Constructor_ValidUser_SetsPropertiesFromUserIdentity()
     {
-        var currentUser = new User
+        User currentUser = new User
         {
             Id = 7,
             Username = "alex",
             AuthProvider = "local",
-            AuthSubject = "alex-7",
+            AuthSubject = "alex-7", 
         };
 
-        var viewModel = new MainViewModel(currentUser);
+        MainViewModel viewModel = new MainViewModel(currentUser);
 
         Assert.Same(currentUser, viewModel.CurrentUser);
         Assert.Equal("alex", viewModel.UserLabel);
