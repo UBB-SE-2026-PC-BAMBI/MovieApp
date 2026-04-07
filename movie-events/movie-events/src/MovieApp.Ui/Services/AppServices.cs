@@ -28,4 +28,6 @@ public class AppServices : IAppServices
     public IEventJoinService? EventJoinService { get; set; }
     public IWatchlistPathProvider? WatchlistPathProvider { get; set; }
     public IMarathonService? MarathonService { get; set; }
+
+    public IDialogService? DialogService { get; set; }
 }
