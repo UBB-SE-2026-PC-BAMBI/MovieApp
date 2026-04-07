@@ -30,7 +30,7 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward(redeemed: true);
 
-        var result = await service.RedeemAsync(reward, eventId: null);
+        var result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -46,7 +46,7 @@ public sealed class RewardServiceTests
         var reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
         // Trying to redeem against event 99 — wrong event
-        var result = await service.RedeemAsync(reward, eventId: 99);
+        var result = await service.RedeemAsync(reward, eventIdentifier: 99);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -59,7 +59,7 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        var result = await service.RedeemAsync(reward, eventId: null);
+        var result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.False(result);
         Assert.Empty(repo.MarkedRedeemedIds);
@@ -72,7 +72,7 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward(scope: "EventSpecific", eventId: 5);
 
-        var result = await service.RedeemAsync(reward, eventId: 5);
+        var result = await service.RedeemAsync(reward, eventIdentifier: 5);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
@@ -88,7 +88,7 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward(scope: "Global");
 
-        var result = await service.RedeemAsync(reward, eventId: null);
+        var result = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.True(result);
         Assert.Contains(1, repo.MarkedRedeemedIds);
@@ -101,7 +101,7 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward();
 
-        await service.RedeemAsync(reward, eventId: null);
+        await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.Contains(reward.RewardId, repo.MarkedRedeemedIds);
     }
@@ -115,8 +115,8 @@ public sealed class RewardServiceTests
         var service = new RewardService(repo);
         var reward = MakeReward();
 
-        var first = await service.RedeemAsync(reward, eventId: null);
-        var second = await service.RedeemAsync(reward, eventId: null);
+        var first = await service.RedeemAsync(reward, eventIdentifier: null);
+        var second = await service.RedeemAsync(reward, eventIdentifier: null);
 
         Assert.True(first);
         Assert.False(second);
@@ -140,8 +140,8 @@ public sealed class RewardServiceTests
             DiscountValue = 10,
         };
 
-        var first = await service.RedeemAsync(reward1, eventId: null);
-        var second = await service.RedeemAsync(reward2, eventId: null);
+        var first = await service.RedeemAsync(reward1, eventIdentifier: null);
+        var second = await service.RedeemAsync(reward2, eventIdentifier: null);
 
         Assert.True(first);
         Assert.True(second);
@@ -165,11 +165,11 @@ public sealed class RewardServiceTests
             EventId = 5,
         };
 
-        var globalOk = await service.RedeemAsync(globalReward, eventId: 5);
-        var eventOk = await service.RedeemAsync(eventReward, eventId: 5);
+        var globalOk = await service.RedeemAsync(globalReward, eventIdentifier: 5);
+        var eventOk = await service.RedeemAsync(eventReward, eventIdentifier: 5);
         var eventFail = await service.RedeemAsync(
             new Reward { RewardId = 3, RewardType = "Discount", OwnerUserId = 10, ApplicabilityScope = "EventSpecific", DiscountValue = 20, EventId = 5 },
-            eventId: 99);
+            eventIdentifier: 99);
 
         Assert.True(globalOk);
         Assert.True(eventOk);

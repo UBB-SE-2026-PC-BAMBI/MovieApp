@@ -104,8 +104,6 @@ public static class EventListTransformer
     public static IOrderedEnumerable<Event> ApplySorting(IEnumerable<Event> events, EventSortOption sortOption)
     {
         ArgumentNullException.ThrowIfNull(events);
-
-        // Strategy pattern implementation
         IEventSortStrategy strategy = EventSortStrategyFactory.GetStrategy(sortOption);
         return strategy.Sort(events);
     }
