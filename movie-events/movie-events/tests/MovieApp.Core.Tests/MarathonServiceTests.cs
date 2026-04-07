@@ -8,21 +8,21 @@ namespace MovieApp.Core.Tests;
 public sealed class MarathonServiceTests
 {
     [Fact]
-    public async Task GetWeeklyMarathonsAsync_AssignsWeeklyMarathonsWhenUserHasNone()
+    public async Task GetWeeklyMarathonsAsync_UserHasNoAssignedMarathons_AssignsAndReturnsMarathons()
     {
-        var repository = new StubMarathonRepository();
-        var service = CreateService(repository);
+        StubMarathonRepository repository = new StubMarathonRepository();
+        MarathonService service = CreateService(repository);
 
-        var result = (await service.GetWeeklyMarathonsAsync(userId: 10)).ToList();
+        List<Marathon> result = (await service.GetWeeklyMarathonsAsync(userId: 10)).ToList();
 
         Assert.True(repository.AssignWeeklyMarathonsCalled);
         Assert.NotEmpty(result);
     }
 
     [Fact]
-    public async Task StartMarathonAsync_ReturnsFalseWhenPrerequisiteIsIncomplete()
+    public async Task StartMarathonAsync_PrerequisiteIsIncomplete_ReturnsFalse()
     {
-        var repository = new StubMarathonRepository
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             ActiveMarathons =
             [
@@ -36,29 +36,29 @@ public sealed class MarathonServiceTests
             ],
             IsPrerequisiteCompletedResult = false,
         };
-        var service = CreateService(repository);
+        MarathonService service = CreateService(repository);
 
-        var result = await service.StartMarathonAsync(11);
+        bool result = await service.StartMarathonAsync(11);
 
         Assert.False(result);
         Assert.False(repository.JoinMarathonCalled);
     }
 
     [Fact]
-    public async Task UpdateQuizResultAsync_IncrementsCompletedMoviesAndAveragesAccuracy()
+    public async Task UpdateQuizResultAsync_ValidQuizResult_UpdatesCompletedMoviesAndAccuracy()
     {
-        var progress = new MarathonProgress
+        MarathonProgress progress = new MarathonProgress
         {
             UserId = 10,
             MarathonId = 21,
             TriviaAccuracy = 50,
             CompletedMoviesCount = 1,
         };
-        var repository = new StubMarathonRepository
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             ProgressByMarathonId = { [21] = progress },
         };
-        var service = CreateService(repository);
+        MarathonService service = CreateService(repository);
 
         await service.UpdateQuizResultAsync(21, correctAnswers: 3);
 
@@ -68,9 +68,9 @@ public sealed class MarathonServiceTests
     }
 
     [Fact]
-    public async Task LogMovieAsync_ReturnsFalseWhenVerificationIsNotPerfect()
+    public async Task LogMovieAsync_NotAllAnswersCorrect_ReturnsFalse()
     {
-        var repository = new StubMarathonRepository
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             ProgressByMarathonId =
             {
@@ -84,32 +84,32 @@ public sealed class MarathonServiceTests
             },
             MovieCountsByMarathonId = { [21] = 2 },
         };
-        var service = CreateService(repository);
+        MarathonService service = CreateService(repository);
 
-        var result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 2);
+        bool result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 2);
 
         Assert.False(result);
         Assert.Null(repository.UpdatedProgress);
     }
 
     [Fact]
-    public async Task LogMovieAsync_CompletesMarathonWhenFinalMovieIsVerified()
+    public async Task LogMovieAsync_FinalMovieVerified_MarksMarathonAsCompleted()
     {
-        var progress = new MarathonProgress
+        MarathonProgress progress = new MarathonProgress
         {
             UserId = 10,
             MarathonId = 21,
             CompletedMoviesCount = 1,
             TriviaAccuracy = 100,
         };
-        var repository = new StubMarathonRepository
+        StubMarathonRepository repository = new StubMarathonRepository
         {
             ProgressByMarathonId = { [21] = progress },
             MovieCountsByMarathonId = { [21] = 2 },
         };
-        var service = CreateService(repository);
+        MarathonService service = CreateService(repository);
 
-        var result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 3);
+        bool result = await service.LogMovieAsync(21, movieId: 100, correctAnswers: 3);
 
         Assert.True(result);
         Assert.Equal(2, progress.CompletedMoviesCount);
