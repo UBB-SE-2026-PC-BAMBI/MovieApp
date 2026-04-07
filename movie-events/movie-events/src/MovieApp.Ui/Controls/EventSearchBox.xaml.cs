@@ -1,7 +1,11 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
+// <copyright file="EventSearchBox.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Controls;
+
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 /// <summary>
 /// Reusable free-text search input for event-list screens.
@@ -12,29 +16,6 @@ namespace MovieApp.Ui.Controls;
 /// </remarks>
 public sealed partial class EventSearchBox : UserControl
 {
-    private bool _isLoaded;
-    private string _pendingSearchText = string.Empty;
-
-    /// <summary>
-    /// Raised whenever the search text changes through user interaction or property sync.
-    /// </summary>
-    public event EventHandler<string>? SearchTextChanged;
-
-    public EventSearchBox()
-    {
-        InitializeComponent();
-        Loaded += OnLoaded;
-    }
-
-    /// <summary>
-    /// Gets or sets the current search text shown by the control.
-    /// </summary>
-    public string SearchText
-    {
-        get => (string)GetValue(SearchTextProperty);
-        set => SetValue(SearchTextProperty, value);
-    }
-
     /// <summary>
     /// Identifies the <see cref="SearchText"/> dependency property.
     /// </summary>
@@ -46,15 +27,6 @@ public sealed partial class EventSearchBox : UserControl
             new PropertyMetadata(string.Empty, OnSearchTextChanged));
 
     /// <summary>
-    /// Gets or sets the placeholder text displayed when no search query is entered.
-    /// </summary>
-    public string PlaceholderText
-    {
-        get => (string)GetValue(PlaceholderTextProperty);
-        set => SetValue(PlaceholderTextProperty, value);
-    }
-
-    /// <summary>
     /// Identifies the <see cref="PlaceholderText"/> dependency property.
     /// </summary>
     public static readonly DependencyProperty PlaceholderTextProperty =
@@ -64,12 +36,47 @@ public sealed partial class EventSearchBox : UserControl
             typeof(EventSearchBox),
             new PropertyMetadata("Search events"));
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private bool isLoaded;
+    private string pendingSearchText = string.Empty;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventSearchBox"/> class.
+    /// </summary>
+    public EventSearchBox()
     {
-        _isLoaded = true;
-        ApplySearchText(_pendingSearchText);
+        this.InitializeComponent();
+        this.Loaded += this.OnLoaded;
     }
 
+    /// <summary>
+    /// Raised whenever the search text changes through user interaction or property sync.
+    /// </summary>
+    public event EventHandler<string>? SearchTextChanged;
+
+    /// <summary>
+    /// Gets or sets the current search text shown by the control.
+    /// </summary>
+    public string SearchText
+    {
+        get => (string)this.GetValue(SearchTextProperty);
+        set => this.SetValue(SearchTextProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the placeholder text displayed when no search query is entered.
+    /// </summary>
+    public string PlaceholderText
+    {
+        get => (string)this.GetValue(PlaceholderTextProperty);
+        set => this.SetValue(PlaceholderTextProperty, value);
+    }
+
+    /// <summary>
+    /// Handles changes to the <see cref="SearchText"/> dependency property.
+    /// Updates the internal pending value and applies it to the UI.
+    /// </summary>
+    /// <param name="dependencyObject">The dependency object instance.</param>
+    /// <param name="args">The property changed event arguments.</param>
     private static void OnSearchTextChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
         if (dependencyObject is not EventSearchBox searchBox)
@@ -77,20 +84,26 @@ public sealed partial class EventSearchBox : UserControl
             return;
         }
 
-        searchBox._pendingSearchText = args.NewValue as string ?? string.Empty;
-        searchBox.ApplySearchText(searchBox._pendingSearchText);
+        searchBox.pendingSearchText = args.NewValue as string ?? string.Empty;
+        searchBox.ApplySearchText(searchBox.pendingSearchText);
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        this.isLoaded = true;
+        this.ApplySearchText(this.pendingSearchText);
     }
 
     private void ApplySearchText(string text)
     {
-        if (!_isLoaded || SearchTextBox is null)
+        if (!this.isLoaded || this.SearchTextBox is null)
         {
             return;
         }
 
-        if (SearchTextBox.Text != text)
+        if (this.SearchTextBox.Text != text)
         {
-            SearchTextBox.Text = text;
+            this.SearchTextBox.Text = text;
         }
     }
 
@@ -99,12 +112,12 @@ public sealed partial class EventSearchBox : UserControl
     /// </summary>
     private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        var newValue = SearchTextBox.Text ?? string.Empty;
-        if (!string.Equals(SearchText, newValue, StringComparison.Ordinal))
+        string newValue = this.SearchTextBox.Text ?? string.Empty;
+        if (!string.Equals(this.SearchText, newValue, StringComparison.Ordinal))
         {
-            SearchText = newValue;
+            this.SearchText = newValue;
         }
 
-        SearchTextChanged?.Invoke(this, newValue);
+        this.SearchTextChanged?.Invoke(this, newValue);
     }
 }

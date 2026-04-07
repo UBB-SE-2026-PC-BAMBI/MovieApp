@@ -1,8 +1,12 @@
+// <copyright file="EventSortSelector.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Controls;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MovieApp.Core.EventLists;
-
-namespace MovieApp.Ui.Controls;
 
 /// <summary>
 /// Reusable single-select sort control for event-list screens.
@@ -13,38 +17,6 @@ namespace MovieApp.Ui.Controls;
 /// </remarks>
 public sealed partial class EventSortSelector : UserControl
 {
-    private static readonly IReadOnlyList<EventSortOptionItem> DefaultSortOptions =
-    [
-        new EventSortOptionItem(EventSortOption.DateAscending, "Date: soonest first"),
-        new EventSortOptionItem(EventSortOption.DateDescending, "Date: latest first"),
-        new EventSortOptionItem(EventSortOption.PriceAscending, "Price: low to high"),
-        new EventSortOptionItem(EventSortOption.PriceDescending, "Price: high to low"),
-        new EventSortOptionItem(EventSortOption.HistoricalRatingDescending, "Historical rating")
-    ];
-
-    private bool _isLoaded;
-    private EventSortOption _pendingSortOption = EventSortOption.DateAscending;
-
-    /// <summary>
-    /// Raised when the user selects a different sort mode.
-    /// </summary>
-    public event EventHandler<EventSortOption>? SortOptionChanged;
-
-    public EventSortSelector()
-    {
-        InitializeComponent();
-        Loaded += OnLoaded;
-    }
-
-    /// <summary>
-    /// Gets or sets the currently selected event sort option.
-    /// </summary>
-    public EventSortOption SelectedSortOption
-    {
-        get => (EventSortOption)GetValue(SelectedSortOptionProperty);
-        set => SetValue(SelectedSortOptionProperty, value);
-    }
-
     /// <summary>
     /// Identifies the <see cref="SelectedSortOption"/> dependency property.
     /// </summary>
@@ -56,15 +28,6 @@ public sealed partial class EventSortSelector : UserControl
             new PropertyMetadata(EventSortOption.DateAscending, OnSelectedSortOptionChanged));
 
     /// <summary>
-    /// Gets or sets the placeholder text shown by the selector before a value is chosen.
-    /// </summary>
-    public string PlaceholderText
-    {
-        get => (string)GetValue(PlaceholderTextProperty);
-        set => SetValue(PlaceholderTextProperty, value);
-    }
-
-    /// <summary>
     /// Identifies the <see cref="PlaceholderText"/> dependency property.
     /// </summary>
     public static readonly DependencyProperty PlaceholderTextProperty =
@@ -74,11 +37,48 @@ public sealed partial class EventSortSelector : UserControl
             typeof(EventSortSelector),
             new PropertyMetadata("Sort events"));
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private static readonly IReadOnlyList<EventSortOptionItem> DefaultSortOptions =
+    [
+        new EventSortOptionItem(EventSortOption.DateAscending, "Date: soonest first"),
+        new EventSortOptionItem(EventSortOption.DateDescending, "Date: latest first"),
+        new EventSortOptionItem(EventSortOption.PriceAscending, "Price: low to high"),
+        new EventSortOptionItem(EventSortOption.PriceDescending, "Price: high to low"),
+        new EventSortOptionItem(EventSortOption.HistoricalRatingDescending, "Historical rating")
+    ];
+
+    private bool isLoaded;
+    private EventSortOption pendingSortOption = EventSortOption.DateAscending;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EventSortSelector"/> class.
+    /// </summary>
+    public EventSortSelector()
     {
-        _isLoaded = true;
-        SortComboBox.ItemsSource = DefaultSortOptions;
-        UpdateSelectedItem(_pendingSortOption);
+        this.InitializeComponent();
+        this.Loaded += this.OnLoaded;
+    }
+
+    /// <summary>
+    /// Raised when the user selects a different sort mode.
+    /// </summary>
+    public event EventHandler<EventSortOption>? SortOptionChanged;
+
+    /// <summary>
+    /// Gets or sets the currently selected event sort option.
+    /// </summary>
+    public EventSortOption SelectedSortOption
+    {
+        get => (EventSortOption)this.GetValue(SelectedSortOptionProperty);
+        set => this.SetValue(SelectedSortOptionProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the placeholder text shown by the selector before a value is chosen.
+    /// </summary>
+    public string PlaceholderText
+    {
+        get => (string)this.GetValue(PlaceholderTextProperty);
+        set => this.SetValue(PlaceholderTextProperty, value);
     }
 
     private static void OnSelectedSortOptionChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -88,8 +88,15 @@ public sealed partial class EventSortSelector : UserControl
             return;
         }
 
-        selector._pendingSortOption = sortOption;
+        selector.pendingSortOption = sortOption;
         selector.UpdateSelectedItem(sortOption);
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        this.isLoaded = true;
+        this.SortComboBox.ItemsSource = DefaultSortOptions;
+        this.UpdateSelectedItem(this.pendingSortOption);
     }
 
     /// <summary>
@@ -97,15 +104,16 @@ public sealed partial class EventSortSelector : UserControl
     /// </summary>
     private void UpdateSelectedItem(EventSortOption sortOption)
     {
-        if (!_isLoaded || SortComboBox is null)
+        if (!this.isLoaded || this.SortComboBox is null)
         {
             return;
         }
 
-        var selectedItem = DefaultSortOptions.FirstOrDefault(item => item.Value == sortOption);
-        if (!ReferenceEquals(SortComboBox.SelectedItem, selectedItem))
+        EventSortOptionItem? selectedItem = 
+            DefaultSortOptions.FirstOrDefault(item => item.Value == sortOption);
+        if (!ReferenceEquals(this.SortComboBox.SelectedItem, selectedItem))
         {
-            SortComboBox.SelectedItem = selectedItem;
+            this.SortComboBox.SelectedItem = selectedItem;
         }
     }
 
@@ -114,21 +122,32 @@ public sealed partial class EventSortSelector : UserControl
     /// </summary>
     private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (SortComboBox.SelectedItem is not EventSortOptionItem selectedItem)
+        if (this.SortComboBox.SelectedItem is not EventSortOptionItem selectedItem)
         {
             return;
         }
 
-        if (SelectedSortOption != selectedItem.Value)
+        if (this.SelectedSortOption != selectedItem.Value)
         {
-            SelectedSortOption = selectedItem.Value;
+            this.SelectedSortOption = selectedItem.Value;
         }
 
-        SortOptionChanged?.Invoke(this, selectedItem.Value);
+        this.SortOptionChanged?.Invoke(this, selectedItem.Value);
     }
 
     /// <summary>
-    /// View model for one reusable sort option entry in the selector.
+    /// Represents a single selectable sort option item.
     /// </summary>
-    private sealed record EventSortOptionItem(EventSortOption Value, string Label);
+    private sealed class EventSortOptionItem
+    {
+        public EventSortOptionItem(EventSortOption value, string label)
+        {
+            this.Value = value;
+            this.Label = label;
+        }
+
+        public EventSortOption Value { get; }
+
+        public string Label { get; }
+    }
 }
