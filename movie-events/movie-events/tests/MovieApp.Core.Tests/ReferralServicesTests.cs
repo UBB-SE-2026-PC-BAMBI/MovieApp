@@ -9,85 +9,85 @@ namespace MovieApp.Core.Tests;
 public sealed class ReferralServicesTests
 {
     [Fact]
-    public void Generate_UsesStableUppercasePatternForSameInputs()
+    public void Generate_ValidInputs_ReturnsStableUppercasePattern()
     {
-        var generator = new ReferralCodeGenerator();
+        ReferralCodeGenerator generator = new ReferralCodeGenerator();
 
-        var code = generator.Generate("alice", 7);
+        string code = generator.Generate("alice", 7);
 
         Assert.Equal($"ALICE{DateTime.UtcNow.Year}7", code);
     }
 
     [Fact]
-    public void Generate_ReturnsAlphanumericCode_AccordingToRequirements()
+    public void Generate_ValidInput_ReturnsAlphanumericCode()
     {
-        var generator = new ReferralCodeGenerator();
+        ReferralCodeGenerator generator = new ReferralCodeGenerator();
 
-        var code = generator.Generate("alice example", 7);
+        string code = generator.Generate("alice example", 7);
 
         Assert.Matches(new Regex("^[A-Za-z0-9]+$"), code);
     }
 
     [Fact]
-    public async Task IsValidReferralAsync_ReturnsFalseWhenCodeDoesNotExist()
+    public async Task IsValidReferralAsync_CodeDoesNotExist_ReturnsFalse()
     {
-        var repository = new StubAmbassadorRepository();
-        var validator = new ReferralValidator(repository);
+        StubAmbassadorRepository repository = new StubAmbassadorRepository();
+        ReferralValidator validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("MISSING", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("MISSING", currentUserId: 10);
 
         Assert.False(result);
     }
 
     [Fact]
-    public async Task IsValidReferralAsync_ReturnsFalseForOwnCode()
+    public async Task IsValidReferralAsync_UserIsCodeOwner_ReturnsFalse()
     {
-        var repository = new StubAmbassadorRepository
+        StubAmbassadorRepository repository = new StubAmbassadorRepository
         {
             OwnersByCode = { ["OWNCODE"] = 10 },
         };
-        var validator = new ReferralValidator(repository);
+        ReferralValidator validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("OWNCODE", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("OWNCODE", currentUserId: 10);
 
         Assert.False(result);
     }
 
     [Fact]
-    public async Task IsValidReferralAsync_ReturnsTrueForAnotherUsersCode()
+    public async Task IsValidReferralAsync_ValidCodeFromAnotherUser_ReturnsTrue()
     {
-        var repository = new StubAmbassadorRepository
+        StubAmbassadorRepository repository = new StubAmbassadorRepository
         {
             OwnersByCode = { ["FRIENDCODE"] = 42 },
         };
-        var validator = new ReferralValidator(repository);
+        ReferralValidator validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserId: 10);
+        bool result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserId: 10);
 
         Assert.True(result);
     }
 
     [Fact]
-    public async Task LogReferralUsageAsync_AddsLogAndAttemptsRewardWhenCodeExists()
+    public async Task LogReferralUsageAsync_ValidCode_AddsLogAndAppliesReward()
     {
-        var repository = new StubAmbassadorRepository
+        StubAmbassadorRepository repository = new StubAmbassadorRepository
         {
             OwnersByCode = { ["FRIENDCODE"] = 42 },
         };
-        var service = new ReferralLogService(repository);
+        ReferralLogService service = new ReferralLogService(repository);
 
         await service.LogReferralUsageAsync("FRIENDCODE", friendId: 10, eventId: 88);
 
-        var loggedUsage = Assert.Single(repository.LogEntries);
+        (int AmbassadorId, int FriendId, int EventId) loggedUsage = Assert.Single(repository.LogEntries);
         Assert.Equal((42, 10, 88), loggedUsage);
         Assert.Equal([42], repository.TryApplyRewardCalls);
     }
 
     [Fact]
-    public async Task LogReferralUsageAsync_DoesNothingWhenCodeDoesNotExist()
+    public async Task LogReferralUsageAsync_CodeDoesNotExist_TakesNoAction()
     {
-        var repository = new StubAmbassadorRepository();
-        var service = new ReferralLogService(repository);
+        StubAmbassadorRepository repository = new StubAmbassadorRepository();
+        ReferralLogService service = new ReferralLogService(repository);
 
         await service.LogReferralUsageAsync("MISSING", friendId: 10, eventId: 88);
 
@@ -98,43 +98,43 @@ public sealed class ReferralServicesTests
     // ── Event-scope referral tests ─────────────────────────────────────────────
 
     [Fact]
-    public async Task IsValidReferralForEventAsync_ReturnsFalse_WhenAlreadyUsedForSameEvent()
+    public async Task IsValidReferralForEventAsync_AlreadyUsedForEvent_ReturnsFalse()
     {
-        var repository = new StubAmbassadorRepository
+        StubAmbassadorRepository repository = new StubAmbassadorRepository
         {
             OwnersByCode = { ["FRIENDCODE"] = 42 },
             ExistingLogs = { (42, 10, 88) },
         };
-        var validator = new ReferralValidator(repository);
+        ReferralValidator validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 88);
+        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 88);
 
         Assert.False(result);
     }
 
     [Fact]
-    public async Task IsValidReferralForEventAsync_ReturnsTrue_WhenDifferentEvent()
+    public async Task IsValidReferralForEventAsync_NotUsedForEvent_ReturnsTrue()
     {
-        var repository = new StubAmbassadorRepository
+        StubAmbassadorRepository repository = new StubAmbassadorRepository
         {
             OwnersByCode = { ["FRIENDCODE"] = 42 },
             ExistingLogs = { (42, 10, 88) }, // used for event 88
         };
-        var validator = new ReferralValidator(repository);
+        ReferralValidator validator = new ReferralValidator(repository);
 
         // event 99 has never been used → should be valid
-        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 99);
+        bool result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 99);
 
         Assert.True(result);
     }
 
     [Fact]
-    public async Task IsValidReferralForEventAsync_ReturnsFalse_WhenCodeDoesNotExist()
+    public async Task IsValidReferralForEventAsync_CodeDoesNotExist_ReturnsFalse()
     {
-        var repository = new StubAmbassadorRepository();
-        var validator = new ReferralValidator(repository);
+        StubAmbassadorRepository repository = new StubAmbassadorRepository();
+        ReferralValidator validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralForEventAsync("MISSING", currentUserId: 10, eventId: 88);
+        bool result = await validator.IsValidReferralForEventAsync("MISSING", currentUserId: 10, eventId: 88);
 
         Assert.False(result);
     }
@@ -157,7 +157,7 @@ public sealed class ReferralServicesTests
 
         public Task<string?> GetReferralCodeAsync(int userId, CancellationToken cancellationToken = default)
         {
-            var code = OwnersByCode.FirstOrDefault(entry => entry.Value == userId).Key;
+            string code = OwnersByCode.FirstOrDefault(entry => entry.Value == userId).Key;
             return Task.FromResult(string.IsNullOrWhiteSpace(code) ? null : code);
         }
 
