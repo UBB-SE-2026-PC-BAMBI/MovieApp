@@ -2,15 +2,20 @@ using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Ui.ViewModels;
 using Xunit;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System;
 
 namespace MovieApp.Ui.Tests;
 
 public sealed class MarathonTriviaViewModelTests
 {
     [Fact]
-    public async Task StartAsync_BeginsTriviaSessionWithThreeMovieQuestions()
+    public async Task StartAsync_MovieHasSufficientQuestions_BeginsTriviaSession()
     {
-        var viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
+        MarathonTriviaViewModel viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
 
         await viewModel.StartAsync(movieId: 99);
 
@@ -21,17 +26,17 @@ public sealed class MarathonTriviaViewModelTests
     }
 
     [Fact]
-    public async Task StartAsync_ThrowsWhenMovieDoesNotHaveEnoughTriviaQuestions()
+    public async Task StartAsync_MovieHasInsufficientQuestions_ThrowsInvalidOperationException()
     {
-        var viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions().Take(2).ToList()));
+        MarathonTriviaViewModel viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions().Take(2).ToList()));
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => viewModel.StartAsync(movieId: 99));
     }
 
     [Fact]
-    public async Task SubmitAnswer_CompletesSessionAndMarksPassForPerfectRun()
+    public async Task SubmitAnswer_AllAnswersCorrect_SetsIsCompleteAndIsPassedToTrue()
     {
-        var viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
+        MarathonTriviaViewModel viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
         await viewModel.StartAsync(movieId: 99);
 
         viewModel.SubmitAnswer('A');
@@ -45,9 +50,9 @@ public sealed class MarathonTriviaViewModelTests
     }
 
     [Fact]
-    public async Task Reset_ClearsCurrentSessionState()
+    public async Task Reset_ActiveSession_ClearsSessionState()
     {
-        var viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
+        MarathonTriviaViewModel viewModel = new MarathonTriviaViewModel(new StubTriviaRepository(BuildMovieQuestions()));
         await viewModel.StartAsync(movieId: 99);
 
         viewModel.Reset();
