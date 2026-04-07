@@ -204,4 +204,70 @@ public sealed class ReferralServicesTests
             return Task.FromResult(ExistingLogs.Contains((ambassadorId, friendId, eventId)));
         }
     }
+    [Fact]
+    public void Generate_WhenUsernameContainsNumbers_KeepsNumbersInOutput()
+    {
+        const string Username = "alice42";
+        const int UserId = 7;
+        const string ExpectedPrefix = "ALICE42";
+        var generator = new ReferralCodeGenerator();
+
+        var code = generator.Generate(Username, UserId);
+
+        Assert.StartsWith(ExpectedPrefix, code, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Generate_WhenUsernameIsEmpty_ReturnsCodeWithYearAndUserId()
+    {
+        const string Username = "";
+        const int UserId = 5;
+        string expectedCode = $"{DateTime.UtcNow.Year}{UserId}";
+        var generator = new ReferralCodeGenerator();
+
+        var code = generator.Generate(Username, UserId);
+
+        Assert.Equal(expectedCode, code);
+    }
+
+    [Fact]
+    public void Generate_WhenCalledTwiceWithSameInput_ReturnsSameCode()
+    {
+        const string Username = "alice";
+        const int UserId = 7;
+        var generator = new ReferralCodeGenerator();
+
+        var firstCode = generator.Generate(Username, UserId);
+        var secondCode = generator.Generate(Username, UserId);
+
+        Assert.Equal(firstCode, secondCode);
+    }
+    [Fact]
+    public void Generate_WhenUsernameHasSpecialCharacters_StripsNonAlphanumericCharacters()
+    {
+        const string Username = "al!ce@ex#ample";
+        const int UserId = 3;
+        const string ExpectedPrefix = "ALCEEXAMPLE";
+        var generator = new ReferralCodeGenerator();
+
+        var code = generator.Generate(Username, UserId);
+
+        Assert.StartsWith(ExpectedPrefix, code, StringComparison.Ordinal);
+        Assert.Matches(new Regex("^[A-Za-z0-9]+$"), code);
+    }
+
+    [Fact]
+    public void Generate_WhenUserIdIsZero_StillProducesValidCode()
+    {
+        const string Username = "alice";
+        const int UserId = 0;
+        string expectedCode = $"ALICE{DateTime.UtcNow.Year}0";
+        var generator = new ReferralCodeGenerator();
+
+        var code = generator.Generate(Username, UserId);
+
+        Assert.Equal(expectedCode, code);
+        Assert.Matches(new Regex("^[A-Za-z0-9]+$"), code);
+    }
+
 }
