@@ -82,7 +82,7 @@ public sealed class SeatGuideViewModel : ViewModelBase
                     seat.Quality = SeatQuality.Standard;
                 }
 
-                if (Random.Shared.Next(PercentageBase) < UnavailabilityPercentage) 
+                if (Random.Shared.Next(PercentageBase) < UnavailabilityPercentage)
                 {
                     seat.IsAvailable = false;
                 }

@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-
 /// <summary>
 /// Displays the event list for a single event section selected from the home page.
 /// </summary>
@@ -20,7 +19,7 @@ using MovieApp.Core.Repositories;
 public sealed class SectionEventsViewModel(IEventRepository? repository, SectionNavigationContext context)
     : EventListPageViewModel
 {
-    private readonly IEventRepository? _repository = repository;
+    private readonly IEventRepository? repository = repository;
 
     /// <summary>
     /// Gets the navigation context that defines which section this view model represents.
@@ -30,22 +29,24 @@ public sealed class SectionEventsViewModel(IEventRepository? repository, Section
     /// <summary>
     /// Gets the page title shown for the selected section.
     /// </summary>
-    public override string PageTitle => Context.Title;
+    public override string PageTitle => this.Context.Title;
 
     /// <summary>
     /// Gets a value indicating whether the selected section can load events from the database.
     /// </summary>
-    public bool IsRepositoryAvailable => _repository is not null;
+    public bool IsRepositoryAvailable => this.repository is not null;
 
     /// <summary>
     /// Gets the visibility of the repository-unavailable message.
     /// </summary>
-    public Visibility UnavailableMessageVisibility => IsRepositoryAvailable ? Visibility.Collapsed : Visibility.Visible;
+    public Visibility UnavailableMessageVisibility => this.IsRepositoryAvailable
+        ? Visibility.Collapsed : Visibility.Visible;
 
     /// <summary>
     /// Gets the message shown when the selected section cannot load database-backed events.
     /// </summary>
-    public string UnavailableMessage => "Section events are unavailable because the database connection is not ready.";
+    public string UnavailableMessage =>
+        "Section events are unavailable because the database connection is not ready.";
 
     /// <summary>
     /// Loads all events for the current section and orders them by date.
@@ -56,15 +57,15 @@ public sealed class SectionEventsViewModel(IEventRepository? repository, Section
     /// </returns>
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        if (_repository is null)
+        if (this.repository is null)
         {
-            return [];
+            return new List<Event>();
         }
 
-        var allEvents = await _repository.GetAllAsync();
+        IEnumerable<Event> allEvents = await this.repository.GetAllAsync();
 
         return allEvents
-            .Where(e => MatchesSection(e, Context.GroupingValue))
+            .Where(e => MatchesSection(e, this.Context.GroupingValue))
             .OrderBy(e => e.EventDateTime)
             .ToList();
     }
@@ -85,8 +86,8 @@ public sealed class SectionEventsViewModel(IEventRepository? repository, Section
             return false;
         }
 
-        var normalizedGroupingValue = groupingValue.Trim();
-        var eventGroupingValue = @event.EventType.Trim();
+        string? normalizedGroupingValue = groupingValue.Trim();
+        string? eventGroupingValue = @event.EventType.Trim();
 
         return string.Equals(
             eventGroupingValue,
