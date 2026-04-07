@@ -1,11 +1,16 @@
-using Microsoft.UI.Xaml;
+// <copyright file="SectionEventsPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels.Events;
 
-namespace MovieApp.Ui.Views;
 
 public sealed partial class SectionEventsPage : Page
 {

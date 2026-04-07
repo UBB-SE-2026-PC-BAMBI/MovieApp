@@ -1,3 +1,7 @@
+// <copyright file="HomeNavigationShortcut.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Ui.ViewModels.Events;
 
 /// <summary>

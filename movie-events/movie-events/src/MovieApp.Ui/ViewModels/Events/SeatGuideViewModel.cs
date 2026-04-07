@@ -1,4 +1,8 @@
-﻿namespace MovieApp.Ui.ViewModels.Events;
+// <copyright file="SeatGuideViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
 
 using System;
 using System.Collections.ObjectModel;

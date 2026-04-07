@@ -1,13 +1,18 @@
-using MovieApp.Core.Models;
-using MovieApp.Core.Models.Movie;
-using MovieApp.Core.Services;
-using MovieApp.Ui.Controls;
-using MovieApp.Ui.Services;
+// <copyright file="SlotMachineViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels;
+
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Microsoft.UI.Xaml.Controls;
+using MovieApp.Core.Models.Movie;
+using MovieApp.Core.Models;
+using MovieApp.Core.Services;
+using MovieApp.Ui.Controls;
+using MovieApp.Ui.Services;
 
-namespace MovieApp.Ui.ViewModels;
 
 /// <summary>
 /// ViewModel for the Slot Machine page.

@@ -1,12 +1,17 @@
-using Microsoft.UI.Xaml.Controls;
-using System.ComponentModel;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using MovieApp.Core.Models;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml;
+// <copyright file="ReferralAreaPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml;
+using MovieApp.Core.Models;
+
 
 /// <summary>
 /// Exposes the referral-code feature area, including ambassador progress,

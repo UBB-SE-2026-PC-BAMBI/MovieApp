@@ -1,13 +1,18 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Shapes;
-using MovieApp.Ui.ViewModels;
-using Windows.UI;
-using Path = Microsoft.UI.Xaml.Shapes.Path;
+// <copyright file="TriviaWheelPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
+using Microsoft.UI.Xaml;
+using MovieApp.Ui.ViewModels;
+using Path = Microsoft.UI.Xaml.Shapes.Path;
+using Windows.UI;
+
 
 public sealed partial class TriviaWheelPage : Page
 {

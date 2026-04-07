@@ -1,16 +1,28 @@
-﻿using Microsoft.UI.Xaml;
+// <copyright file="EventDialogViewBuilder.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
+using System;
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using MovieApp.Core.Models;
 using MovieApp.Ui.Services;
 using Windows.UI;
-using System;
-using System.Threading.Tasks;
 
-namespace MovieApp.Ui.Views;
-
+/// <summary>
+/// Builds the UI element tree displayed inside an event detail <see cref="ContentDialog"/>.
+/// </summary>
 public static class EventDialogViewBuilder
 {
+    /// <summary>
+    /// Creates the content layout for the given event dialog view model.
+    /// </summary>
+    /// <param name="model">The view model containing event data and interaction callbacks.</param>
+    /// <returns>A <see cref="UIElement"/> ready to be set as dialog content.</returns>
     public static UIElement Create(EventDialogViewModel model)
     {
         StackPanel layout = new StackPanel { Spacing = 12 };
@@ -39,7 +51,7 @@ public static class EventDialogViewBuilder
                 CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(12, 8, 12, 8),
                 Margin = new Thickness(0, 4, 0, 4),
-                Child = bannerStack
+                Child = bannerStack,
             });
         }
         else if (model.ShowRegularDiscountBanner)
@@ -53,7 +65,7 @@ public static class EventDialogViewBuilder
                 Background = new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xC1, 0x07)),
                 CornerRadius = new CornerRadius(6),
                 Padding = new Thickness(12, 8, 12, 8),
-                Child = discountStack
+                Child = discountStack,
             });
         }
 
@@ -74,7 +86,7 @@ public static class EventDialogViewBuilder
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { referralTextBox, validationButton }
+            Children = { referralTextBox, validationButton },
         });
 
         Button willAttendButton = new Button { Content = "Will attend", Tag = "Joined!" };
@@ -82,7 +94,6 @@ public static class EventDialogViewBuilder
 
         layout.Loaded += async (object sender, RoutedEventArgs e) =>
         {
-            // FIXED: Added .Services to App calls here
             if (App.Services.EventUserStateService is not null)
             {
                 bool isAlreadyJoined = await App.Services.EventUserStateService.IsEventJoinedByUserAsync(model.Event.Id);
@@ -108,7 +119,7 @@ public static class EventDialogViewBuilder
         {
             Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Children = { willAttendButton, buyTicketButton, seatGuideButton }
+            Children = { willAttendButton, buyTicketButton, seatGuideButton },
         });
 
         if (model.HasFreePass)
@@ -153,15 +164,7 @@ public static class EventDialogViewBuilder
             JoinEventResult result = await App.Services.EventJoinService.JoinEventAsync(eventId, tag);
 
             button.Content = result.Message;
-
-            if (result.Success)
-            {
-                button.IsEnabled = false;
-            }
-            else
-            {
-                button.IsEnabled = true;
-            }
+            button.IsEnabled = !result.Success;
         }
     }
 }

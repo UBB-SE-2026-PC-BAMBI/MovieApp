@@ -1,4 +1,4 @@
-﻿// <copyright file="WatchlistPathProvider.cs" company="MovieApp">
+// <copyright file="WatchlistPathProvider.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 

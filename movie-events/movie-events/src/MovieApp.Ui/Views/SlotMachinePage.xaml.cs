@@ -1,14 +1,19 @@
-using Microsoft.UI.Xaml;
+// <copyright file="SlotMachinePage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using MovieApp.Core.Models;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.Models.Movie;
+using MovieApp.Core.Models;
 using MovieApp.Ui.Controls;
 using MovieApp.Ui.Services;
 using MovieApp.Ui.ViewModels;
 using Windows.UI;
 
-namespace MovieApp.Ui.Views;
 
 public sealed partial class SlotMachinePage : Page
 {

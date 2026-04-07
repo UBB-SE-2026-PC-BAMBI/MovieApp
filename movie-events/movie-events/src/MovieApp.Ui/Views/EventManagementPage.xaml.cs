@@ -1,10 +1,15 @@
-using Microsoft.UI.Xaml;
+// <copyright file="EventManagementPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.EventLists;
 using MovieApp.Core.Models;
 using MovieApp.Ui.ViewModels.Events;
 
-namespace MovieApp.Ui.Views;
 
 public sealed partial class EventManagementPage : Page
 {

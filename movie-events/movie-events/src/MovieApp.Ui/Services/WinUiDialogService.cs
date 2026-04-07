@@ -1,6 +1,7 @@
-﻿// <copyright file="WinUiDialogService.cs" company="MovieApp">
+// <copyright file="WinUiDialogService.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
+
 namespace MovieApp.Ui.Services;
 
 using Microsoft.UI.Xaml.Controls;
@@ -23,7 +24,7 @@ public sealed class WinUiDialogService : IDialogService
     /// <inheritdoc/>
     public async Task ShowInfoAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        ContentDialog dialog = new ContentDialog
         {
             XamlRoot = this.GetXamlRoot(),
             Title = title,
@@ -37,7 +38,7 @@ public sealed class WinUiDialogService : IDialogService
     /// <inheritdoc/>
     public async Task<bool> ShowConfirmAsync(string title, string message)
     {
-        var dialog = new ContentDialog
+        ContentDialog dialog = new ContentDialog
         {
             XamlRoot = this.GetXamlRoot(),
             Title = title,

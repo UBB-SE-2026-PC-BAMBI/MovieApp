@@ -1,7 +1,12 @@
-﻿using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+// <copyright file="TriviaWheelViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels;
+
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
+
 
 public sealed class TriviaWheelViewModel : ViewModelBase
 {

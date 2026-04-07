@@ -1,11 +1,16 @@
-using Microsoft.UI.Xaml;
+// <copyright file="RewardsPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Ui.ViewModels;
 
-namespace MovieApp.Ui.Views;
 
 public sealed partial class RewardsPage : Page
 {

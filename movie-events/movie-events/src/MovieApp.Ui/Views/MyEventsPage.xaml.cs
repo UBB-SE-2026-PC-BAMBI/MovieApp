@@ -1,10 +1,15 @@
-using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
-using MovieApp.Ui.ViewModels.Events;
+// <copyright file="MyEventsPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using Microsoft.UI.Xaml;
+using MovieApp.Ui.ViewModels.Events;
+
 
 public sealed partial class MyEventsPage : Page
 {

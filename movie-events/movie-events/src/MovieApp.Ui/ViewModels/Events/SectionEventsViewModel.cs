@@ -1,8 +1,13 @@
+// <copyright file="SectionEventsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
+
 using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-namespace MovieApp.Ui.ViewModels.Events;
 
 /// <summary>
 /// Displays the event list for a single event section selected from the home page.

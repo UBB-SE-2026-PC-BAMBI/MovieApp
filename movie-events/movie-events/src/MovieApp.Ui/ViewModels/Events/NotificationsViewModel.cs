@@ -1,8 +1,13 @@
+// <copyright file="NotificationsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
+
 using System.Collections.ObjectModel;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 
-namespace MovieApp.Ui.ViewModels.Events;
 
 public sealed class NotificationsViewModel : ViewModelBase
 {

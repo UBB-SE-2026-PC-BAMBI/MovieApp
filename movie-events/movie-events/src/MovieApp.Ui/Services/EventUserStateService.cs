@@ -1,4 +1,4 @@
-﻿// <copyright file="EventUserStateService.cs" company="MovieApp">
+// <copyright file="EventUserStateService.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 

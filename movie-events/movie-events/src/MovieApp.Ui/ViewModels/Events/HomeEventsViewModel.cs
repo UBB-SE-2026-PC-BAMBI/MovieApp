@@ -1,14 +1,19 @@
-using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
-using MovieApp.Ui.Navigation;
-using Microsoft.UI.Xaml;
-using System.ComponentModel;
+// <copyright file="HomeEventsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
+
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System;
+using Microsoft.UI.Xaml;
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
+using MovieApp.Ui.Navigation;
 
-namespace MovieApp.Ui.ViewModels.Events;
 
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {

@@ -1,7 +1,12 @@
-﻿using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+// <copyright file="RewardsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels;
+
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
+
 
 /// <summary>
 /// Exposes the current user's trivia reward state to the UI.

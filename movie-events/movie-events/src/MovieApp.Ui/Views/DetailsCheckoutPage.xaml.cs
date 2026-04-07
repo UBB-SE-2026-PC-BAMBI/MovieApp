@@ -1,6 +1,11 @@
-using Microsoft.UI.Xaml.Controls;
+// <copyright file="DetailsCheckoutPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using Microsoft.UI.Xaml.Controls;
+
 
 /// <summary>
 /// Provides the event detail, seat-guide, and checkout layout that later feature work

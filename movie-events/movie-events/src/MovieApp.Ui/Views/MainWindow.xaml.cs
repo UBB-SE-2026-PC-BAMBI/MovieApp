@@ -1,6 +1,12 @@
-using Microsoft.UI.Xaml;
+// <copyright file="MainWindow.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Views;
+
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Infrastructure;
@@ -8,7 +14,6 @@ using MovieApp.Ui.Navigation;
 using MovieApp.Ui.ViewModels;
 using Windows.System;
 
-namespace MovieApp.Ui.Views;
 
 public sealed partial class MainWindow : Window
 {

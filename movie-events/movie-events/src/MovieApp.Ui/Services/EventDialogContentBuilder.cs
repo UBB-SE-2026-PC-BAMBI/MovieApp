@@ -1,4 +1,4 @@
-﻿// <copyright file="EventDialogContentBuilder.cs" company="MovieApp">
+// <copyright file="EventDialogContentBuilder.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 

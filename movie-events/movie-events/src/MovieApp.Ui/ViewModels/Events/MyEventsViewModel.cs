@@ -1,9 +1,14 @@
+// <copyright file="MyEventsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using MovieApp.Core.Models;
 
-namespace MovieApp.Ui.ViewModels.Events;
 
 /// <summary>
 /// Represents the user's personal event workspace.

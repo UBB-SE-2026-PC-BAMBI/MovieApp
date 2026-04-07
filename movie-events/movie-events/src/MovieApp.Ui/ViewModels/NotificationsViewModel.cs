@@ -1,3 +1,9 @@
+// <copyright file="NotificationsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels;
+
 using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +12,6 @@ using Microsoft.UI.Xaml;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 
-namespace MovieApp.Ui.ViewModels;
 
 /// <summary>
 /// Provides the notifications screen with the current user's persisted notifications.

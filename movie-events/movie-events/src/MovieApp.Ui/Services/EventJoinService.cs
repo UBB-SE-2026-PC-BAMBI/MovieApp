@@ -1,4 +1,4 @@
-﻿// <copyright file="EventJoinService.cs" company="MovieApp">
+// <copyright file="EventJoinService.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 

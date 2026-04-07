@@ -1,8 +1,13 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using MovieApp.Ui.ViewModels;
+// <copyright file="FavoritesPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using MovieApp.Ui.ViewModels;
+
 
 /// <summary>
 /// Hosts the current user's persisted favorite events.

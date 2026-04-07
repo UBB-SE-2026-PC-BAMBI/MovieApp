@@ -1,6 +1,11 @@
-using MovieApp.Core.Models;
+// <copyright file="MainViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels;
+
+using MovieApp.Core.Models;
+
 
 /// <summary>
 /// Represents the top-level shell state shown by <c>MainWindow</c>.

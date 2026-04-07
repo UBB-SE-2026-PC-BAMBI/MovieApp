@@ -1,7 +1,12 @@
-﻿using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
+// <copyright file="MarathonTriviaViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels;
+
+using MovieApp.Core.Models;
+using MovieApp.Core.Repositories;
+
 
 /// <summary>
 /// Drives the rapid-fire trivia check used to verify movie watches inside marathons.

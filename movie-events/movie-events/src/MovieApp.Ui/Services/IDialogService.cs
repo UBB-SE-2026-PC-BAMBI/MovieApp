@@ -1,4 +1,4 @@
-﻿// <copyright file="IDialogService.cs" company="MovieApp">
+// <copyright file="IDialogService.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 

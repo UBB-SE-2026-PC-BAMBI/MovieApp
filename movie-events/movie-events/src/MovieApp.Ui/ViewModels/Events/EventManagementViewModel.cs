@@ -1,3 +1,7 @@
+// <copyright file="EventManagementViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Ui.ViewModels.Events;
 
 using MovieApp.Core.Models;
