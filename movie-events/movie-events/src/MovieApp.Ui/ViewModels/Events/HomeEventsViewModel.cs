@@ -14,20 +14,31 @@ using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 using MovieApp.Ui.Navigation;
 
-
+/// <summary>
+/// View model for the home screen, providing grouped event sections
+/// and navigation shortcuts.
+/// </summary>
 public sealed class HomeEventsViewModel : EventListPageViewModel
 {
-    private readonly IEventRepository? _repository;
-    private IReadOnlyList<EventSection> _sections = [];
+    private readonly IEventRepository? repository;
+    private IReadOnlyList<EventSection> sections = new List<EventSection>();
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HomeEventsViewModel"/> class.
+    /// </summary>
+    /// <param name="repository">The event repository used to load event data.</param>
     public HomeEventsViewModel(IEventRepository? repository)
     {
-        _repository = repository;
-        PropertyChanged += OnBasePropertyChanged;
+        this.repository = repository;
+        this.PropertyChanged += this.OnBasePropertyChanged;
     }
 
+    /// <inheritdoc/>
     public override string PageTitle => "Home";
 
+    /// <summary>
+    /// Gets the navigation shortcuts displayed on the home screen.
+    /// </summary>
     public IReadOnlyList<HomeNavigationShortcut> NavigationShortcuts { get; } =
     [
         new HomeNavigationShortcut
@@ -44,18 +55,40 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         },
     ];
 
+    /// <summary>
+    /// Gets the grouped event sections displayed on the home screen.
+    /// </summary>
     public IReadOnlyList<EventSection> Sections
     {
-        get => _sections;
-        private set => SetProperty(ref _sections, value);
+        get => this.sections;
+        private set => this.SetProperty(ref this.sections, value);
     }
 
-    public bool IsRepositoryAvailable => _repository is not null;
+    /// <summary>
+    /// Gets a value indicating whether the event repository is available.
+    /// </summary>
+    public bool IsRepositoryAvailable => this.repository is not null;
 
-    public Visibility UnavailableMessageVisibility => IsRepositoryAvailable ? Visibility.Collapsed : Visibility.Visible;
+    /// <summary>
+    /// Gets the visibility of the message shown when the repository is unavailable.
+    /// </summary>
+    public Visibility UnavailableMessageVisibility => this.IsRepositoryAvailable ?
+        Visibility.Collapsed : Visibility.Visible;
 
-    public string UnavailableMessage => "Event data is unavailable because the database connection is not ready.";
+    /// <summary>
+    /// Gets the message displayed when event data is unavailable.
+    /// </summary>
+    public string UnavailableMessage =>
+        "Event data is unavailable because the database connection is not ready.";
 
+    /// <summary>
+    /// Creates a navigation context for the specified event section.
+    /// </summary>
+    /// <param name="section">The section used to build the navigation context.</param>
+    /// <returns>The navigation context for the section.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="section"/> is <see langword="null"/>.
+    /// </exception>
     public SectionNavigationContext CreateNavigationContext(EventSection section)
     {
         ArgumentNullException.ThrowIfNull(section);
@@ -67,14 +100,20 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         };
     }
 
+    /// <summary>
+    /// Loads all events from the repository and enriches them with user-specific state.
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing the list of events.
+    /// </returns>
     protected override async Task<IReadOnlyList<Event>> LoadEventsAsync()
     {
-        if (_repository is null)
+        if (this.repository is null)
         {
-            return [];
+            return new List<Event>();
         }
 
-        IEnumerable<Event> allEvents = await _repository.GetAllAsync();
+        IEnumerable<Event> allEvents = await this.repository.GetAllAsync();
         List<Event> eventsList = allEvents.ToList();
 
         if (App.Services.EventUserStateService is not null)
@@ -89,14 +128,11 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         return eventsList;
     }
 
-    private void OnBasePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(VisibleEvents))
-        {
-            Sections = BuildSections(VisibleEvents);
-        }
-    }
-
+    /// <summary>
+    /// Groups events into sections based on their event type.
+    /// </summary>
+    /// <param name="events">The events to group.</param>
+    /// <returns>A list of event sections grouped by event type.</returns>
     private static IReadOnlyList<EventSection> BuildSections(IEnumerable<Event> events)
     {
         Dictionary<string, EventSection> sectionsByType = new Dictionary<string, EventSection>(StringComparer.OrdinalIgnoreCase);
@@ -121,5 +157,18 @@ public sealed class HomeEventsViewModel : EventListPageViewModel
         return sectionsByType.Values
             .OrderBy(section => section.Title, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    /// <summary>
+    /// Handles property change notifications from the base class and updates sections when needed.
+    /// </summary>
+    /// <param name="sender">The source of the property change.</param>
+    /// <param name="e">The event data describing the property change.</param>
+    private void OnBasePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(this.VisibleEvents))
+        {
+            this.Sections = BuildSections(this.VisibleEvents);
+        }
     }
 }
