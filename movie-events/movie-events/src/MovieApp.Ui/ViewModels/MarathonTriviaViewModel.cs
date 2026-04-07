@@ -7,116 +7,152 @@ namespace MovieApp.Ui.ViewModels;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-
 /// <summary>
 /// Drives the rapid-fire trivia check used to verify movie watches inside marathons.
 /// </summary>
 public sealed class MarathonTriviaViewModel : ViewModelBase
 {
-    private readonly ITriviaRepository _triviaRepository;
-    private List<TriviaQuestion> _questions = new();
-    private int _currentIndex;
-    private int _correctCount;
-    private bool _isLoading;
-    private bool _isPlaying;
-    private bool _isComplete;
+    private readonly ITriviaRepository triviaRepository;
+    private List<TriviaQuestion> questions = new ();
+    private int currentIndex;
+    private int correctCount;
+    private bool isLoading;
+    private bool isPlaying;
+    private bool isComplete;
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="MarathonTriviaViewModel"/> class.
     /// Creates the view model with access to movie-specific trivia data.
     /// </summary>
+    /// <param name="triviaRepository">The repository used to retrieve trivia questions.</param>
     public MarathonTriviaViewModel(ITriviaRepository triviaRepository)
     {
-        _triviaRepository = triviaRepository;
+        this.triviaRepository = triviaRepository;
     }
 
+    /// <summary>
+    /// Gets a value indicating whether trivia questions are currently being loaded.
+    /// </summary>
     public bool IsLoading
     {
-        get => _isLoading;
-        private set => SetProperty(ref _isLoading, value);
+        get => this.isLoading;
+        private set => this.SetProperty(ref this.isLoading, value);
     }
 
+    /// <summary>
+    /// Gets a value indicating whether a trivia session is currently in progress.
+    /// </summary>
     public bool IsPlaying
     {
-        get => _isPlaying;
-        private set => SetProperty(ref _isPlaying, value);
+        get => this.isPlaying;
+        private set => this.SetProperty(ref this.isPlaying, value);
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the trivia session has completed.
+    /// </summary>
     public bool IsComplete
     {
-        get => _isComplete;
+        get => this.isComplete;
         private set
         {
-            SetProperty(ref _isComplete, value);
-            OnPropertyChanged(nameof(IsPassed));
-            OnPropertyChanged(nameof(ResultText));
+            this.SetProperty(ref this.isComplete, value);
+            this.OnPropertyChanged(nameof(this.IsPassed));
+            this.OnPropertyChanged(nameof(this.ResultText));
         }
     }
 
-    public int CorrectCount => _correctCount;
+    /// <summary>
+    /// Gets the number of correctly answered questions in the current session.
+    /// </summary>
+    public int CorrectCount => this.correctCount;
 
-    public bool IsPassed => IsComplete && _correctCount == _questions.Count;
+    /// <summary>
+    /// Gets a value indicating whether the user passed the trivia session.
+    /// </summary>
+    public bool IsPassed => this.IsComplete && this.correctCount == this.questions.Count;
 
+    /// <summary>
+    /// Gets the current trivia question being presented.
+    /// </summary>
     public TriviaQuestion? CurrentQuestion =>
-        _currentIndex < _questions.Count ? _questions[_currentIndex] : null;
+        this.currentIndex < this.questions.Count ? this.questions[this.currentIndex] : null;
 
-    public string ProgressText => _questions.Count == 0
+    /// <summary>
+    /// Gets the text describing the user's progress through the trivia session.
+    /// </summary>
+    public string ProgressText => this.questions.Count == 0
         ? string.Empty
-        : $"Question {_currentIndex + 1} of {_questions.Count}";
+        : $"Question {this.currentIndex + 1} of {this.questions.Count}";
 
-    public string ResultText => !IsComplete
+    /// <summary>
+    /// Gets the result message displayed after the trivia session completes.
+    /// </summary>
+    public string ResultText => !this.IsComplete
         ? string.Empty
-        : IsPassed
+        : this.IsPassed
             ? "Passed! Movie verified."
-            : $"Failed — {_correctCount}/{_questions.Count} correct. Try again.";
+            : $"Failed — {this.correctCount}/{this.questions.Count} correct. Try again.";
 
     /// <summary>
     /// Starts a new three-question trivia verification session for the specified movie.
     /// </summary>
+    /// <param name="movieId">The identifier of the movie.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task StartAsync(int movieId)
     {
-        IsLoading = true;
-        _currentIndex = 0;
-        _correctCount = 0;
-        IsComplete = false;
+        this.IsLoading = true;
+        this.currentIndex = 0;
+        this.correctCount = 0;
+        this.IsComplete = false;
 
         try
         {
-            var fetched = await _triviaRepository.GetByMovieIdAsync(movieId, 3);
-            _questions = fetched.ToList();
+            IEnumerable<TriviaQuestion> fetched =
+                await this.triviaRepository.GetByMovieIdAsync(movieId, 3);
+            this.questions = fetched.ToList();
 
-            if (_questions.Count < 3)
+            if (this.questions.Count < 3)
+            {
                 throw new InvalidOperationException(
                     $"Not enough trivia questions for movie {movieId}.");
+            }
 
-            IsPlaying = true;
+            this.IsPlaying = true;
         }
         finally
         {
-            IsLoading = false;
+            this.IsLoading = false;
         }
 
-        NotifyQuestionChanged();
+        this.NotifyQuestionChanged();
     }
 
     /// <summary>
     /// Submits an answer for the current question and advances the verification session.
     /// </summary>
+    /// <param name="selected">The selected answer option.</param>
     public void SubmitAnswer(char selected)
     {
-        if (!IsPlaying || CurrentQuestion is null) return;
-
-        if (selected == CurrentQuestion.CorrectOption)
-            _correctCount++;
-
-        _currentIndex++;
-
-        if (_currentIndex >= _questions.Count)
+        if (!this.IsPlaying || this.CurrentQuestion is null)
         {
-            IsPlaying = false;
-            IsComplete = true;
+            return;
         }
 
-        NotifyQuestionChanged();
+        if (selected == this.CurrentQuestion.CorrectOption)
+        {
+            this.correctCount++;
+        }
+
+        this.currentIndex++;
+
+        if (this.currentIndex >= this.questions.Count)
+        {
+            this.IsPlaying = false;
+            this.IsComplete = true;
+        }
+
+        this.NotifyQuestionChanged();
     }
 
     /// <summary>
@@ -124,18 +160,21 @@ public sealed class MarathonTriviaViewModel : ViewModelBase
     /// </summary>
     public void Reset()
     {
-        _questions.Clear();
-        _currentIndex = 0;
-        _correctCount = 0;
-        IsPlaying = false;
-        IsComplete = false;
-        NotifyQuestionChanged();
+        this.questions.Clear();
+        this.currentIndex = 0;
+        this.correctCount = 0;
+        this.IsPlaying = false;
+        this.IsComplete = false;
+        this.NotifyQuestionChanged();
     }
 
+    /// <summary>
+    /// Raises property change notifications for question-related UI bindings.
+    /// </summary>
     private void NotifyQuestionChanged()
     {
-        OnPropertyChanged(nameof(CurrentQuestion));
-        OnPropertyChanged(nameof(ProgressText));
-        OnPropertyChanged(nameof(ResultText));
+        this.OnPropertyChanged(nameof(this.CurrentQuestion));
+        this.OnPropertyChanged(nameof(this.ProgressText));
+        this.OnPropertyChanged(nameof(this.ResultText));
     }
 }

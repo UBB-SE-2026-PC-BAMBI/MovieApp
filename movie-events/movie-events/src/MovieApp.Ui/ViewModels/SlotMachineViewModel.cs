@@ -6,13 +6,11 @@ namespace MovieApp.Ui.ViewModels;
 
 using System.Collections.ObjectModel;
 using System.Windows.Input;
-using Microsoft.UI.Xaml.Controls;
 using MovieApp.Core.Models.Movie;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 using MovieApp.Ui.Controls;
 using MovieApp.Ui.Services;
-
 
 /// <summary>
 /// ViewModel for the Slot Machine page.
@@ -20,156 +18,194 @@ using MovieApp.Ui.Services;
 /// </summary>
 public sealed class SlotMachineViewModel : ViewModelBase
 {
-    public event Action<Movie, int>? JackpotHit;
+    private readonly ISlotMachineService slotMachineService;
+    private readonly ISlotMachineAnimationService animationService;
+    private readonly int userId;
 
-    private readonly ISlotMachineService _slotMachineService;
-    private readonly ISlotMachineAnimationService _animationService;
-    private readonly int _userId;
+    private Genre selectedGenre = new ();
+    private Actor selectedActor = new ();
+    private Director selectedDirector = new ();
+    private int availableSpins;
+    private int bonusSpins;
+    private int loginStreak;
+    private bool isSpinning;
+    private bool isSpinButtonEnabled;
+    private bool isGenreSpinning;
+    private bool isActorSpinning;
+    private bool isDirectorSpinning;
+    private string statusMessage = "Ready to spin!";
 
-    private Genre _selectedGenre = new();
-    private Actor _selectedActor = new();
-    private Director _selectedDirector = new();
-    private int _availableSpins;
-    private int _bonusSpins;
-    private int _loginStreak;
-    private bool _isSpinning;
-    private bool _isSpinButtonEnabled;
-    private bool _isGenreSpinning;
-    private bool _isActorSpinning;
-    private bool _isDirectorSpinning;
-    private string _statusMessage = "Ready to spin!";
+    private bool hasMatchingEvents;
 
-    public Genre SelectedGenre
-    {
-        get => _selectedGenre;
-        private set => SetProperty(ref _selectedGenre, value);
-    }
+    private bool hasNoMatchingEvents = true;
 
-    public Actor SelectedActor
-    {
-        get => _selectedActor;
-        private set => SetProperty(ref _selectedActor, value);
-    }
+    private AsyncRelayCommand? spinCommand;
 
-    public Director SelectedDirector
-    {
-        get => _selectedDirector;
-        private set => SetProperty(ref _selectedDirector, value);
-    }
-
-    public int AvailableSpins
-    {
-        get => _availableSpins;
-        private set
-        {
-            if (SetProperty(ref _availableSpins, value))
-                UpdateIsSpinButtonEnabled();
-        }
-    }
-
-    public int BonusSpins
-    {
-        get => _bonusSpins;
-        private set
-        {
-            if (SetProperty(ref _bonusSpins, value))
-                UpdateIsSpinButtonEnabled();
-        }
-    }
-
-    public int LoginStreak
-    {
-        get => _loginStreak;
-        private set => SetProperty(ref _loginStreak, value);
-    }
-
-    public bool IsSpinning
-    {
-        get => _isSpinning;
-        private set
-        {
-            if (SetProperty(ref _isSpinning, value))
-                UpdateIsSpinButtonEnabled();
-        }
-    }
-
-    public bool IsSpinButtonEnabled
-    {
-        get => _isSpinButtonEnabled;
-        private set => SetProperty(ref _isSpinButtonEnabled, value);
-    }
-
-    private void UpdateIsSpinButtonEnabled()
-    {
-        IsSpinButtonEnabled = !IsSpinning && (AvailableSpins > 0 || BonusSpins > 0);
-        _spinCommand?.NotifyCanExecuteChanged();
-    }
-
-    public bool IsGenreSpinning
-    {
-        get => _isGenreSpinning;
-        private set => SetProperty(ref _isGenreSpinning, value);
-    }
-
-    public bool IsActorSpinning
-    {
-        get => _isActorSpinning;
-        private set => SetProperty(ref _isActorSpinning, value);
-    }
-
-    public bool IsDirectorSpinning
-    {
-        get => _isDirectorSpinning;
-        private set => SetProperty(ref _isDirectorSpinning, value);
-    }
-
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        private set => SetProperty(ref _statusMessage, value);
-    }
-
-    public ObservableCollection<MatchingEventItem> MatchingEvents { get; } = new();
-    public Movie? JackpotMovie { get; private set; }
-    public bool JackpotAchieved { get; private set; }
-
-    private bool _hasMatchingEvents;
-    public bool HasMatchingEvents
-    {
-        get => _hasMatchingEvents;
-        private set => SetProperty(ref _hasMatchingEvents, value);
-    }
-
-    private bool _hasNoMatchingEvents = true;
-    public bool HasNoMatchingEvents
-    {
-        get => _hasNoMatchingEvents;
-        private set => SetProperty(ref _hasNoMatchingEvents, value);
-    }
-
-    private AsyncRelayCommand? _spinCommand;
-
-    public ICommand SpinCommand => _spinCommand ??= new AsyncRelayCommand(SpinAsync, CanSpin);
-
-    // Creates a database-backed slot-machine view model for the current user.
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SlotMachineViewModel"/> class.
+    /// Creates a database-backed slot-machine view model for the current user.
+    /// </summary>
+    /// <param name="userId">The identifier of the current user.</param>
+    /// <param name="slotMachineService">The slot machine service.</param>
+    /// <param name="animationService">The animation service used for reel animations.</param>
     public SlotMachineViewModel(
         int userId,
         ISlotMachineService slotMachineService,
         ISlotMachineAnimationService animationService)
     {
-        _userId = userId;
-        _slotMachineService = slotMachineService;
-        _animationService = animationService;
-        MatchingEvents.CollectionChanged += (_, _) =>
+        this.userId = userId;
+        this.slotMachineService = slotMachineService;
+        this.animationService = animationService;
+
+        this.MatchingEvents.CollectionChanged += (_, _) =>
         {
-            HasMatchingEvents = MatchingEvents.Count > 0;
-            HasNoMatchingEvents = !HasMatchingEvents;
+            this.HasMatchingEvents = this.MatchingEvents.Count > 0;
+            this.HasNoMatchingEvents = !this.HasMatchingEvents;
         };
     }
 
     /// <summary>
+    /// Occurs when a jackpot is achieved during a spin.
+    /// </summary>
+    /// <remarks>
+    /// Provides the winning movie and discount percentage.
+    /// </remarks>
+    public event Action<Movie, int>? JackpotHit;
+
+    /// <summary>Gets the currently displayed genre on the reel.</summary>
+    public Genre SelectedGenre
+    {
+        get => this.selectedGenre;
+        private set => this.SetProperty(ref this.selectedGenre, value);
+    }
+
+    /// <summary>Gets the currently displayed actor on the reel.</summary>
+    public Actor SelectedActor
+    {
+        get => this.selectedActor;
+        private set => this.SetProperty(ref this.selectedActor, value);
+    }
+
+    /// <summary>Gets the currently displayed director on the reel.</summary>
+    public Director SelectedDirector
+    {
+        get => this.selectedDirector;
+        private set => this.SetProperty(ref this.selectedDirector, value);
+    }
+
+    /// <summary>Gets the number of remaining daily spins.</summary>
+    public int AvailableSpins
+    {
+        get => this.availableSpins;
+        private set
+        {
+            if (this.SetProperty(ref this.availableSpins, value))
+            {
+                this.UpdateIsSpinButtonEnabled();
+            }
+        }
+    }
+
+    /// <summary>Gets the number of bonus spins available.</summary>
+    public int BonusSpins
+    {
+        get => this.bonusSpins;
+        private set
+        {
+            if (this.SetProperty(ref this.bonusSpins, value))
+            {
+                this.UpdateIsSpinButtonEnabled();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether no matching events were found.
+    /// </summary>
+    public bool HasNoMatchingEvents
+    {
+        get => this.hasNoMatchingEvents;
+        private set => this.SetProperty(ref this.hasNoMatchingEvents, value);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether no matching events were found. Same fucking shit. Why am I doing this.
+    /// </summary>
+    public bool HasMatchingEvents
+    {
+        get => this.hasMatchingEvents;
+        private set => this.SetProperty(ref this.hasMatchingEvents, value);
+    }
+
+    /// <summary>Gets the user's current login streak.</summary>
+    public int LoginStreak
+    {
+        get => this.loginStreak;
+        private set => this.SetProperty(ref this.loginStreak, value);
+    }
+
+    /// <summary>Gets a value indicating whether a spin is currently in progress.</summary>
+    public bool IsSpinning
+    {
+        get => this.isSpinning;
+        private set
+        {
+            if (this.SetProperty(ref this.isSpinning, value))
+            {
+                this.UpdateIsSpinButtonEnabled();
+            }
+        }
+    }
+
+    /// <summary>Gets a value indicating whether the spin button is enabled.</summary>
+    public bool IsSpinButtonEnabled
+    {
+        get => this.isSpinButtonEnabled;
+        private set => this.SetProperty(ref this.isSpinButtonEnabled, value);
+    }
+
+    /// <summary>Gets a value indicating whether the genre reel is spinning.</summary>
+    public bool IsGenreSpinning
+    {
+        get => this.isGenreSpinning;
+        private set => this.SetProperty(ref this.isGenreSpinning, value);
+    }
+
+    /// <summary>Gets a value indicating whether the actor reel is spinning.</summary>
+    public bool IsActorSpinning
+    {
+        get => this.isActorSpinning;
+        private set => this.SetProperty(ref this.isActorSpinning, value);
+    }
+
+    /// <summary>Gets a value indicating whether the director reel is spinning.</summary>
+    public bool IsDirectorSpinning
+    {
+        get => this.isDirectorSpinning;
+        private set => this.SetProperty(ref this.isDirectorSpinning, value);
+    }
+
+    /// <summary>Gets the current status message displayed to the user.</summary>
+    public string StatusMessage
+    {
+        get => this.statusMessage;
+        private set => this.SetProperty(ref this.statusMessage, value);
+    }
+
+    /// <summary>Gets the collection of events matching the current spin result.</summary>
+    public ObservableCollection<MatchingEventItem> MatchingEvents { get; } = new ();
+
+    /// <summary>Gets the movie associated with a jackpot result, if any.</summary>
+    public Movie? JackpotMovie { get; private set; }
+
+    /// <summary>Gets a value indicating whether a jackpot was achieved.</summary>
+    public bool JackpotAchieved { get; private set; }
+
+    /// <summary>Gets the command that triggers a slot machine spin.</summary>
+    public ICommand SpinCommand => this.spinCommand ??= new AsyncRelayCommand(this.SpinAsync, this.CanSpin);
+
+    /// <summary>
     /// Factory method that creates a <see cref="SlotMachineViewModel"/> in an unavailable state.
-    /// Use this when the slot machine service cannot be reached or is disabled.
     /// </summary>
     /// <param name="statusMessage">The message to display when the slot machine is unavailable.</param>
     /// <returns>A <see cref="SlotMachineViewModel"/> with no spins and the spin button disabled.</returns>
@@ -184,185 +220,232 @@ public sealed class SlotMachineViewModel : ViewModelBase
         return viewModel;
     }
 
+    /// <summary>
+    /// Initializes the slot machine state for the current user.
+    /// </summary>
+    /// <param name="cancellationToken">A token used to cancel the initialization.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            await LoadUserStateAsync(cancellationToken);
-            UpdateIsSpinButtonEnabled();
-            StatusMessage = App.StreakSpinGrantedOnLogin
+            await this.LoadUserStateAsync(cancellationToken);
+            this.UpdateIsSpinButtonEnabled();
+
+            this.StatusMessage = App.StreakSpinGrantedOnLogin
                 ? "3-day streak! Bonus spin awarded. Ready to spin!"
                 : "Ready to spin!";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error initializing: {ex.Message}";
+            this.StatusMessage = $"Error initializing: {ex.Message}";
         }
     }
 
     /// <summary>
-    /// Lightweight refresh of the spin counter only (SM.30).
-    /// Call after an external action may have changed the user's available spins.
+    /// Lightweight refresh of the spin counter only.
     /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task RefreshSpinCountAsync()
     {
-        var state = await _slotMachineService.GetUserSpinStateAsync(_userId);
-        AvailableSpins = state.DailySpinsRemaining;
-        BonusSpins = state.BonusSpins;
-        LoginStreak = state.LoginStreak;
+        UserSpinData? state = await this.slotMachineService.GetUserSpinStateAsync(this.userId);
+        this.AvailableSpins = state.DailySpinsRemaining;
+        this.BonusSpins = state.BonusSpins;
+        this.LoginStreak = state.LoginStreak;
     }
 
     private async Task LoadUserStateAsync(CancellationToken cancellationToken = default)
     {
-        var state = await _slotMachineService.GetUserSpinStateAsync(_userId);
-        AvailableSpins = state.DailySpinsRemaining;
-        BonusSpins = state.BonusSpins;
-        LoginStreak = state.LoginStreak;
+        UserSpinData? state = await this.slotMachineService.GetUserSpinStateAsync(this.userId);
 
-        // Load initial random values for display
-        SelectedGenre = await _slotMachineService.GetRandomGenreAsync(cancellationToken);
-        SelectedActor = await _slotMachineService.GetRandomActorAsync(cancellationToken);
-        SelectedDirector = await _slotMachineService.GetRandomDirectorAsync(cancellationToken);
+        this.AvailableSpins = state.DailySpinsRemaining;
+        this.BonusSpins = state.BonusSpins;
+        this.LoginStreak = state.LoginStreak;
+
+        this.SelectedGenre = await this.slotMachineService.GetRandomGenreAsync(cancellationToken);
+        this.SelectedActor = await this.slotMachineService.GetRandomActorAsync(cancellationToken);
+        this.SelectedDirector = await this.slotMachineService.GetRandomDirectorAsync(cancellationToken);
     }
 
-    private bool CanSpin() => !IsSpinning && (AvailableSpins > 0 || BonusSpins > 0);
+    private bool CanSpin() => !this.IsSpinning && (this.AvailableSpins > 0 || this.BonusSpins > 0);
 
+    /// <summary>
+    /// Executes a slot machine spin.
+    /// </summary>
+    /// <returns>A task representing the operation.</returns>
     private async Task SpinAsync()
     {
-        if (IsSpinning || (AvailableSpins <= 0 && BonusSpins <= 0))
+        if (this.IsSpinning || (this.AvailableSpins <= 0 && this.BonusSpins <= 0))
+        {
             return;
+        }
 
-        IsSpinning = true;
-        IsGenreSpinning = true;
-        IsActorSpinning = true;
-        IsDirectorSpinning = true;
-        MatchingEvents.Clear();
-        JackpotAchieved = false;
-        StatusMessage = "Spinning...";
+        this.IsSpinning = true;
+        this.IsGenreSpinning = true;
+        this.IsActorSpinning = true;
+        this.IsDirectorSpinning = true;
+        this.MatchingEvents.Clear();
+        this.JackpotAchieved = false;
+        this.StatusMessage = "Spinning...";
 
         try
         {
-            // Perform the spin
-            var result = await _slotMachineService.SpinAsync(_userId);
+            SlotMachineResult? result = await this.slotMachineService.SpinAsync(this.userId);
 
-            // Get reel sequences for animation
-            var genres = await _slotMachineService.GetGenresAsync();
-            var actors = await _slotMachineService.GetActorsAsync();
-            var directors = await _slotMachineService.GetDirectorsAsync();
+            IReadOnlyList<Genre> genres = await this.slotMachineService.GetGenresAsync();
+            IReadOnlyList<Actor> actors = await this.slotMachineService.GetActorsAsync();
+            IReadOnlyList<Director> directors = await this.slotMachineService.GetDirectorsAsync();
 
-            // Animate the reels with sequential stops: Genre -> Actor -> Director
-            await _animationService.AnimateSpinAsync(
+            await this.animationService.AnimateSpinAsync(
                 result.Genre,
                 result.Actor,
                 result.Director,
                 genres,
                 actors,
                 directors,
-                genre => SelectedGenre = genre,
-                actor => SelectedActor = actor,
-                director => SelectedDirector = director,
-                reelIndex =>
+                g => this.SelectedGenre = g,
+                a => this.SelectedActor = a,
+                d => this.SelectedDirector = d,
+                i =>
                 {
-                    switch (reelIndex)
+                    if (i == 0)
                     {
-                        case 0: IsGenreSpinning = false; break;
-                        case 1: IsActorSpinning = false; break;
-                        case 2: IsDirectorSpinning = false; break;
+                        this.IsGenreSpinning = false;
+                    }
+                    else if (i == 1)
+                    {
+                        this.IsActorSpinning = false;
+                    }
+                    else
+                    {
+                        this.IsDirectorSpinning = false;
                     }
                 });
 
-            // Update UI with results (reel values already set by animation callbacks)
-            JackpotMovie = result.JackpotMovie;
-            JackpotAchieved = result.JackpotDiscountApplied;
+            this.JackpotMovie = result.JackpotMovie;
+            this.JackpotAchieved = result.JackpotDiscountApplied;
 
-            // Populate matching events with jackpot highlighting
-            MatchingEvents.Clear();
-            foreach (var evt in result.MatchingEvents)
+            this.MatchingEvents.Clear();
+            foreach (Event @event in result.MatchingEvents)
             {
-                var isJackpot = result.JackpotEventIds.Contains(evt.Id);
-                MatchingEvents.Add(new MatchingEventItem(evt, isJackpot));
+                bool isJackpot = result.JackpotEventIds.Contains(@event.Id);
+                this.MatchingEvents.Add(new MatchingEventItem(@event, isJackpot));
             }
 
-            // Update status
-            if (JackpotAchieved)
+            if (this.JackpotAchieved)
             {
-                StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
-                JackpotHit?.Invoke(result.JackpotMovie!, result.DiscountPercentage);
+                this.StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
+                this.JackpotHit?.Invoke(result.JackpotMovie!, result.DiscountPercentage);
             }
-            else if (MatchingEvents.Count > 0)
+            else if (this.MatchingEvents.Count > 0)
             {
-                StatusMessage = $"Found {MatchingEvents.Count} matching events!";
+                this.StatusMessage = $"Found {this.MatchingEvents.Count} matching events!";
             }
             else
             {
-                StatusMessage = "No matching events this time. Try again!";
+                this.StatusMessage = "No matching events this time. Try again!";
             }
 
-            // Refresh spin counts (without overwriting reel values)
-            var updatedState = await _slotMachineService.GetUserSpinStateAsync(_userId);
-            AvailableSpins = updatedState.DailySpinsRemaining;
-            BonusSpins = updatedState.BonusSpins;
-        }
-        catch (InvalidOperationException ex)
-        {
-            StatusMessage = ex.Message;
+            UserSpinData? updatedState =
+                await this.slotMachineService.GetUserSpinStateAsync(this.userId);
+            this.AvailableSpins = updatedState.DailySpinsRemaining;
+            this.BonusSpins = updatedState.BonusSpins;
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error during spin: {ex.Message}";
+            this.StatusMessage = $"Error during spin: {ex.Message}";
         }
         finally
         {
-            IsSpinning = false;
-            ((AsyncRelayCommand)SpinCommand).NotifyCanExecuteChanged();
+            this.IsSpinning = false;
+            ((AsyncRelayCommand)this.SpinCommand).NotifyCanExecuteChanged();
         }
+    }
+
+    private void UpdateIsSpinButtonEnabled()
+    {
+        this.IsSpinButtonEnabled = !this.IsSpinning && (this.AvailableSpins > 0 || this.BonusSpins > 0);
+        this.spinCommand?.NotifyCanExecuteChanged();
     }
 }
 
 /// <summary>
-/// Wraps an Event with a jackpot indicator for display in the matching events list.
+/// Wraps an Event with a jackpot indicator for display.
 /// </summary>
 public sealed class MatchingEventItem
 {
-    public Event Event { get; }
-    public bool IsJackpotEvent { get; }
-    public string PriceText => EventCard.GetPriceText(Event, System.Globalization.CultureInfo.CurrentCulture);
-
-    public MatchingEventItem(Event evt, bool isJackpotEvent)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MatchingEventItem"/> class.
+    /// </summary>
+    /// <param name="event">The associated event.</param>
+    /// <param name="isJackpotEvent">Indicates whether the event is part of a jackpot.</param>
+    public MatchingEventItem(Event @event, bool isJackpotEvent)
     {
-        Event = evt;
-        IsJackpotEvent = isJackpotEvent;
+        this.Event = @event;
+        this.IsJackpotEvent = isJackpotEvent;
     }
+
+    /// <summary>Gets the associated event.</summary>
+    public Event Event { get; }
+
+    /// <summary>Gets a value indicating whether the event is part of a jackpot.</summary>
+    public bool IsJackpotEvent { get; }
+
+    /// <summary>Gets the formatted price text.</summary>
+    public string PriceText => EventCard.GetPriceText(
+        this.Event,
+        System.Globalization.CultureInfo.CurrentCulture);
 }
 
 /// <summary>
-/// Simple async relay command implementation for MVVM.
+/// Simple async relay command implementation.
 /// </summary>
 public sealed class AsyncRelayCommand : ICommand
 {
-    private readonly Func<Task> _executeAsync;
-    private readonly Func<bool> _canExecute;
+    private readonly Func<Task> executeAsync;
+    private readonly Func<bool> canExecute;
 
-    public event EventHandler? CanExecuteChanged;
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AsyncRelayCommand"/> class.
+    /// </summary>
+    /// <param name="executeAsync">The asynchronous action to execute.</param>
+    /// <param name="canExecute">
+    /// The predicate that determines whether the command can execute.
+    /// If <see langword="null"/>, the command can always execute.
+    /// </param>
     public AsyncRelayCommand(Func<Task> executeAsync, Func<bool>? canExecute = null)
     {
-        _executeAsync = executeAsync;
-        _canExecute = canExecute ?? (() => true);
+        this.executeAsync = executeAsync;
+        this.canExecute = canExecute ?? (() => true);
     }
 
-    public bool CanExecute(object? parameter) => _canExecute();
+    /// <summary>Occurs when the ability to execute changes.</summary>
+    public event EventHandler? CanExecuteChanged;
 
+    /// <summary>
+    /// Determines whether the command can execute.
+    /// </summary>
+    /// <param name="parameter">The command parameter.</param>
+    /// <returns>
+    /// <see langword="true"/> if the command can execute; otherwise, <see langword="false"/>.
+    /// </returns>
+    public bool CanExecute(object? parameter) => this.canExecute();
+
+    /// <summary>
+    /// Executes the command asynchronously.
+    /// </summary>
+    /// <param name="parameter">The command parameter.</param>
     public async void Execute(object? parameter)
     {
-        if (CanExecute(parameter))
+        if (this.CanExecute(parameter))
         {
-            await _executeAsync();
+            await this.executeAsync();
         }
     }
 
+    /// <summary>Raises the <see cref="CanExecuteChanged"/> event.</summary>
     public void NotifyCanExecuteChanged()
     {
-        CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 }

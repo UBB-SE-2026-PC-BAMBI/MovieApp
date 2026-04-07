@@ -7,303 +7,407 @@ namespace MovieApp.Ui.ViewModels;
 using MovieApp.Core.Models;
 using MovieApp.Core.Repositories;
 
-
+/// <summary>
+/// ViewModel responsible for managing the trivia wheel gameplay logic.
+/// </summary>
 public sealed class TriviaWheelViewModel : ViewModelBase
 {
-    
-    private const bool DisableDailySpinLimit = false;
+    private const int QuestionsPerSession = 20;
+    private const string ErrorMessage = "Trivia unavailable: no trivia data in the database.";
 
-    private readonly ITriviaRepository _triviaRepository;
-    private readonly ITriviaRewardRepository _triviaRewardRepository;
-    private readonly IUserSlotMachineStateRepository _spinRepository;
-    private readonly int _currentUserId;
-    private List<TriviaQuestion> _questions = new();
-    private UserSpinData? _spinData;
+    private readonly ITriviaRepository triviaRepository;
+    private readonly ITriviaRewardRepository triviaRewardRepository;
+    private readonly IUserSlotMachineStateRepository spinRepository;
+    private readonly int currentUserId;
 
-    private string _selectedCategory = string.Empty;
-    private bool _canSpin = true;
-    private bool _isPlaying;
-    private bool _isSessionComplete;
-    private TriviaQuestion? _currentQuestion;
-    private int _currentQuestionIndex;
-    private int _score;
-    private bool _hintUsed;
-    private bool _noQuestionsAvailable;
-    private bool _isTriviaAvailable = true;
-    private string _availabilityMessage = string.Empty;
+    private List<TriviaQuestion> questions = new ();
+    private UserSpinData? spinData;
 
-    private const int QUESTION_PER_SESSION = 20;
-    private const string ERROR_MESSAGE = "Trivia unavailable: no trivia data in the database.";
+    private bool disableDailySpinLimit = false;
+    private string selectedCategory = string.Empty;
+    private bool canSpin = true;
+    private bool isPlaying;
+    private bool isSessionComplete;
+    private TriviaQuestion? currentQuestion;
+    private int currentQuestionIndex;
+    private int score;
+    private bool hintUsed;
+    private bool noQuestionsAvailable;
+    private bool isTriviaAvailable = true;
+    private string availabilityMessage = string.Empty;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TriviaWheelViewModel"/> class.
+    /// </summary>
+    /// <param name="triviaRepository">Provides access to trivia questions.</param>
+    /// <param name="triviaRewardRepository">Handles persistence of trivia rewards.</param>
+    /// <param name="spinRepository">Manages user spin state data.</param>
+    /// <param name="currentUserId">The identifier of the current user.</param>
     public TriviaWheelViewModel(
         ITriviaRepository triviaRepository,
         ITriviaRewardRepository triviaRewardRepository,
         IUserSlotMachineStateRepository spinRepository,
         int currentUserId)
     {
-        _triviaRepository = triviaRepository;
-        _triviaRewardRepository = triviaRewardRepository;
-        _spinRepository = spinRepository;
-        _currentUserId = currentUserId;
+        this.triviaRepository = triviaRepository;
+        this.triviaRewardRepository = triviaRewardRepository;
+        this.spinRepository = spinRepository;
+        this.currentUserId = currentUserId;
     }
 
+    /// <summary>
+    /// Gets the available trivia categories.
+    /// </summary>
     public IReadOnlyList<string> Categories { get; } = new List<string>
     {
         "Actors",
         "Directors",
         "Movie Quotes",
         "Oscars and Awards",
-        "General Movie Trivia"
+        "General Movie Trivia",
     };
 
+    /// <summary>
+    /// Gets a value indicating whether the user can spin.
+    /// </summary>
     public bool CanSpin
     {
-        get => _canSpin;
+        get => this.canSpin;
         private set
         {
-            _canSpin = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(RemainingSpinsText));
+            this.canSpin = value;
+            this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.RemainingSpinsText));
         }
     }
 
-    public string RemainingSpinsText => CanSpin
+    /// <summary>
+    /// Gets the remaining spins text.
+    /// </summary>
+    public string RemainingSpinsText => this.CanSpin
         ? "1 spin available today"
         : "Next spin available tomorrow";
 
+    /// <summary>
+    /// Gets the selected category.
+    /// </summary>
     public string SelectedCategory
     {
-        get => _selectedCategory;
+        get => this.selectedCategory;
         private set
         {
-            _selectedCategory = value;
-            OnPropertyChanged();
+            this.selectedCategory = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the game is currently active.
+    /// </summary>
     public bool IsPlaying
     {
-        get => _isPlaying;
+        get => this.isPlaying;
         private set
         {
-            _isPlaying = value;
-            OnPropertyChanged();
+            this.isPlaying = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the session is complete.
+    /// </summary>
     public bool IsSessionComplete
     {
-        get => _isSessionComplete;
+        get => this.isSessionComplete;
         private set
         {
-            _isSessionComplete = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(HasEarnedReward));
+            this.isSessionComplete = value;
+            this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.HasEarnedReward));
         }
     }
 
+    /// <summary>
+    /// Gets the current question.
+    /// </summary>
     public TriviaQuestion? CurrentQuestion
     {
-        get => _currentQuestion;
+        get => this.currentQuestion;
         private set
         {
-            _currentQuestion = value;
-            OnPropertyChanged();
+            this.currentQuestion = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets the current question index.
+    /// </summary>
     public int CurrentQuestionIndex
     {
-        get => _currentQuestionIndex;
+        get => this.currentQuestionIndex;
         private set
         {
-            _currentQuestionIndex = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(ProgressValue));
-            OnPropertyChanged(nameof(ProgressText));
+            this.currentQuestionIndex = value;
+            this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.ProgressValue));
+            this.OnPropertyChanged(nameof(this.ProgressText));
         }
     }
 
+    /// <summary>
+    /// Gets the score.
+    /// </summary>
     public int Score
     {
-        get => _score;
+        get => this.score;
         private set
         {
-            _score = value;
-            OnPropertyChanged();
+            this.score = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether a hint was used.
+    /// </summary>
     public bool HintUsed
     {
-        get => _hintUsed;
+        get => this.hintUsed;
         private set
         {
-            _hintUsed = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsHintAvailable));
+            this.hintUsed = value;
+            this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.IsHintAvailable));
         }
     }
 
-    public bool IsHintAvailable => !HintUsed;
-    public bool HasEarnedReward => Score == QUESTION_PER_SESSION;
-    public double ProgressValue => CurrentQuestionIndex / QUESTION_PER_SESSION * 100;
-    public string ProgressText => $"{CurrentQuestionIndex}/{QUESTION_PER_SESSION}";
+    /// <summary>
+    /// Gets a value indicating whether a hint is available.
+    /// </summary>
+    public bool IsHintAvailable => !this.HintUsed;
 
+    /// <summary>
+    /// Gets a value indicating whether the user earned a reward.
+    /// </summary>
+    public bool HasEarnedReward => this.Score == QuestionsPerSession;
+
+    /// <summary>
+    /// Gets the progress value.
+    /// </summary>
+    public double ProgressValue => (double)this.CurrentQuestionIndex / QuestionsPerSession * 100;
+
+    /// <summary>
+    /// Gets the progress text.
+    /// </summary>
+    public string ProgressText => $"{this.CurrentQuestionIndex}/{QuestionsPerSession}";
+
+    /// <summary>
+    /// Gets a value indicating whether trivia is available.
+    /// </summary>
     public bool IsTriviaAvailable
     {
-        get => _isTriviaAvailable;
+        get => this.isTriviaAvailable;
         private set
         {
-            _isTriviaAvailable = value;
-            OnPropertyChanged();
+            this.isTriviaAvailable = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets the availability message.
+    /// </summary>
     public string AvailabilityMessage
     {
-        get => _availabilityMessage;
+        get => this.availabilityMessage;
         private set
         {
-            _availabilityMessage = value;
-            OnPropertyChanged();
+            this.availabilityMessage = value;
+            this.OnPropertyChanged();
         }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether no questions are available.
+    /// </summary>
     public bool NoQuestionsAvailable
     {
-        get => _noQuestionsAvailable;
+        get => this.noQuestionsAvailable;
         private set
         {
-            _noQuestionsAvailable = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(EmptyStateMessage));
+            this.noQuestionsAvailable = value;
+            this.OnPropertyChanged();
+            this.OnPropertyChanged(nameof(this.EmptyStateMessage));
         }
     }
 
-    public string EmptyStateMessage => NoQuestionsAvailable
+    /// <summary>
+    /// Gets the empty state message.
+    /// </summary>
+    public string EmptyStateMessage => this.NoQuestionsAvailable
         ? "No trivia questions are available for this category yet."
         : "Spin the wheel to begin!";
 
+    /// <summary>
+    /// Initializes the trivia state for the current user, including spin availability and trivia data.
+    /// </summary>
+    /// <returns>
+    /// A task that represents the asynchronous operation.
+    /// </returns>
     public async Task InitializeAsync()
     {
-        if (DisableDailySpinLimit)
+        if (this.disableDailySpinLimit)
         {
-            CanSpin = true;
-            await RefreshTriviaAvailabilityAsync();
+            this.CanSpin = true;
+            await this.RefreshTriviaAvailabilityAsync();
             return;
         }
 
         try
         {
-            _spinData = await _spinRepository.GetByUserIdAsync(_currentUserId);
+            this.spinData = await this.spinRepository.GetByUserIdAsync(this.currentUserId);
 
-            if (_spinData is null)
+            if (this.spinData is null)
             {
-                _spinData = new UserSpinData
+                this.spinData = new UserSpinData
                 {
-                    UserId = _currentUserId,
+                    UserId = this.currentUserId,
                     DailySpinsRemaining = 1,
                     BonusSpins = 0,
                     LoginStreak = 0,
-                    EventSpinRewardsToday = 0
+                    EventSpinRewardsToday = 0,
                 };
-                await _spinRepository.CreateAsync(_spinData);
-                CanSpin = true;
+
+                await this.spinRepository.CreateAsync(this.spinData);
+                this.CanSpin = true;
             }
             else
             {
-                CanSpin = !HasSpunToday(_spinData.LastTriviaSpinReset);
+                this.CanSpin = !HasSpunToday(this.spinData.LastTriviaSpinReset);
             }
 
-            await RefreshTriviaAvailabilityAsync();
+            await this.RefreshTriviaAvailabilityAsync();
         }
         catch
         {
-            CanSpin = false;
-            IsTriviaAvailable = false;
-            AvailabilityMessage = "Trivia unavailable: no database connection.";
+            this.CanSpin = false;
+            this.IsTriviaAvailable = false;
+            this.AvailabilityMessage = "Trivia unavailable: no database connection.";
         }
     }
 
+    /// <summary>
+    /// Records a trivia spin for the current user and updates the spin state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task RecordSpinAsync()
     {
-        if (DisableDailySpinLimit) return;
-
-        _spinData ??= await _spinRepository.GetByUserIdAsync(_currentUserId);
-
-        if (_spinData is null) return;
-
-        _spinData.LastTriviaSpinReset = DateTime.UtcNow;
-        await _spinRepository.UpdateAsync(_spinData);
-        CanSpin = false;
-    }
-
-    public async Task LoadQuestionsAsync(string category)
-    {
-        SelectedCategory = category;
-
-        IEnumerable<TriviaQuestion> all = await _triviaRepository.GetByCategoryAsync(category);
-
-        _questions = all
-            .OrderBy(_ => Guid.NewGuid())
-            .Take(20)
-            .ToList();
-
-        CurrentQuestionIndex = 0;
-        Score = 0;
-        HintUsed = false;
-        IsSessionComplete = false;
-        NoQuestionsAvailable = false;
-        CurrentQuestion = null;
-
-        if (_questions.Count < QUESTION_PER_SESSION)
+        if (this.disableDailySpinLimit)
         {
-            IsPlaying = false;
-            NoQuestionsAvailable = true;
             return;
         }
 
-        IsPlaying = true;
-        AdvanceToNextQuestion();
-    }
+        this.spinData ??= await this.spinRepository.GetByUserIdAsync(this.currentUserId);
 
-    public void SubmitAnswer(char selectedOption)
-    {
-        if (CurrentQuestion is null) return;
-
-        if (selectedOption == CurrentQuestion.CorrectOption)
+        if (this.spinData is null)
         {
-            Score++;
+            return;
         }
 
-        if (CurrentQuestionIndex >= _questions.Count)
-        {
-            IsSessionComplete = true;
-            IsPlaying = false;
+        this.spinData.LastTriviaSpinReset = DateTime.UtcNow;
+        await this.spinRepository.UpdateAsync(this.spinData);
+        this.CanSpin = false;
+    }
 
-            if (HasEarnedReward)
+    /// <summary>
+    /// Loads and prepares trivia questions for the specified category.
+    /// </summary>
+    /// <param name="category">The category from which to retrieve trivia questions.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task LoadQuestionsAsync(string category)
+    {
+        this.SelectedCategory = category;
+
+        IEnumerable<TriviaQuestion> all = await this.triviaRepository.GetByCategoryAsync(category);
+
+        this.questions = all
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(QuestionsPerSession)
+            .ToList();
+
+        this.CurrentQuestionIndex = 0;
+        this.Score = 0;
+        this.HintUsed = false;
+        this.IsSessionComplete = false;
+        this.NoQuestionsAvailable = false;
+        this.CurrentQuestion = null;
+
+        if (this.questions.Count < QuestionsPerSession)
+        {
+            this.IsPlaying = false;
+            this.NoQuestionsAvailable = true;
+            return;
+        }
+
+        this.IsPlaying = true;
+        this.AdvanceToNextQuestion();
+    }
+
+    /// <summary>
+    /// Submits the selected answer for the current trivia question and updates the game state.
+    /// </summary>
+    /// <param name="selectedOption">The selected answer option.</param>
+    public void SubmitAnswer(char selectedOption)
+    {
+        if (this.CurrentQuestion is null)
+        {
+            return;
+        }
+
+        if (selectedOption == this.CurrentQuestion.CorrectOption)
+        {
+            this.Score++;
+        }
+
+        if (this.CurrentQuestionIndex >= this.questions.Count)
+        {
+            this.IsSessionComplete = true;
+            this.IsPlaying = false;
+
+            if (this.HasEarnedReward)
             {
-                _ = GrantRewardAsync();
+                _ = this.GrantRewardAsync();
             }
         }
         else
         {
-            AdvanceToNextQuestion();
+            this.AdvanceToNextQuestion();
         }
     }
 
+    /// <summary>
+    /// Uses a hint.
+    /// </summary>
     public void UseHint()
     {
-        HintUsed = true;
+        this.HintUsed = true;
     }
 
+    /// <summary>
+    /// Gets a collection of answer options that should be hidden when using a hint.
+    /// </summary>
+    /// <returns>A read-only list of answer options to hide.</returns>
     public IReadOnlyList<char> GetHintOptionsToHide()
     {
-        if (CurrentQuestion is null) return Array.Empty<char>();
+        if (this.CurrentQuestion is null)
+        {
+            return Array.Empty<char>();
+        }
 
         return new List<char> { 'A', 'B', 'C', 'D' }
-            .Where(o => o != CurrentQuestion.CorrectOption)
+            .Where(o => o != this.CurrentQuestion.CorrectOption)
             .OrderBy(_ => Guid.NewGuid())
             .Take(2)
             .ToList();
@@ -311,44 +415,54 @@ public sealed class TriviaWheelViewModel : ViewModelBase
 
     private static bool HasSpunToday(DateTime lastSpin)
     {
-        if (lastSpin == default) return false;
+        if (lastSpin == default)
+        {
+            return false;
+        }
+
         return lastSpin.Date == DateTime.UtcNow.Date;
     }
 
     private async Task RefreshTriviaAvailabilityAsync()
     {
-        foreach (string category in Categories)
+        foreach (string category in this.Categories)
         {
-            IEnumerable<TriviaQuestion> questions = await _triviaRepository.GetByCategoryAsync(category);
+            IEnumerable<TriviaQuestion> questions = await this.triviaRepository.GetByCategoryAsync(category);
+
             if (questions.Any())
             {
-                IsTriviaAvailable = true;
-                AvailabilityMessage = string.Empty;
+                this.IsTriviaAvailable = true;
+                this.AvailabilityMessage = string.Empty;
                 return;
             }
         }
 
-        IsTriviaAvailable = false;
-        AvailabilityMessage = ERROR_MESSAGE;
-        CanSpin = false;
+        this.IsTriviaAvailable = false;
+        this.AvailabilityMessage = ErrorMessage;
+        this.CanSpin = false;
     }
 
     private async Task GrantRewardAsync()
     {
-        TriviaReward reward = new TriviaReward
+        TriviaReward reward = new ()
         {
             Id = 0,
-            UserId = _currentUserId,
+            UserId = this.currentUserId,
             IsRedeemed = false,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
 
-        await _triviaRewardRepository.AddAsync(reward);
+        await this.triviaRewardRepository.AddAsync(reward);
     }
 
     private void AdvanceToNextQuestion()
     {
-        CurrentQuestion = _questions[CurrentQuestionIndex];
-        CurrentQuestionIndex++;
+        this.CurrentQuestion = this.questions[this.CurrentQuestionIndex];
+        this.CurrentQuestionIndex++;
+    }
+
+    private void FlipDisableDailySpinLimit()
+    {
+        this.disableDailySpinLimit = !this.disableDailySpinLimit;
     }
 }
