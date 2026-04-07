@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Moq;
 using MovieApp.Core.Models;
 using MovieApp.Core.Models.Movie;
 using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace MovieApp.Core.Tests;
@@ -288,5 +289,97 @@ public sealed class SlotMachineServiceTests
         // Calling again on the same day must not change the streak
         Assert.False(await service.RecordLoginAndCheckStreakAsync(1));
         Assert.Equal(1, (await stateRepo.GetByUserIdAsync(1))!.LoginStreak);
+    }
+
+
+    [Fact]
+    public async Task SpinAsync_ThrowsInvalidOperationException_WhenNoValidCombinations()
+    {
+        var mockStateRepo = new Mock<IUserSlotMachineStateRepository>();
+        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 1, LastSlotSpinReset = DateTime.UtcNow };
+        mockStateRepo.Setup(r => r.GetByUserIdAsync(1, default)).ReturnsAsync(state);
+
+        var mockMovieRepo = new Mock<IMovieRepository>();
+        mockMovieRepo.Setup(r => r.GetValidReelCombinationsAsync(default)).ReturnsAsync(new List<ReelCombination>());
+
+        var service = new SlotMachineService(mockStateRepo.Object, mockMovieRepo.Object, new Mock<IEventRepository>().Object, new Mock<IUserMovieDiscountRepository>().Object);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SpinAsync(1));
+    }
+
+    [Fact]
+    public async Task GetAvailableSpinsAsync_ResetsSpins_WhenDateIsInPast()
+    {
+        var mockStateRepo = new Mock<IUserSlotMachineStateRepository>();
+        var state = new UserSpinData { UserId = 1, DailySpinsRemaining = 0, LastSlotSpinReset = DateTime.UtcNow.AddDays(-1) };
+        mockStateRepo.Setup(r => r.GetByUserIdAsync(1, default)).ReturnsAsync(state);
+
+        var service = new SlotMachineService(mockStateRepo.Object, new Mock<IMovieRepository>().Object, new Mock<IEventRepository>().Object, new Mock<IUserMovieDiscountRepository>().Object);
+
+        var spins = await service.GetAvailableSpinsAsync(1);
+
+        Assert.Equal(5, spins); // Reset to default 5
+        mockStateRepo.Verify(r => r.UpdateAsync(state, default), Times.Once);
+    }
+
+    [Fact]
+    public async Task GrantStreakSpinAsync_ReturnsTrue_WhenStreakIsMet()
+    {
+        var mockStateRepo = new Mock<IUserSlotMachineStateRepository>();
+        var state = new UserSpinData { UserId = 1, LoginStreak = 3, BonusSpins = 0 }; // 3 is RequiredLoginStreak
+        mockStateRepo.Setup(r => r.GetByUserIdAsync(1, default)).ReturnsAsync(state);
+
+        var service = new SlotMachineService(mockStateRepo.Object, new Mock<IMovieRepository>().Object, new Mock<IEventRepository>().Object, new Mock<IUserMovieDiscountRepository>().Object);
+
+        var result = await service.GrantStreakSpinAsync(1);
+
+        Assert.True(result);
+        Assert.Equal(0, state.LoginStreak);
+        Assert.Equal(1, state.BonusSpins);
+    }
+
+    [Fact]
+    public async Task GrantStreakSpinAsync_ReturnsFalse_WhenStreakNotMet()
+    {
+        var mockStateRepo = new Mock<IUserSlotMachineStateRepository>();
+        var state = new UserSpinData { UserId = 1, LoginStreak = 2, BonusSpins = 0 };
+        mockStateRepo.Setup(r => r.GetByUserIdAsync(1, default)).ReturnsAsync(state);
+
+        var service = new SlotMachineService(mockStateRepo.Object, new Mock<IMovieRepository>().Object, new Mock<IEventRepository>().Object, new Mock<IUserMovieDiscountRepository>().Object);
+
+        var result = await service.GrantStreakSpinAsync(1);
+
+        Assert.False(result);
+        Assert.Equal(2, state.LoginStreak);
+    }
+
+    [Fact]
+    public async Task WrapperMethods_ReturnExpectedValues()
+    {
+        // Tests GetGenresAsync, GetRandomGenreAsync, GetUserSpinStateAsync, GetMatchingEventsAsync
+        var mockMovieRepo = new Mock<IMovieRepository>();
+        var mockStateRepo = new Mock<IUserSlotMachineStateRepository>();
+        var mockEventRepo = new Mock<IEventRepository>();
+
+        mockMovieRepo.Setup(r => r.GetGenresAsync(default)).ReturnsAsync(new List<Genre> { new Genre { Id = 1, Name = "Test" } });
+        mockMovieRepo.Setup(r => r.GetActorsAsync(default)).ReturnsAsync(new List<Actor> { new Actor { Id = 1, Name = "Test" } });
+        mockMovieRepo.Setup(r => r.GetDirectorsAsync(default)).ReturnsAsync(new List<Director> { new Director { Id = 1, Name = "Test" } });
+
+        var state = new UserSpinData { UserId = 1, LastSlotSpinReset = DateTime.UtcNow };
+        mockStateRepo.Setup(r => r.GetByUserIdAsync(1, default)).ReturnsAsync(state);
+
+        var service = new SlotMachineService(mockStateRepo.Object, mockMovieRepo.Object, mockEventRepo.Object, new Mock<IUserMovieDiscountRepository>().Object);
+
+        var genres = await service.GetGenresAsync();
+        var actors = await service.GetActorsAsync();
+        var directors = await service.GetDirectorsAsync();
+        var randomGenre = await service.GetRandomGenreAsync();
+        var fetchedState = await service.GetUserSpinStateAsync(1);
+
+        Assert.Single(genres);
+        Assert.Single(actors);
+        Assert.Single(directors);
+        Assert.NotNull(randomGenre);
+        Assert.Equal(1, fetchedState.UserId);
     }
 }
