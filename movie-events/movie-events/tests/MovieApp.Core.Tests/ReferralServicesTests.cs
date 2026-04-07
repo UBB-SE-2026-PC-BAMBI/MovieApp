@@ -34,7 +34,7 @@ public sealed class ReferralServicesTests
         var repository = new StubAmbassadorRepository();
         var validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("MISSING", currentUserId: 10);
+        var result = await validator.IsValidReferralAsync("MISSING", currentUserIdentifier: 10);
 
         Assert.False(result);
     }
@@ -48,7 +48,7 @@ public sealed class ReferralServicesTests
         };
         var validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("OWNCODE", currentUserId: 10);
+        var result = await validator.IsValidReferralAsync("OWNCODE", currentUserIdentifier: 10);
 
         Assert.False(result);
     }
@@ -62,7 +62,7 @@ public sealed class ReferralServicesTests
         };
         var validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserId: 10);
+        var result = await validator.IsValidReferralAsync("FRIENDCODE", currentUserIdentifier: 10);
 
         Assert.True(result);
     }
@@ -76,7 +76,7 @@ public sealed class ReferralServicesTests
         };
         var service = new ReferralLogService(repository);
 
-        await service.LogReferralUsageAsync("FRIENDCODE", friendId: 10, eventId: 88);
+        await service.LogReferralUsageAsync("FRIENDCODE", friendIdentifier: 10, eventIdentifier: 88);
 
         var loggedUsage = Assert.Single(repository.LogEntries);
         Assert.Equal((42, 10, 88), loggedUsage);
@@ -89,7 +89,7 @@ public sealed class ReferralServicesTests
         var repository = new StubAmbassadorRepository();
         var service = new ReferralLogService(repository);
 
-        await service.LogReferralUsageAsync("MISSING", friendId: 10, eventId: 88);
+        await service.LogReferralUsageAsync("MISSING", friendIdentifier: 10, eventIdentifier: 88);
 
         Assert.Empty(repository.LogEntries);
         Assert.Empty(repository.TryApplyRewardCalls);
@@ -107,7 +107,7 @@ public sealed class ReferralServicesTests
         };
         var validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 88);
+        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserIdentifier: 10, eventIdentifier: 88);
 
         Assert.False(result);
     }
@@ -123,7 +123,7 @@ public sealed class ReferralServicesTests
         var validator = new ReferralValidator(repository);
 
         // event 99 has never been used → should be valid
-        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserId: 10, eventId: 99);
+        var result = await validator.IsValidReferralForEventAsync("FRIENDCODE", currentUserIdentifier: 10, eventIdentifier: 99);
 
         Assert.True(result);
     }
@@ -134,7 +134,7 @@ public sealed class ReferralServicesTests
         var repository = new StubAmbassadorRepository();
         var validator = new ReferralValidator(repository);
 
-        var result = await validator.IsValidReferralForEventAsync("MISSING", currentUserId: 10, eventId: 88);
+        var result = await validator.IsValidReferralForEventAsync("MISSING", currentUserIdentifier: 10, eventIdentifier: 88);
 
         Assert.False(result);
     }

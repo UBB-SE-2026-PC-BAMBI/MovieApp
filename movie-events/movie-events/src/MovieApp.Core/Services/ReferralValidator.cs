@@ -1,59 +1,75 @@
-using MovieApp.Core.Repositories;
+// <copyright file="ReferralValidator.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Core.Services;
+
+using System.Threading;
+using System.Threading.Tasks;
+using MovieApp.Core.Repositories;
 
 /// <summary>
 /// Validates referral-code usage rules during enrollment.
 /// </summary>
 public sealed class ReferralValidator : IReferralValidator
 {
-    private readonly IAmbassadorRepository _ambassadorRepository;
+    private readonly IAmbassadorRepository ambassadorRepository;
 
     /// <summary>
-    /// Creates a validator backed by ambassador persistence.
+    /// Initializes a new instance of the <see cref="ReferralValidator"/> class.
     /// </summary>
+    /// <param name="ambassadorRepository">The repository used for ambassador data.</param>
     public ReferralValidator(IAmbassadorRepository ambassadorRepository)
     {
-        _ambassadorRepository = ambassadorRepository;
+        this.ambassadorRepository = ambassadorRepository;
     }
 
     /// <summary>
     /// Checks that a referral code exists and is not owned by the current user.
     /// </summary>
-    public async Task<bool> IsValidReferralAsync(string referralCode, int currentUserId, CancellationToken cancellationToken = default)
+    /// <param name="referralCode">The unique referral code string.</param>
+    /// <param name="currentUserIdentifier">The identifier of the user attempting to use the code.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>True if the referral is valid; otherwise, false.</returns>
+    public async Task<bool> IsValidReferralAsync(string referralCode, int currentUserIdentifier, CancellationToken cancellationToken = default)
     {
-        var ownerId = await _ambassadorRepository.GetUserIdByReferralCodeAsync(referralCode, cancellationToken);
-        if (ownerId is null)
+        int? ownerIdentifier = await this.ambassadorRepository.GetUserIdByReferralCodeAsync(referralCode, cancellationToken);
+        if (ownerIdentifier is null)
         {
-            return false; // Code does not exist
+            return false;
         }
 
-        if (ownerId.Value == currentUserId)
+        if (ownerIdentifier.Value == currentUserIdentifier)
         {
-            return false; // Anti-Fraud: Cannot use your own code
+            return false;
         }
 
         return true;
     }
 
     /// <summary>
-    /// Checks code validity AND that this friend has not already used the same code for the same event.
-    /// Prevents a referred user from earning the ambassador multiple rewards for a single event.
+    /// Checks code validity and ensures the user has not already used it for a specific event.
     /// </summary>
-    public async Task<bool> IsValidReferralForEventAsync(string referralCode, int currentUserId, int eventId, CancellationToken cancellationToken = default)
+    /// <param name="referralCode">The unique referral code string.</param>
+    /// <param name="currentUserIdentifier">The identifier of the user attempting to use the code.</param>
+    /// <param name="eventIdentifier">The unique identifier of the event.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>True if the referral is valid for the specific event; otherwise, false.</returns>
+    public async Task<bool> IsValidReferralForEventAsync(string referralCode, int currentUserIdentifier, int eventIdentifier, CancellationToken cancellationToken = default)
     {
-        if (!await IsValidReferralAsync(referralCode, currentUserId, cancellationToken))
+        bool isBasicValid = await this.IsValidReferralAsync(referralCode, currentUserIdentifier, cancellationToken);
+        if (!isBasicValid)
         {
             return false;
         }
 
-        var ambassadorId = await _ambassadorRepository.GetUserIdByReferralCodeAsync(referralCode, cancellationToken);
-        if (ambassadorId is null)
+        int? ambassadorIdentifier = await this.ambassadorRepository.GetUserIdByReferralCodeAsync(referralCode, cancellationToken);
+        if (ambassadorIdentifier is null)
         {
             return false;
         }
 
-        var alreadyUsed = await _ambassadorRepository.HasReferralLogAsync(ambassadorId.Value, currentUserId, eventId, cancellationToken);
+        bool alreadyUsed = await this.ambassadorRepository.HasReferralLogAsync(ambassadorIdentifier.Value, currentUserIdentifier, eventIdentifier, cancellationToken);
         return !alreadyUsed;
     }
 }
