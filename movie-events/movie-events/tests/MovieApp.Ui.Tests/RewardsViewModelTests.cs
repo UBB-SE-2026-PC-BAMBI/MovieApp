@@ -11,17 +11,17 @@ namespace MovieApp.Ui.Tests;
 public sealed class RewardsViewModelTests
 {
     [Fact]
-    public async Task LoadAsync_LoadsCurrentUsersReward()
+    public async Task LoadAsync_RewardExistsForUser_SetsTriviaRewardAndStatusText()
     {
-        var reward = new TriviaReward
+        TriviaReward reward = new TriviaReward
         {
             Id = 5,
             UserId = 10,
             CreatedAt = DateTime.UtcNow,
             IsRedeemed = false,
         };
-        var repository = new StubTriviaRewardRepository(reward);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(reward);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
         await viewModel.LoadAsync();
 
@@ -31,17 +31,17 @@ public sealed class RewardsViewModelTests
     }
 
     [Fact]
-    public async Task RedeemTriviaRewardAsync_MarksRewardAsRedeemedAndPersistsIt()
+    public async Task RedeemTriviaRewardAsync_UnredeemedRewardExists_MarksRedeemedAndCallsRepository()
     {
-        var reward = new TriviaReward
+        TriviaReward reward = new TriviaReward
         {
             Id = 5,
             UserId = 10,
             CreatedAt = DateTime.UtcNow,
             IsRedeemed = false,
         };
-        var repository = new StubTriviaRewardRepository(reward);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(reward);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
         await viewModel.LoadAsync();
 
         await viewModel.RedeemTriviaRewardAsync();
@@ -52,10 +52,10 @@ public sealed class RewardsViewModelTests
     }
 
     [Fact]
-    public async Task RedeemTriviaRewardAsync_DoesNothingWhenThereIsNoReward()
+    public async Task RedeemTriviaRewardAsync_NoRewardExists_DoesNotCallRepository()
     {
-        var repository = new StubTriviaRewardRepository(null);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(null);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
         await viewModel.RedeemTriviaRewardAsync();
 
@@ -65,10 +65,10 @@ public sealed class RewardsViewModelTests
     // ── New Edge Case Tests ───────────────────────────────────────────
 
     [Fact]
-    public async Task LoadAsync_WhenNoRewardExistsForUser_HasTriviaRewardIsFalse()
+    public async Task LoadAsync_NoRewardExists_SetsHasTriviaRewardToFalse()
     {
-        var repository = new StubTriviaRewardRepository(null);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(null);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
         await viewModel.LoadAsync();
 
@@ -77,16 +77,16 @@ public sealed class RewardsViewModelTests
     }
 
     [Fact]
-    public async Task LoadAsync_WhenRewardAlreadyRedeemed_TriviaRewardStatusTextIsAlreadyRedeemed()
+    public async Task LoadAsync_RewardAlreadyRedeemed_SetsStatusTextToAlreadyRedeemed()
     {
-        var reward = new TriviaReward
+        TriviaReward reward = new TriviaReward
         {
             Id = 1,
             UserId = 10,
             IsRedeemed = true
         };
-        var repository = new StubTriviaRewardRepository(reward);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(reward);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
         await viewModel.LoadAsync();
 
@@ -94,16 +94,16 @@ public sealed class RewardsViewModelTests
     }
 
     [Fact]
-    public async Task RedeemTriviaRewardAsync_WhenRewardAlreadyRedeemed_DoesNotCallMarkRedeemed()
+    public async Task RedeemTriviaRewardAsync_RewardAlreadyRedeemed_DoesNotCallRepository()
     {
-        var reward = new TriviaReward
+        TriviaReward reward = new TriviaReward
         {
             Id = 1,
             UserId = 10,
             IsRedeemed = true
         };
-        var repository = new StubTriviaRewardRepository(reward);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(reward);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
         await viewModel.LoadAsync();
 
         await viewModel.RedeemTriviaRewardAsync();
@@ -112,14 +112,14 @@ public sealed class RewardsViewModelTests
     }
 
     [Fact]
-    public async Task LoadAsync_SetsIsLoadingTrueThenFalse()
+    public async Task LoadAsync_WhenCalled_TogglesIsLoadingProperty()
     {
-        var repository = new StubTriviaRewardRepository(null);
-        var viewModel = new RewardsViewModel(repository, currentUserId: 10);
+        StubTriviaRewardRepository repository = new StubTriviaRewardRepository(null);
+        RewardsViewModel viewModel = new RewardsViewModel(repository, currentUserId: 10);
 
-        var isLoadingTransitions = new List<bool>();
+        List<bool> isLoadingTransitions = new List<bool>();
 
-        viewModel.PropertyChanged += (sender, args) =>
+        viewModel.PropertyChanged += (object? sender, System.ComponentModel.PropertyChangedEventArgs args) =>
         {
             if (args.PropertyName == nameof(viewModel.IsLoading))
             {
