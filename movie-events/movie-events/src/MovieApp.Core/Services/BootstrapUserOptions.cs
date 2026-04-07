@@ -1,3 +1,7 @@
+// <copyright file="BootstrapUserOptions.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
 namespace MovieApp.Core.Services;
 
 /// <summary>
@@ -8,10 +12,10 @@ public sealed class BootstrapUserOptions
     /// <summary>
     /// Gets the external authentication provider identifier.
     /// </summary>
-    public required string AuthProvider { get; init; }
+    required public string AuthProvider { get; init; }
 
     /// <summary>
     /// Gets the external authentication subject identifier.
     /// </summary>
-    public required string AuthSubject { get; init; }
+    required public string AuthSubject { get; init; }
 }
