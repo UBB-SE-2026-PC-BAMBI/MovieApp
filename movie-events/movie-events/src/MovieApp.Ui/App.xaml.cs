@@ -100,6 +100,7 @@ public partial class App : Application
                 EventJoinService = new EventJoinService(),
                 WatchlistPathProvider = new WatchlistPathProvider(),
                 MarathonService = new MarathonService(marathonRepository, _currentUserService),
+                DialogService = new WinUiDialogService(),
             };
 
             string localDataFolder = appServices.WatchlistPathProvider.GetWatchlistFolderPath();

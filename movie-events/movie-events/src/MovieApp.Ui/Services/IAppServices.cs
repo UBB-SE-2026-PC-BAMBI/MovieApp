@@ -28,4 +28,6 @@ public interface IAppServices
     IEventJoinService? EventJoinService { get; }
     IWatchlistPathProvider? WatchlistPathProvider { get; }
     IMarathonService? MarathonService { get; }
+
+    IDialogService? DialogService { get; }
 }
