@@ -1,12 +1,12 @@
-﻿// <copyright file="IMarathonService.cs" company="MovieApp">
+// <copyright file="IMarathonService.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
-
 namespace MovieApp.Core.Services;
 
+using MovieApp.Core.Models;
+using MovieApp.Core.Models.Movie;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MovieApp.Core.Models;
 
 /// <summary>
 /// Defines the contract for marathon progress, enrollment, and verification logic.
@@ -50,4 +50,18 @@ public interface IMarathonService
     /// <param name="correctAnswersCount">The number of correct answers achieved for verification.</param>
     /// <returns>True if the movie was logged successfully; otherwise, false.</returns>
     Task<bool> LogMovieAsync(int marathonIdentifier, int movieIdentifier, int correctAnswersCount);
+
+    Task<int> GetParticipantCountAsync(int marathonId);
+
+    Task<int> GetMarathonMovieCountAsync(int marathonId);
+
+    Task<bool> IsPrerequisiteCompletedAsync(int userId, int marathonId);
+
+    Task<IEnumerable<Movie>> GetMoviesForMarathonAsync(int marathonId);
+
+    Task<IEnumerable<LeaderboardEntry>> GetLeaderboardAsync(int marathonId);
+
+    Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId);
+
+    Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId);
 }

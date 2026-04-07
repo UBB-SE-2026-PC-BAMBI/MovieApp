@@ -27,4 +27,5 @@ public interface IAppServices
     IEventUserStateService? EventUserStateService { get; }
     IEventJoinService? EventJoinService { get; }
     IWatchlistPathProvider? WatchlistPathProvider { get; }
+    IMarathonService? MarathonService { get; }
 }

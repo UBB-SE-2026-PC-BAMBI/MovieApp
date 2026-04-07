@@ -4,12 +4,13 @@
 
 namespace MovieApp.Core.Services;
 
+using MovieApp.Core.Models;
+using MovieApp.Core.Models.Movie;
+using MovieApp.Core.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MovieApp.Core.Models;
-using MovieApp.Core.Repositories;
 
 /// <summary>
 /// Coordinates marathon enrollment, progress, and weekly assignment workflows.
@@ -162,5 +163,40 @@ public sealed class MarathonService : IMarathonService
 
         await this.marathonRepo.UpdateProgressAsync(marathonProgress);
         return true;
+    }
+
+    public Task<int> GetParticipantCountAsync(int marathonId)
+    {
+        return marathonRepo.GetParticipantCountAsync(marathonId);
+    }
+
+    public Task<int> GetMarathonMovieCountAsync(int marathonId)
+    {
+        return marathonRepo.GetMarathonMovieCountAsync(marathonId);
+    }
+
+    public Task<bool> IsPrerequisiteCompletedAsync(int userId, int marathonId)
+    {
+        return marathonRepo.IsPrerequisiteCompletedAsync(userId, marathonId);
+    }
+
+    public Task<IEnumerable<Movie>> GetMoviesForMarathonAsync(int marathonId)
+    {
+        return marathonRepo.GetMoviesForMarathonAsync(marathonId);
+    }
+
+    public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardAsync(int marathonId)
+    {
+        return marathonRepo.GetLeaderboardWithUsernamesAsync(marathonId);
+    }
+
+    public Task<MarathonProgress?> GetUserProgressAsync(int userId, int marathonId)
+    {
+        return marathonRepo.GetUserProgressAsync(userId, marathonId);
+    }
+
+    public Task<IEnumerable<LeaderboardEntry>> GetLeaderboardWithUsernamesAsync(int marathonId)
+    {
+        return marathonRepo.GetLeaderboardWithUsernamesAsync(marathonId);
     }
 }
