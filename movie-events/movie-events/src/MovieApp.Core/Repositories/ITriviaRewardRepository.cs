@@ -1,40 +1,39 @@
-// <copyright file="IUserMovieDiscountRepository.cs" company="MovieApp">
+﻿// <copyright file="ITriviaRewardRepository.cs" company="MovieApp">
 // Copyright (c) MovieApp. All rights reserved.
 // </copyright>
 
 namespace MovieApp.Core.Repositories;
 
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MovieApp.Core.Models;
 
 /// <summary>
-/// Provides persistence operations for movie discount rewards.
+/// Provides persistence operations for managing trivia-wheel rewards.
 /// </summary>
-public interface IUserMovieDiscountRepository
+public interface ITriviaRewardRepository
 {
     /// <summary>
-    /// Adds a new discount reward to the user's collection.
+    /// Adds a new trivia reward to the persistence store.
     /// </summary>
-    /// <param name="reward">The reward entity to save.</param>
+    /// <param name="reward">The trivia reward entity to save.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task AddAsync(Reward reward, CancellationToken cancellationToken = default);
+    Task AddAsync(TriviaReward reward, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves all discount rewards associated with a specific user.
+    /// Retrieves the oldest unredeemed reward for a specific user.
     /// </summary>
     /// <param name="userIdentifier">The unique identifier of the user.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A list of rewards belonging to the user.</returns>
-    Task<List<Reward>> GetDiscountsForUserAsync(int userIdentifier, CancellationToken cancellationToken = default);
+    /// <returns>The unredeemed trivia reward if found; otherwise, null.</returns>
+    Task<TriviaReward?> GetUnredeemedByUserAsync(int userIdentifier, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Persists the redeemed state for a reward so it cannot be used again.
+    /// Marks a specific trivia reward as successfully redeemed.
     /// </summary>
     /// <param name="rewardIdentifier">The unique identifier of the reward.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task MarkRedeemedAsync(int rewardIdentifier, CancellationToken cancellationToken = default);
+    Task MarkAsRedeemedAsync(int rewardIdentifier, CancellationToken cancellationToken = default);
 }
