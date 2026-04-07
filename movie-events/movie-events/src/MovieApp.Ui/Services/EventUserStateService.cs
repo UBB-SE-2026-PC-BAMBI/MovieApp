@@ -1,13 +1,27 @@
-﻿using System.Collections.Generic;
+﻿// <copyright file="EventUserStateService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Services;
+
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MovieApp.Core.Models;
 using MovieApp.Core.Services;
 
-namespace MovieApp.Ui.Services;
-
+/// <summary>
+/// Provides user-specific state information for events, such as discounts and participation status.
+/// </summary>
 public class EventUserStateService : IEventUserStateService
 {
+    /// <summary>
+    /// Gets the highest available discount for the specified event based on the current user's rewards.
+    /// </summary>
+    /// <param name="eventId">The identifier of the event.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing the maximum discount percentage.
+    /// </returns>
     public async Task<int> GetDiscountForEventAsync(int eventId)
     {
         User? user = App.Services.CurrentUserService?.CurrentUser;
@@ -39,6 +53,13 @@ public class EventUserStateService : IEventUserStateService
         return bestDiscount;
     }
 
+    /// <summary>
+    /// Determines whether the current user has joined the specified event.
+    /// </summary>
+    /// <param name="eventId">The identifier of the event.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation, containing <see langword="true"/> if the user has joined the event; otherwise, <see langword="false"/>.
+    /// </returns>
     public async Task<bool> IsEventJoinedByUserAsync(int eventId)
     {
         User? user = App.Services.CurrentUserService?.CurrentUser;

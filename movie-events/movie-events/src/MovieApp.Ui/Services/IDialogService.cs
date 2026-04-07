@@ -1,4 +1,8 @@
-﻿namespace MovieApp.Ui.Services;
+﻿// <copyright file="IDialogService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.Services;
 
 using System.Threading.Tasks;
 

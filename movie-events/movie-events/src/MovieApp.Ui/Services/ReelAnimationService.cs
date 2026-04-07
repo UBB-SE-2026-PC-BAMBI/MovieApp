@@ -1,8 +1,11 @@
-using System.Diagnostics;
-
-using MovieApp.Core.Models.Movie;
+// <copyright file="ReelAnimationService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Services;
+
+using System.Diagnostics;
+using MovieApp.Core.Models.Movie;
 
 /// <summary>
 /// Service responsible for managing reel animation timing and sequencing in WinUI.
@@ -10,17 +13,28 @@ namespace MovieApp.Ui.Services;
 /// </summary>
 public sealed class ReelAnimationService
 {
-    private const int ANIMATION_DURATION_MS = 2000;
-    private const int REEL_STOP_DELAY_MS = 200;
+    private const int AnimationDurationMs = 2000;
+    private const int ReelStopDelayMs = 200;
 
+    /// <summary>
+    /// Occurs when the reel animation has completed.
+    /// </summary>
+    /// <remarks>
+    /// Provides the final reel values via <see cref="ReelAnimationCompletedEventArgs"/>.
+    /// </remarks>
     public event EventHandler<ReelAnimationCompletedEventArgs>? AnimationCompleted;
 
     /// <summary>
-    /// Animates all 3 reels with sequential stops.
-    /// Reels stop in order: Genre, Actor, Director.
-    /// During animation, each reel displays multiple sequential values.
-    /// Final values are set to the generated values from the service.
+    /// Animates all reels with staggered stop timing and raises the completion event when finished.
     /// </summary>
+    /// <param name="finalGenre">The final genre displayed after animation completes.</param>
+    /// <param name="finalActor">The final actor displayed after animation completes.</param>
+    /// <param name="finalDirector">The final director displayed after animation completes.</param>
+    /// <param name="genreSequence">The sequence of genres used during animation.</param>
+    /// <param name="actorSequence">The sequence of actors used during animation.</param>
+    /// <param name="directorSequence">The sequence of directors used during animation.</param>
+    /// <param name="cancellationToken">A token used to cancel the animation.</param>
+    /// <returns>A task that represents the asynchronous animation operation.</returns>
     public async Task AnimateReelsAsync(
         Genre finalGenre,
         Actor finalActor,
@@ -33,19 +47,19 @@ public sealed class ReelAnimationService
         try
         {
             // Start animations for all reels simultaneously
-            Task animationGenreTask = AnimateReelAsync(genreSequence.Cast<object>().ToList(), 0, cancellationToken);
-            Task animationActorTask = AnimateReelAsync(actorSequence.Cast<object>().ToList(), REEL_STOP_DELAY_MS, cancellationToken);
-            Task animationDirectorTask = AnimateReelAsync(directorSequence.Cast<object>().ToList(), REEL_STOP_DELAY_MS * 2, cancellationToken);
+            Task animationGenreTask = this.AnimateReelAsync(genreSequence.Cast<object>().ToList(), 0, cancellationToken);
+            Task animationActorTask = this.AnimateReelAsync(actorSequence.Cast<object>().ToList(), ReelStopDelayMs, cancellationToken);
+            Task animationDirectorTask = this.AnimateReelAsync(directorSequence.Cast<object>().ToList(), ReelStopDelayMs * 2, cancellationToken);
 
             await Task.WhenAll(animationGenreTask, animationActorTask, animationDirectorTask);
 
             // Notify completion with final values
-            OnAnimationCompleted(new ReelAnimationCompletedEventArgs
+            this.OnAnimationCompleted(new ReelAnimationCompletedEventArgs
             {
                 FinalGenre = finalGenre,
                 FinalActor = finalActor,
                 FinalDirector = finalDirector,
-                CompletedAt = DateTime.UtcNow
+                CompletedAt = DateTime.UtcNow,
             });
         }
         catch (OperationCanceledException)
@@ -60,20 +74,23 @@ public sealed class ReelAnimationService
     private async Task AnimateReelAsync(List<object> values, int delayMs, CancellationToken cancellationToken)
     {
         if (values.Count == 0)
+        {
             return;
+        }
 
         // Initial delay before this reel starts
         await Task.Delay(delayMs, cancellationToken);
 
         Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-        while (stopwatch.ElapsedMilliseconds < ANIMATION_DURATION_MS && !cancellationToken.IsCancellationRequested)
+        while (stopwatch.ElapsedMilliseconds < AnimationDurationMs && !cancellationToken.IsCancellationRequested)
         {
             // Cycle through reel values
             int index = (int)((stopwatch.ElapsedMilliseconds / 50) % values.Count);
-            // Here you would update the UI binding with values[index]
-            // This would be connected to the ViewModel that updates display
 
+            // Here you would update the UI binding with values[index]
+
+            // This would be connected to the ViewModel that updates display
             await Task.Delay(50, cancellationToken);
         }
 
@@ -82,7 +99,7 @@ public sealed class ReelAnimationService
 
     private void OnAnimationCompleted(ReelAnimationCompletedEventArgs e)
     {
-        AnimationCompleted?.Invoke(this, e);
+        this.AnimationCompleted?.Invoke(this, e);
     }
 }
 
@@ -91,8 +108,23 @@ public sealed class ReelAnimationService
 /// </summary>
 public sealed class ReelAnimationCompletedEventArgs : EventArgs
 {
-    public required Genre FinalGenre { get; init; }
-    public required Actor FinalActor { get; init; }
-    public required Director FinalDirector { get; init; }
-    public required DateTime CompletedAt { get; init; }
+    /// <summary>
+    /// Gets the final genre after the animation completes.
+    /// </summary>
+    required public Genre FinalGenre { get; init; }
+
+    /// <summary>
+    /// Gets the final actor after the animation completes.
+    /// </summary>
+    required public Actor FinalActor { get; init; }
+
+    /// <summary>
+    /// Gets the final director after the animation completes.
+    /// </summary>
+    required public Director FinalDirector { get; init; }
+
+    /// <summary>
+    /// Gets the UTC timestamp when the animation completed.
+    /// </summary>
+    required public DateTime CompletedAt { get; init; }
 }
