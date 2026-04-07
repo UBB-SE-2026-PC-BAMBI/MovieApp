@@ -15,6 +15,8 @@ namespace MovieApp.Ui.ViewModels;
 /// </summary>
 public sealed class SlotMachineViewModel : ViewModelBase
 {
+    public event Action<Movie, int>? JackpotHit;
+
     private readonly ISlotMachineService _slotMachineService;
     private readonly ISlotMachineAnimationService _animationService;
     private readonly int _userId;
@@ -140,14 +142,11 @@ public sealed class SlotMachineViewModel : ViewModelBase
         private set => SetProperty(ref _hasNoMatchingEvents, value);
     }
 
-    public event Action<Movie, int>? JackpotHit;
-
     private AsyncRelayCommand? _spinCommand;
+
     public ICommand SpinCommand => _spinCommand ??= new AsyncRelayCommand(SpinAsync, CanSpin);
 
-    /// <summary>
-    /// Creates a database-backed slot-machine view model for the current user.
-    /// </summary>
+    // Creates a database-backed slot-machine view model for the current user.
     public SlotMachineViewModel(
         int userId,
         ISlotMachineService slotMachineService,
@@ -163,6 +162,17 @@ public sealed class SlotMachineViewModel : ViewModelBase
         };
     }
 
+    public static SlotMachineViewModel CreateUnavailable(string statusMessage)
+    {
+        SlotMachineViewModel viewModel = new SlotMachineViewModel(0, null!, null!);
+
+        viewModel.AvailableSpins = 0;
+        viewModel.IsSpinButtonEnabled = false;
+        viewModel.StatusMessage = statusMessage;
+
+        return viewModel;
+    }
+
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -170,7 +180,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
             await LoadUserStateAsync(cancellationToken);
             UpdateIsSpinButtonEnabled();
             StatusMessage = App.StreakSpinGrantedOnLogin
-                ? "🔥 3-day streak! Bonus spin awarded. Ready to spin!"
+                ? "3-day streak! Bonus spin awarded. Ready to spin!"
                 : "Ready to spin!";
         }
         catch (Exception ex)
@@ -265,7 +275,7 @@ public sealed class SlotMachineViewModel : ViewModelBase
             // Update status
             if (JackpotAchieved)
             {
-                StatusMessage = $"🎉 JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
+                StatusMessage = $"JACKPOT! {result.DiscountPercentage}% discount earned on {result.JackpotMovie?.Title}!";
                 JackpotHit?.Invoke(result.JackpotMovie!, result.DiscountPercentage);
             }
             else if (MatchingEvents.Count > 0)
