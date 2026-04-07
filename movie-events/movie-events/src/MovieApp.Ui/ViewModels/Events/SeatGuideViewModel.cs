@@ -1,4 +1,8 @@
-﻿namespace MovieApp.Ui.ViewModels.Events;
+// <copyright file="SeatGuideViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui.ViewModels.Events;
 
 using System;
 using System.Collections.ObjectModel;
@@ -78,7 +82,7 @@ public sealed class SeatGuideViewModel : ViewModelBase
                     seat.Quality = SeatQuality.Standard;
                 }
 
-                if (Random.Shared.Next(PercentageBase) < UnavailabilityPercentage) 
+                if (Random.Shared.Next(PercentageBase) < UnavailabilityPercentage)
                 {
                     seat.IsAvailable = false;
                 }

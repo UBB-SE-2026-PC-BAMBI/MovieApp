@@ -1,34 +1,44 @@
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using MovieApp.Ui.ViewModels;
+// <copyright file="NotificationsPage.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Views;
+
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using MovieApp.Ui.ViewModels;
 
 /// <summary>
 /// Hosts the current user's event-related notifications.
 /// </summary>
 public sealed partial class NotificationsPage : Page
 {
-    private bool _initialized;
+    private bool initialized;
 
-    public NotificationsViewModel ViewModel { get; }
-
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotificationsPage"/> class.
+    /// </summary>
     public NotificationsPage()
     {
-        ViewModel = new NotificationsViewModel();
-        InitializeComponent();
-        DataContext = ViewModel;
-        Loaded += NotificationsPage_Loaded;
+        this.ViewModel = new NotificationsViewModel();
+        this.InitializeComponent();
+        this.DataContext = this.ViewModel;
+        this.Loaded += this.NotificationsPage_Loaded;
     }
+
+    /// <summary>
+    /// Gets the view model associated with this page.
+    /// </summary>
+    public NotificationsViewModel ViewModel { get; }
 
     private async void NotificationsPage_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_initialized)
+        if (this.initialized)
         {
             return;
         }
 
-        _initialized = true;
-        await ViewModel.InitializeAsync();
+        this.initialized = true;
+        await this.ViewModel.InitializeAsync();
     }
 }

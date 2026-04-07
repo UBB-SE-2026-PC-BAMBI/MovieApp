@@ -1,7 +1,11 @@
-using System.Diagnostics;
-using MovieApp.Core.Models.Movie;
+// <copyright file="SlotMachineAnimationService.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.Services;
+
+using System.Diagnostics;
+using MovieApp.Core.Models.Movie;
 
 /// <summary>
 /// Coordinates the slot machine spin animation.
@@ -11,26 +15,27 @@ namespace MovieApp.Ui.Services;
 /// </summary>
 public sealed class SlotMachineAnimationService : ISlotMachineAnimationService
 {
-    private const int SPIN_DURATION_MS = 2000;
-    private const int REEL_STOP_INTERVAL_MS = 600;
-    private const int TICK_INTERVAL_MS = 80;
+    private const int SpinDurationMs = 2000;
+    private const int ReelStopIntervalMs = 600;
+    private const int TickIntervalMs = 80;
 
     /// <summary>
-    /// Animates the slot machine reels. During the spin, each reel displays
-    /// multiple values from its category sequentially. Reels stop independently
-    /// in the order: Genre, Actor, Director.
+    /// Animates the slot machine reels by cycling through values and stopping each reel at a different time.
     /// </summary>
     /// <param name="finalGenre">The final genre value for the first reel.</param>
     /// <param name="finalActor">The final actor value for the second reel.</param>
     /// <param name="finalDirector">The final director value for the third reel.</param>
-    /// <param name="genres">Available genre values to cycle through.</param>
-    /// <param name="actors">Available actor values to cycle through.</param>
-    /// <param name="directors">Available director values to cycle through.</param>
-    /// <param name="onGenreChanged">Callback invoked when the genre reel value changes.</param>
-    /// <param name="onActorChanged">Callback invoked when the actor reel value changes.</param>
-    /// <param name="onDirectorChanged">Callback invoked when the director reel value changes.</param>
-    /// <param name="onReelStopped">Callback invoked when a reel stops (0 = Genre, 1 = Actor, 2 = Director).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="genres">The available genre values to display during animation.</param>
+    /// <param name="actors">The available actor values to display during animation.</param>
+    /// <param name="directors">The available director values to display during animation.</param>
+    /// <param name="onGenreChanged">Invoked whenever the genre reel value changes.</param>
+    /// <param name="onActorChanged">Invoked whenever the actor reel value changes.</param>
+    /// <param name="onDirectorChanged">Invoked whenever the director reel value changes.</param>
+    /// <param name="onReelStopped">
+    /// Invoked when a reel stops spinning (0 = Genre, 1 = Actor, 2 = Director).
+    /// </param>
+    /// <param name="cancellationToken">A token used to cancel the animation.</param>
+    /// <returns>A task that represents the asynchronous animation operation.</returns>
     public async Task AnimateSpinAsync(
         Genre finalGenre,
         Actor finalActor,
@@ -45,13 +50,15 @@ public sealed class SlotMachineAnimationService : ISlotMachineAnimationService
         CancellationToken cancellationToken = default)
     {
         if (genres.Count == 0 || actors.Count == 0 || directors.Count == 0)
+        {
             return;
+        }
 
         Random random = new Random();
 
-        int genreStopTime = SPIN_DURATION_MS;
-        int actorStopTime = SPIN_DURATION_MS + REEL_STOP_INTERVAL_MS;
-        int directorStopTime = SPIN_DURATION_MS + REEL_STOP_INTERVAL_MS * 2;
+        int genreStopTime = SpinDurationMs;
+        int actorStopTime = SpinDurationMs + ReelStopIntervalMs;
+        int directorStopTime = SpinDurationMs + (2 * ReelStopIntervalMs);
 
         Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -106,7 +113,9 @@ public sealed class SlotMachineAnimationService : ISlotMachineAnimationService
             }
 
             if (!directorStopped)
-                await Task.Delay(TICK_INTERVAL_MS, cancellationToken);
+            {
+                await Task.Delay(TickIntervalMs, cancellationToken);
+            }
         }
 
         stopwatch.Stop();

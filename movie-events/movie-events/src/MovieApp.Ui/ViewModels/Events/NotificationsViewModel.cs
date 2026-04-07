@@ -1,58 +1,96 @@
-using System.Collections.ObjectModel;
-using MovieApp.Core.Models;
-using MovieApp.Core.Services;
+// <copyright file="NotificationsViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels.Events;
 
+using System.Collections.ObjectModel;
+using System.Reflection.Metadata.Ecma335;
+using MovieApp.Core.Models;
+using MovieApp.Core.Services;
+
+/// <summary>
+/// View model responsible for loading and managing user notifications.
+/// </summary>
 public sealed class NotificationsViewModel : ViewModelBase
 {
-    private readonly INotificationService _notificationService;
-    private bool _isLoading;
+    private readonly INotificationService notificationService;
+    private bool isLoading;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotificationsViewModel"/> class.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the notification service is not initialized.
+    /// </exception>
     public NotificationsViewModel()
     {
-        _notificationService = App.Services.NotificationService ?? throw new InvalidOperationException("NotificationService is not initialized.");
-        Notifications = new ObservableCollection<Notification>();
+        this.notificationService = App.Services.NotificationService
+            ?? throw new InvalidOperationException("NotificationService is not initialized.");
+        this.Notifications = new ObservableCollection<Notification>();
     }
 
+    /// <summary>
+    /// Gets the collection of notifications for the current user.
+    /// </summary>
     public ObservableCollection<Notification> Notifications { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether notifications are currently being loaded.
+    /// </summary>
     public bool IsLoading
     {
-        get => _isLoading;
-        private set => SetProperty(ref _isLoading, value);
+        get => this.isLoading;
+        private set => this.SetProperty(ref this.isLoading, value);
     }
-    
-    public bool HasNoNotifications => !IsLoading && Notifications.Count == 0;
 
+    /// <summary>
+    /// Gets a value indicating whether there are no notifications to display.
+    /// </summary>
+    public bool HasNoNotifications => !this.IsLoading && this.Notifications.Count == 0;
+
+    /// <summary>
+    /// Asynchronously loads notifications for the current user.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous initialization operation.</returns>
     public async Task InitializeAsync()
     {
-        IsLoading = true;
-        OnPropertyChanged(nameof(HasNoNotifications));
-        
+        this.IsLoading = true;
+        this.OnPropertyChanged(nameof(this.HasNoNotifications));
+
         try
         {
-            var currentUser = App.Services.CurrentUserService?.CurrentUser;
-            if (currentUser == null) return;
-
-            var notifications = await _notificationService.GetNotificationsByUserAsync(currentUser.Id);
-            
-            Notifications.Clear();
-            foreach (var n in notifications)
+            User? currentUser = App.Services.CurrentUserService?.CurrentUser;
+            if (currentUser == null)
             {
-                Notifications.Add(n);
+                return;
             }
-            OnPropertyChanged(nameof(HasNoNotifications));
+
+            IReadOnlyList<Notification> notifications = await this.notificationService
+                .GetNotificationsByUserAsync(currentUser.Id);
+
+            this.Notifications.Clear();
+            foreach (Notification notification in notifications)
+            {
+                this.Notifications.Add(notification);
+            }
+
+            this.OnPropertyChanged(nameof(this.HasNoNotifications));
         }
         finally
         {
-            IsLoading = false;
+            this.IsLoading = false;
         }
     }
 
+    /// <summary>
+    /// Removes a notification and refreshes the list.
+    /// </summary>
+    /// <param name="notificationId">The identifier of the notification to remove.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task RemoveNotificationAsync(int notificationId)
     {
-        await _notificationService.RemoveNotificationAsync(notificationId);
-        await InitializeAsync();
+        await this.notificationService.RemoveNotificationAsync(notificationId);
+        await this.InitializeAsync();
     }
 }

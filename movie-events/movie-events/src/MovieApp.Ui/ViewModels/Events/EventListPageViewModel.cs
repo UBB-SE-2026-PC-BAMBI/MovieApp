@@ -1,7 +1,11 @@
-using MovieApp.Core.EventLists;
-using MovieApp.Core.Models;
+// <copyright file="EventListPageViewModel.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
 
 namespace MovieApp.Ui.ViewModels.Events;
+
+using MovieApp.Core.EventLists;
+using MovieApp.Core.Models;
 
 /// <summary>
 /// Base view model for screens that display a searchable, filterable,
@@ -17,69 +21,78 @@ namespace MovieApp.Ui.ViewModels.Events;
 /// </remarks>
 public abstract class EventListPageViewModel : ViewModelBase
 {
-    private IReadOnlyList<Event> _allEvents = [];
-    private IReadOnlyList<Event> _visibleEvents = [];
-    private bool _isLoading;
-    private bool _hasNoEvents;
-
-    public abstract string PageTitle { get; }
-
-    public EventListState EventListState { get; } = new();
-
-    public IReadOnlyList<EventSortOption> AvailableSortOptions => EventListState.AvailableSortOptions;
+    private IReadOnlyList<Event> allEvents = new List<Event>();
+    private IReadOnlyList<Event> visibleEvents = new List<Event>();
+    private bool isLoading;
+    private bool hasNoEvents;
 
     /// <summary>
-    /// The full source event list owned by this screen.
+    /// Gets the title displayed for this page.
+    /// </summary>
+    public abstract string PageTitle { get; }
+
+    /// <summary>
+    /// Gets the current state used for searching, filtering, and sorting events.
+    /// </summary>
+    public EventListState EventListState { get; } = new ();
+
+    /// <summary>
+    /// Gets the available sort options for the current event list.
+    /// </summary>
+    public IReadOnlyList<EventSortOption> AvailableSortOptions => this.EventListState.AvailableSortOptions;
+
+    /// <summary>
+    /// Gets or sets full source event list owned by this screen.
     /// </summary>
     public IReadOnlyList<Event> AllEvents
     {
-        get => _allEvents;
-        protected set => SetProperty(ref _allEvents, value);
+        get => this.allEvents;
+        protected set => this.SetProperty(ref this.allEvents, value);
     }
 
     /// <summary>
-    /// The transformed event list currently displayed by the UI.
+    /// Gets or sets the transformed event list currently displayed by the UI.
     /// </summary>
     public IReadOnlyList<Event> VisibleEvents
     {
-        get => _visibleEvents;
-        protected set => SetProperty(ref _visibleEvents, value);
+        get => this.visibleEvents;
+        protected set => this.SetProperty(ref this.visibleEvents, value);
     }
 
     /// <summary>
-    /// Indicates whether the event list is currently being loaded.
+    /// Gets a value indicating whether the event list is currently being loaded.
     /// </summary>
     public bool IsLoading
     {
-        get => _isLoading;
+        get => this.isLoading;
         private set
         {
-            if (SetProperty(ref _isLoading, value))
+            if (this.SetProperty(ref this.isLoading, value))
             {
-                OnPropertyChanged(nameof(ShowEventList));
+                this.OnPropertyChanged(nameof(this.ShowEventList));
             }
         }
     }
 
     /// <summary>
-    /// Indicates whether no events exist after initialization completes.
+    /// Gets a value indicating whether no events exist after initialization completes.
     /// </summary>
     public bool HasNoEvents
     {
-        get => _hasNoEvents;
+        get => this.hasNoEvents;
         private set
         {
-            if (SetProperty(ref _hasNoEvents, value))
+            if (this.SetProperty(ref this.hasNoEvents, value))
             {
-                OnPropertyChanged(nameof(ShowEventList));
+                this.OnPropertyChanged(nameof(this.ShowEventList));
             }
         }
     }
 
     /// <summary>
-    /// Indicates whether the event list should be shown in the UI.
+    /// Gets a value indicating whether whether the event list should be shown in the UI.
     /// </summary>
-    public bool ShowEventList => !IsLoading && !HasNoEvents;
+    public bool ShowEventList => !this.IsLoading && !this.HasNoEvents;
 
     /// <summary>
     /// Asynchronously initializes the event list for this screen.
@@ -92,20 +105,23 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// <br/>
     /// Call this method before the page expects the event list to be displayed.
     /// </remarks>
+    /// <returns>
+    /// A task that represents the asynchronous initialization operation.
+    /// </returns>
     public async Task InitializeAsync()
     {
-        IsLoading = true;
-        HasNoEvents = false;
+        this.IsLoading = true;
+        this.HasNoEvents = false;
 
         try
         {
-            AllEvents = await LoadEventsAsync();
-            RefreshVisibleEvents();
-            HasNoEvents = AllEvents.Count == 0;
+            this.AllEvents = await this.LoadEventsAsync();
+            this.RefreshVisibleEvents();
+            this.HasNoEvents = this.AllEvents.Count == 0;
         }
         finally
         {
-            IsLoading = false;
+            this.IsLoading = false;
         }
     }
 
@@ -123,14 +139,15 @@ public abstract class EventListPageViewModel : ViewModelBase
     public void SetSearchText(string? searchText)
     {
         // Passing in a null value must allow the user to reset search.
-        var normalizedSearchText = searchText ?? string.Empty;
-        if (EventListState.SearchText == normalizedSearchText)
+        string normalizedSearchText = searchText ?? string.Empty;
+        if (this.EventListState.SearchText == normalizedSearchText)
         {
             // Refresh not needed if the search text didn't change
             return;
         }
-        EventListState.SearchText = normalizedSearchText;
-        RefreshVisibleEvents();
+
+        this.EventListState.SearchText = normalizedSearchText;
+        this.RefreshVisibleEvents();
     }
 
     /// <summary>
@@ -146,13 +163,14 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// </remarks>
     public void SetSortOption(EventSortOption sortOption)
     {
-        if (EventListState.SelectedSortOption == sortOption)
+        if (this.EventListState.SelectedSortOption == sortOption)
         {
             // Refresh not needed if the sort option did not change.
             return;
         }
-        EventListState.SelectedSortOption = sortOption;
-        RefreshVisibleEvents();
+
+        this.EventListState.SelectedSortOption = sortOption;
+        this.RefreshVisibleEvents();
     }
 
     /// <summary>
@@ -172,9 +190,9 @@ public abstract class EventListPageViewModel : ViewModelBase
     public void UpdateFilters(Action<EventFilterState> updateFilters)
     {
         ArgumentNullException.ThrowIfNull(updateFilters);
-        
-        updateFilters(EventListState.ActiveFilters);
-        RefreshVisibleEvents();
+
+        updateFilters(this.EventListState.ActiveFilters);
+        this.RefreshVisibleEvents();
     }
 
     /// <summary>
@@ -187,8 +205,8 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// </remarks>
     public void ResetEventListState()
     {
-        EventListState.Reset();
-        RefreshVisibleEvents();
+        this.EventListState.Reset();
+        this.RefreshVisibleEvents();
     }
 
     /// <summary>
@@ -202,7 +220,7 @@ public abstract class EventListPageViewModel : ViewModelBase
     /// </remarks>
     public void RefreshVisibleEvents()
     {
-        VisibleEvents = EventListTransformer.Apply(AllEvents, EventListState);
+        this.VisibleEvents = EventListTransformer.Apply(this.AllEvents, this.EventListState);
     }
 
     /// <summary>
