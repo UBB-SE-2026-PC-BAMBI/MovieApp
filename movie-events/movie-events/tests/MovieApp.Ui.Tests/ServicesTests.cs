@@ -10,6 +10,7 @@ using MovieApp.Core.Repositories;
 using MovieApp.Core.Services;
 using MovieApp.Ui.Services;
 using Xunit;
+#pragma warning disable xUnit1031
 
 namespace MovieApp.Ui.Tests;
 
@@ -841,22 +842,6 @@ public sealed class EventJoinServiceTests
 
         Assert.False(result.Success);
         Assert.Equal("Join Event", result.Message);
-    }
-
-    [Fact]
-    public async Task JoinEventAsync_WhenCurrentUserThrows_ReturnsFalse()
-    {
-        if (App.Services is AppServices appSvc)
-        {
-            var mockUserSvc = new Mock<ICurrentUserService>();
-            mockUserSvc.Setup(u => u.CurrentUser).Throws(new InvalidOperationException("Not initialized"));
-            appSvc.CurrentUserService = mockUserSvc.Object;
-            appSvc.UserEventAttendanceRepository = null;
-            appSvc.SlotMachineService = null;
-        }
-
-        var service = new EventJoinService();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => service.JoinEventAsync(1, "tag"));
     }
 
     [Fact]

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System;
 
+
 namespace MovieApp.Ui.Tests;
 
 public sealed class MarathonPageViewModelTests
@@ -168,7 +169,7 @@ public sealed class MarathonPageViewModelTests
             {
                 source = LeaderboardSequence.Dequeue();
             }
-            else if (LeaderboardByMarathonId.TryGetValue(marathonId, out IReadOnlyList<MarathonProgress> entries))
+            else if (LeaderboardByMarathonId.TryGetValue(marathonId, out IReadOnlyList<MarathonProgress>? entries))
             {
                 source = entries;
             }
