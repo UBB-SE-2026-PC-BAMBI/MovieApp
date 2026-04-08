@@ -2,7 +2,7 @@ using Xunit;
 
 namespace MovieApp.Infrastructure.Tests;
 
-public sealed class SqlUserSlotMachineStateRepositoryTests
+public sealed class SqlUserSlotMachineStateRepositoryTests2
 {
     [Fact]
     public void Interface_DefinesExpectedMethods()
