@@ -98,13 +98,13 @@ public sealed class ViewsTesting
     [Fact]
     public void ReferralAreaPage_ReferralCode_Setter_RaisesPropertyChanged()
     {
-        ReferralAreaPage page = null;
+        ReferralAreaPage? page = null;
         try { page = new ReferralAreaPage(); } catch { }
 
         if (page != null)
         {
             bool wasRaised = false;
-            page.PropertyChanged += (object sender, PropertyChangedEventArgs e) =>
+            page.PropertyChanged += (object? sender, PropertyChangedEventArgs e) =>
             {
                 if (e.PropertyName == "ReferralCode") wasRaised = true;
             };
@@ -119,7 +119,7 @@ public sealed class ViewsTesting
     [Fact]
     public void ReferralAreaPage_IsHistoryEmpty_ReturnsVisible_WhenCollectionEmpty()
     {
-        ReferralAreaPage page = null;
+        ReferralAreaPage? page = null;
         try { page = new ReferralAreaPage(); } catch { }
 
         if (page != null)
