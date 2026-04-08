@@ -1,3 +1,9 @@
+// <copyright file="App.xaml.cs" company="MovieApp">
+// Copyright (c) MovieApp. All rights reserved.
+// </copyright>
+
+namespace MovieApp.Ui;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.UI.Xaml;
 using MovieApp.Core.Repositories;
@@ -8,27 +14,76 @@ using MovieApp.Ui.ViewModels;
 using MovieApp.Ui.Views;
 using System;
 
-namespace MovieApp.Ui;
-
+/// <summary>
+/// Represents the application entry point and is responsible for initializing services and the main window.
+/// </summary>
 public partial class App : Application
 {
-    private Window? _window;
-    private ICurrentUserService? _currentUserService;
-    public static IAppServices Services { get; private set; } = new AppServices();
-    public static MainWindow? CurrentMainWindow { get; private set; }
-    public static IConfigurationRoot? Configuration { get; private set; }
-    public static int CurrentUserId { get; private set; }
-    public static bool StreakSpinGrantedOnLogin { get; private set; }
+    private Window? window;
+    private ICurrentUserService? currentUserService;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="App"/> class.
+    /// </summary>
     public App()
     {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 
+    /// <summary>
+    /// Gets the application-wide services container.
+    /// </summary>
+    /// <returns>The <see cref="IAppServices"/> instance.</returns>
+    public static IAppServices Services { get; private set; } = new AppServices();
+
+    /// <summary>
+    /// Gets the current main window instance.
+    /// </summary>
+    /// <returns>The <see cref="MainWindow"/> instance, or <c>null</c> if not initialized.</returns>
+    public static MainWindow? CurrentMainWindow { get; private set; }
+
+    /// <summary>
+    /// Gets the application configuration.
+    /// </summary>
+    /// <returns>The <see cref="IConfigurationRoot"/> instance, or <c>null</c> if not initialized.</returns>
+    public static IConfigurationRoot? Configuration { get; private set; }
+
+    /// <summary>
+    /// Gets the identifier of the currently authenticated user.
+    /// </summary>
+    /// <returns>The current user identifier.</returns>
+    public static int CurrentUserId { get; private set; }
+
+    /// <summary>
+    /// Gets a value indicating whether a streak spin was granted on login.
+    /// </summary>
+    /// <returns><c>true</c> if granted; otherwise, <c>false</c>.</returns>
+    public static bool StreakSpinGrantedOnLogin { get; private set; }
+
+    /// <summary>
+    /// Ensures that critical application services are initialized and valid.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when required services are missing or invalid.
+    /// </exception>
+    public static void EnsureServicesValid()
+    {
+        if (App.Services.CurrentUserService == null || App.Services.EventRepository == null
+            || Configuration == null)
+        {
+            throw new InvalidOperationException(
+                "Critical runtime services have been reset or are unavailable. The application cannot continue.");
+        }
+    }
+
+    /// <summary>
+    /// Called when the application is launched and initializes all required services and the main window.
+    /// </summary>
+    /// <param name="args">Launch activation arguments.</param>
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         MainViewModel viewModel;
-        ResetRuntimeServices();
+        this.ResetRuntimeServices();
 
         try
         {
@@ -63,8 +118,8 @@ public partial class App : Application
             SqlUserEventAttendanceRepository userEventAttendanceRepository = new SqlUserEventAttendanceRepository(databaseOptions);
             SqlMarathonRepository marathonRepository = new SqlMarathonRepository(databaseOptions);
 
-            _currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
-            await _currentUserService.InitializeAsync();
+            this.currentUserService = new CurrentUserService(userRepository, bootstrapUserOptions);
+            await this.currentUserService.InitializeAsync();
 
             ISlotMachineService slotMachineService = new SlotMachineService(
                                                             slotMachineStateRepository,
@@ -78,7 +133,7 @@ public partial class App : Application
 
             var appServices = new AppServices
             {
-                CurrentUserService = _currentUserService,
+                CurrentUserService = this.currentUserService,
                 EventRepository = eventRepository,
                 TriviaRepository = triviaRepository,
                 TriviaRewardRepository = triviaRewardRepository,
@@ -99,7 +154,7 @@ public partial class App : Application
                 EventUserStateService = new EventUserStateService(),
                 EventJoinService = new EventJoinService(),
                 WatchlistPathProvider = new WatchlistPathProvider(),
-                MarathonService = new MarathonService(marathonRepository, _currentUserService),
+                MarathonService = new MarathonService(marathonRepository, this.currentUserService),
                 DialogService = new WinUiDialogService(),
             };
 
@@ -108,22 +163,22 @@ public partial class App : Application
 
             Services = appServices;
 
-            CurrentUserId = _currentUserService.CurrentUser.Id;
+            CurrentUserId = this.currentUserService.CurrentUser.Id;
 
             StreakSpinGrantedOnLogin = await slotMachineService.RecordLoginAndCheckStreakAsync(
-                _currentUserService.CurrentUser.Id);
+                this.currentUserService.CurrentUser.Id);
 
-            viewModel = new MainViewModel(_currentUserService.CurrentUser);
+            viewModel = new MainViewModel(this.currentUserService.CurrentUser);
         }
         catch (Exception exception)
         {
-            ResetRuntimeServices();
+            this.ResetRuntimeServices();
             viewModel = MainViewModel.CreateStartupError(BuildStartupErrorMessage(exception));
         }
 
         CurrentMainWindow = new MainWindow(viewModel, Services.EventRepository!);
-        _window = CurrentMainWindow;
-        _window.Activate();
+        this.window = CurrentMainWindow;
+        this.window.Activate();
     }
 
     private static IConfigurationRoot BuildConfiguration()
@@ -132,14 +187,6 @@ public partial class App : Application
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
             .Build();
-    }
-
-    private void ResetRuntimeServices()
-    {
-        _currentUserService = null;
-        Services = new AppServices();
-        Configuration = null;
-        CurrentUserId = 0;
     }
 
     private static string BuildStartupErrorMessage(Exception exception)
@@ -152,11 +199,11 @@ public partial class App : Application
             + exception.Message;
     }
 
-    public static void EnsureServicesValid()
+    private void ResetRuntimeServices()
     {
-        if (App.Services.CurrentUserService == null || App.Services.EventRepository == null || Configuration == null)
-        {
-            throw new InvalidOperationException("Critical runtime services have been reset or are unavailable. The application cannot continue.");
-        }
+        this.currentUserService = null;
+        Services = new AppServices();
+        Configuration = null;
+        CurrentUserId = 0;
     }
 }

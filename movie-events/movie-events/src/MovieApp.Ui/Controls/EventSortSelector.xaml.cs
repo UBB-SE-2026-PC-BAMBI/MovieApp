@@ -109,7 +109,7 @@ public sealed partial class EventSortSelector : UserControl
             return;
         }
 
-        EventSortOptionItem? selectedItem = 
+        EventSortOptionItem? selectedItem =
             DefaultSortOptions.FirstOrDefault(item => item.Value == sortOption);
         if (!ReferenceEquals(this.SortComboBox.SelectedItem, selectedItem))
         {
